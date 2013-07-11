@@ -10,27 +10,15 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Files
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// To read
-// In Linux
-//#define PIVOT_APPROACH_FILE	"../server0418/etc/pivotApproach_CtrlBasis.dat"
-//#define SL_APPROACH_FILE		"../server0418/etc/straightLineApproach_CtrlBasis.dat"
-
-// In QNX
-#define PIVOT_APPROACH_FILE 	"../data/PivotApproach/pivotApproachState1.dat"
-#define SL_APPROACH_FILE 		"../data/PivotApproach/pivotApproachState1.dat"	// not used in qnx
+// To Read DATA
+#define PIVOT_APPROACH_FILE 	"./data/PivotApproach/pivotApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
+#define SL_APPROACH_FILE 		"./data/PivotApproach/PA10/pivotApproachState1.dat"		// Waypoints for State1 in StraightLineApproach for the PA10 Robot
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// To writer, local folder
-// In Linux
-//#define ANGLES_FILE			"/home/juan/Documents/Results/HIRO/PivotApproach/Angles.dat"
-//#define CARTPOS_FILE			"/home/juan/Documents/Results/HIRO/PivotApproach/CartPos.dat"
-//#define STATE_FILE			"/home/juan/Documents/Results/HIRO/PivotApproach/State.dat"
-//#define FORCES_FILE			"/home/juan/Documents/Results/HIRO/PivotApproach/Torques.dat"
-
-// In QNX
-#define ANGLES_FILE			"./data/Results/Angles.dat"
-#define CARTPOS_FILE		"./data/Results/CartPos.dat"
-#define STATE_FILE			"./data/Results/State.dat"
-#define FORCES_FILE			"./data/Results/Torques.dat"
+// To Write Data (used in AssemblyStrategy::OpenFiles)
+#define ANGLES_FILE			"./data/Results/Angles.dat"		// Save joint angles of robot
+#define CARTPOS_FILE		"./data/Results/CartPos.dat"	// Save CartPos of End-Effector in world coordinates
+#define STATE_FILE			"./data/Results/State.dat"		// Save State Transition times for SideApproach
+#define FORCES_FILE			"./data/Results/Torques.dat"	// Save Joint Torques for robot
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Design Parameters
@@ -2015,56 +2003,40 @@ int AssemblyStrategy::wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/v
 void AssemblyStrategy::OpenFiles()
 {
 
-#ifdef DEBUG_PLUGIN3
-  std::cerr << "\nAssemblyStrategy::OpenFiles - Entering" << std::endl;	
-#endif	
+	#ifdef DEBUG_PLUGIN3
+	  std::cerr << "\nAssemblyStrategy::OpenFiles - Entering" << std::endl;
+	#endif
 
-  /*************************************** Robot Angles ***************************************/
-  //	#ifdef LINUX
-  //		ostr_angles.open(strAngles);
-  //		std::cerr << "\nWorking with linux";
-  //	#elif
-  ostr_angles.open("Angles.dat"); //strAngles);
-  //	#endif
+  /*************************************** Robot Joint Angles ***************************************/
+  ostr_angles.open(strAngles);			// "Angles.dat");
   if (!ostr_angles.is_open())
     std::cerr << ANGLES_FILE << " was not opened." << std::endl;
 
-  /*************************************** Cart Positions ***************************************/
-  //	#ifdef LINUX
-  //		ostr_cartPos.open(strCartPos);
-  //		std::cerr << "\nWorking with linux";
-  //	#elif
-  ostr_cartPos.open("CartPos.dat"); //strCartPos);
+  /*************************************** EndEffector Cart Positions (World Coords) ***************************************/
+  ostr_cartPos.open(strCartPos); 		// "CartPos.dat");
   //	#endif
   if (!ostr_cartPos.is_open())
     std::cerr << CARTPOS_FILE << " was not  opened." << std::endl;
 
   /*************************************** State Time Data ***************************************/
-  //	#ifdef LINUX
-  //		ostr_state.open(strState);
-  //		std::cerr << "\nWorking with linux";
-  //	#elif
-  ostr_state.open("State.dat"); //strState);
-  //	#endif
+  ostr_state.open(strState);			// "State.dat"); //
   if (!ostr_state.is_open())
     std::cerr << STATE_FILE << " was not opened." << std::endl;
+
   // Insert a value of 0 as the starting time of the state vector
   ostr_state << "0.0" << endl;;
 
-  /*************************************** Force Data ***************************************/
-  //	#ifdef LINUX		
-  //		ostr_Forces.open(strForces);
-  //		std::cerr << "\nWorking with linux";
-  //	#elif
-  ostr_Forces.open("Torques.dat");//strForces);
-  //	#endif
+  /*************************************** Joint Torque Data in World Coords ***************************************/
+  ostr_Forces.open(strForces);			// "Torques.dat");
   if (!ostr_Forces.is_open())
     std::cerr << FORCES_FILE << " was not opened." << std::endl;
 
+  /*************************************** Desired Joint Torque Data in Local Coords ***************************************/
   ostr_des.open("Des.dat");
   if(!ostr_des.is_open())
     std::cerr << "des.dat was not opened." << std::endl;
 
+  /*************************************** Actual Joint Torque Data in World Coords ***************************************/
   ostr_cur.open("Cur.dat");
   if(!ostr_cur.is_open())
     std::cerr << "cur.dat was not opened." << std::endl;
