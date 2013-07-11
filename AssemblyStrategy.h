@@ -78,7 +78,7 @@ typedef tvmet::Vector<double, 6> vector6;
 //---------------------------------------------------------------------------------------------------------------------------
 // CONTACT Transitional Parameters
 #define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
-#define HSA_Rot2Ins_My				0.6			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
+#define HSA_Rot2Ins_My				0.8			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables

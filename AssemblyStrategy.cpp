@@ -617,152 +617,129 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
   /******************************************************************** SIDE APPROACH **********************************************************************************************/
   else if(approach==SideApproach)
-    {
-      switch (State)
-	{
-	  /****************************************** Approach ***************************************************************/
-	case 1:// Move, such that the TCP makes contact with the docking pivot in the male camera part at an angle.
+  {
+	  switch (State)
 	  {
-	    // Initialize
-	    if(ctrlInitFlag)
-	      {
+	  /****************************************** Approach ***************************************************************/
+	  case 1:// Move, such that the TCP makes contact with the docking pivot in the male camera part at an angle.
+	  {
+		  // Initialize
+		  if(ctrlInitFlag)
+		  {
 #ifdef DEBUG_PLUGIN3
-		std::cerr << "State 1 in AssemblyStrategy::StateMachine" << std::endl;
+			  std::cerr << "State 1 in AssemblyStrategy::StateMachine" << std::endl;
 #endif	 
-						
-		// In this first step ensure that the original end-effector position and orientation are set correctly
-		EndEff_r_org = rpyFromRot(rot);
-		wrist_r = EndEff_r_org;
 
-		EndEff_p_org = pos;
-		wrist_p = EndEff_p_org;
-					
+			  // In this first step ensure that the original end-effector position and orientation are set correctly
+			  EndEff_r_org = rpyFromRot(rot);
+			  wrist_r = EndEff_r_org;
+
+			  EndEff_p_org = pos;
+			  wrist_p = EndEff_p_org;
+
 #ifdef DEBUG_PLUGIN3
-		std::cerr << "/*******************************************************************************************\n"
-		  "The original position of the EndEffector is: " << wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) 
-			  << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2) << 
-		  "\n*******************************************************************************************/" << std::endl;
+			  std::cerr << "/*******************************************************************************************\n"
+					  "The original position of the EndEffector is: " << wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2)
+					  << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2) <<
+					  "\n*******************************************************************************************/" << std::endl;
 #endif
-					
-	
-		nextState	 = false;
-		ctrlInitFlag = false;
-	      }
 
-	    // Primitive Ikin controller: Use a preplanned trajectory to move the wrist at an angle until contact.
-	    // DesIKin are hardcoded into the code.
-	    // Output is JointAngleUpdate
-	    ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
-	    // 0) Check for state termination.
-	    StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time); // Fix to add ErrorNorm2
+			  nextState	 = false;
+			  ctrlInitFlag = false;
+		  }
+
+		  // Primitive Ikin controller: Use a preplanned trajectory to move the wrist at an angle until contact.
+		  // DesIKin are hardcoded into the code.
+		  // Output is JointAngleUpdate
+		  ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+
+		  // 0) Check for state termination.
+		  StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time); // Fix to add ErrorNorm2
 	  }
 	  break;
 
 	  /****************************************** Rotation ***************************************************************/
-	case 2: // Rotate until contact
+	  case 2: // Rotate until contact
 	  {
-	    // Initialize
-	    if(ctrlInitFlag)
-	      {
+		  // Initialize
+		  if(ctrlInitFlag)
+		  {
 #ifdef DEBUG_PLUGIN3
-		std::cerr << "State 2 in AssemblyStrategy::StateMachine" << std::endl;
+			  std::cerr << "State 2 in AssemblyStrategy::StateMachine" << std::endl;
 #endif	 
-	
-		nextState	 = false;
-		ctrlInitFlag = false;
-		// Set up a new trajectory file with current information
-		ProcessTrajFile(strTrajState2,State,pos,CurRPY,cur_time);
-		EndEff_p_org = pos;
-		EndEff_r_org = CurRPY;
-	      }
 
-	    // Primitive Ikin controller: Use a preplanned trajectory to rotate wrist until further contact
-	    //ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach, IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+			  nextState	 	= false;
+			  ctrlInitFlag 	= false;
+			  // Set up a new trajectory file with current information
+			  ProcessTrajFile(strTrajState2,State,pos,CurRPY,cur_time);
+			  EndEff_p_org = pos;
+			  EndEff_r_org = CurRPY;
+		  }
 
-	    // Or, use a ForceIKinController
-	    // Set a DesForce that pushes down and against the wall of the camera model
-	    //--------------------------------------------------------------------------
-	    // In Linux
-	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;	// In world coordinates
-	    //DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // I.e. fwd/backwards
-	    //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;	// move towards open end on the side
+		  // Primitive Ikin controller: Use a preplanned trajectory to rotate wrist until further contact
+		  //ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach, IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
-	    // In QNX
-	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;	// In world coordinates
-	    //DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // I.e. fwd/backwards
-	    //--------------------------------------------------------------------------
-	    //DesMoment(1) 		= ROTATIONAL_FORCE; //ROTATIONAL_FORCE;
-	    //--------------------------------------------------------------------------
+		  // Or, use a ForceIKinController
+		  // Set a DesForce that pushes down and against the wall of the camera model
 #ifdef SIMULATION
-	    /*------------------------ WORLD COORDINATES -------------------------------*/
-	    // +X: Downwards
-	    // +Y: Moves right
-	    // +Z: Moves forward (and a bit left)
-	    DesForce(UP_AXIS) 	= VERTICAL_FORCE;
-	    DesForce(SIDE_AXIS) = -1*HORIZONTAL_FORCE;
-	    DesForce(FWD_AXIS) 	= TRANSVERSE_FORCE;
-	    DesMoment(1) 		= ROTATIONAL_FORCE;
+		  /*------------------------ WORLD COORDINATES -------------------------------*/
+		  // +X: Downwards
+		  // +Y: Moves right
+		  // +Z: Moves forward (and a bit left)
+		  DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;
+		  //DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
+		  //DesForce(FWD_AXIS) 	=  1.000*TRANSVERSE_FORCE;
+		  DesMoment(1) 			=  1.375*ROTATIONAL_FORCE;
 #else
-	    DesForce(UP_AXIS) = VERTICAL_FORCE;
-	    DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
-	    //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-	    DesMoment(1) = 3*ROTATIONAL_FORCE;
+		  DesForce(UP_AXIS) = VERTICAL_FORCE;
+		  //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+		  DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
+		  DesMoment(1) = 3*ROTATIONAL_FORCE;
 #endif
-	    
-	    ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
-	    // Check for state termination. Also free allocated resources.
-	    StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+		  ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+
+		  // Check for state termination. Also free allocated resources.
+		  StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 	  }
 	  break;
 
 
 	  /****************************************** Compliant Insertion Controller ***************************************************************/
-	case 3:
+	  case 3:
 	  {
-	    // Initialize
-	    if(ctrlInitFlag)
-	      {
+		  // Initialize
+		  if(ctrlInitFlag)
+		  {
 #ifdef DEBUG_PLUGIN3
-		std::cerr << "State 3 in AssemblyStrategy::StateMachine" << std::endl;
+			  std::cerr << "State 3 in AssemblyStrategy::StateMachine" << std::endl;
 #endif	 
-	
-		nextState	 = false;
-		ctrlInitFlag = false;
-	      }
 
-	    // Set a DesForce that pushes down and against the wall of the camera model
-	    //--------------------------------------------------------------------------
-	    // Linux
-	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;
-
-	    // In world coordinates
-	    //DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
-	    //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;																// move towards open end on the side
-				
-	    // QNX
-	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;																	// In world coordinates
-	    //DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // push against the wall				
-	    //--------------------------------------------------------------------------
-	    //DesMoment(1) 		= ROTATIONAL_FORCE;//ROTATIONAL_FORCE;///2.0;
-	    //--------------------------------------------------------------------------
+			  nextState	 = false;
+			  ctrlInitFlag = false;
+		  }
+		  /*------------------------ WORLD COORDINATES -------------------------------*/
+		  // Set a DesForce that pushes down stronger and still rotates.
+		  // +X: Downwards
+		  // +Y: Moves right
+		  // +Z: Moves forward (and a bit left)
 #ifdef SIMULATION
-	    DesForce(UP_AXIS) = /*0.95*/VERTICAL_FORCE;
-	    DesForce(FWD_AXIS) = TRANSVERSE_FORCE;
-	    DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-	    DesMoment(1) = 1.5*ROTATIONAL_FORCE;
+		  DesForce(UP_AXIS) 	=  1.200*VERTICAL_FORCE;
+		  //DesForce(SIDE_AXIS) =  1.000*HORIZONTAL_FORCE;
+		  DesForce(FWD_AXIS) 	= -5.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+		  DesMoment(1) 			=  1.500*ROTATIONAL_FORCE;
 #else
-	    DesForce(UP_AXIS) = VERTICAL_FORCE;
-	    DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
-	    // DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-	    DesMoment(1) = 4*ROTATIONAL_FORCE;
+		  DesForce(UP_AXIS) = VERTICAL_FORCE;
+		  // DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+		  DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
+		  DesMoment(1) = 4*ROTATIONAL_FORCE;
 #endif
-	    
-	    ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
-	    // Check for state termination. Also free allocated resources.
-	    StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+		  ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+
+		  // Check for state termination. Also free allocated resources.
+		  StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 	  }
 	  break;
 
@@ -1446,7 +1423,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  case Approach2Rotation:
 			  {
 				  // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
-				  float endApproachTime=ex_time[0];
+				  float endApproachTime=ex_time[1];						// Check the pivotApproachState1.dat carefully. If 1 line choose ex_time[0], if there are two lines choose ex_time[0]
 				  if( cur_time>(endApproachTime*0.80) )					// Want to make sure we are near the region of contact before we start measuring.
 					  if(avgSig(Fx)>HSA_App2Rot_Fx)						// Vertical Contact Force along X-Direction in local coordinates. // Lateral contact for x-axis
 					  {
@@ -1459,10 +1436,11 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  case Rotation2Insertion:
 			  {
 				  // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
-				  //float endRotationTime=ex_time[1];
+				  //float endRotationTime=ex_time[2];
 				  #ifdef SIMULATION
-					  //if( cur_time>(endRotationTime*0.90) ) 			// Cannot currently use time here in SideApproach because it is a state dominated by a ForceMoment composition.
-				  	  if(avgSig(My)>HSA_Rot2Ins_My) 						// Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+					  //if( cur_time>(endRotationTime*0.90) ) 			// Time-based Condition: Cannot currently use time here in SideApproach because it is a state dominated by a ForceMoment composition.
+				  	  //if(CurJointAngles(4)<0.1919)					// Joint-based Angle Condition: Can be coupled with the pitch angle in pivotApproachState1.dat. Notice that a flat horizontal maleCam corresponds to a pitch angle of -1.57 but a joint angle 4 of 0
+				  	  if(avgSig(My)>HSA_Rot2Ins_My) 					// Force-based Condition: Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
 					  {
 							  NextStateActions(cur_time);
 					  }
@@ -1476,15 +1454,16 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  }
 			  break;
 
-			  // Transition from State 3a to 3b: Snap Insertion to Push Down insertion
+			  /*************************** Insertion2Mating Transition ******************************************************************************************************************************************/
+			  // Transition Insertion2Mating
 			  case Insertion2Mating:
 			  {
 				#ifdef SIMULATION
-				  if(CurJointAngles(4)<0.116877)//for simulation
+				  if(CurJointAngles(My)<0.116877)			//for simulation
 					  //if(CurJointAngles(4)<0.097688)
-					  // if(CurJointAngles(4)<-0.264) // if the wrist pitch joint angle is less than 14 degrees
+					  // if(CurJointAngles(4)<-0.264) 		// if the wrist pitch joint angle is less than 14 degrees
 					  //if(CurJointAngles(4)<-0.104717333)
-					  //if(CurJointAngles(4)<0.104717333) // if the wrist pitch joint angle is less than 6 degrees
+					  //if(CurJointAngles(4)<0.104717333) 	// if the wrist pitch joint angle is less than 6 degrees
 					  {
 						  NextStateActions(cur_time);
 					  }
