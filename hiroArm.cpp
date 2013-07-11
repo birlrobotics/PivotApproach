@@ -229,8 +229,8 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
 
   // Path trunk
   // Folder where robot joint angles, cart. position, and forces will be saved and desired trajectory read from.
-  const char readDirectory[]  = "./data/PivotApproach/";
-  const char writeDirectory[] = "./data/Results/";
+  const char readDirectory[]  = "./data/PivotApproach";
+  const char writeDirectory[] = "./data/Results";
 
   // Assign path trunk to each of the FIVE char variables
   strcpy(TrajState1,	readDirectory);
@@ -242,13 +242,13 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
   strcpy(Forces,	    writeDirectory);
 
   // Concatenate with appropriate endings
-  strcat(TrajState1,	"pivotApproachState1.dat");	// Desired Trajectory
-  strcat(TrajState2,	"pivotApproachState2.dat");	// Desired Trajectory
-  strcat(manipTest,		"manipulationTestAxis.dat");	// What test axis do you want to try
-  strcat(Angles,		"Angles.dat");			// Robot Joint Angles
-  strcat(CartPos,		"CartPos.dat");			// Cartesian Positions
-  strcat(State,			"State.dat");			// New States Time Ocurrence
-  strcat(Forces,		"Torques.dat");			// Robot Forces/Moments
+  strcat(TrajState1,	"/pivotApproachState1.dat");	// Desired Trajectory
+  strcat(TrajState2,	"/pivotApproachState2.dat");	// Desired Trajectory
+  strcat(manipTest,		"/manipulationTestAxis.dat");	// What test axis do you want to try
+  strcat(Angles,		"/Angles.dat");			// Robot Joint Angles
+  strcat(CartPos,		"/CartPos.dat");			// Cartesian Positions
+  strcat(State,			"/State.dat");			// New States Time Ocurrence
+  strcat(Forces,		"/Torques.dat");			// Robot Forces/Moments
 
   // Initialize PA with these directories
   ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, pos, rot, CurAngles);	// Initialize: Records waypoints from desired trajectory file
