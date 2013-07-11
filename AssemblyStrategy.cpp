@@ -6,9 +6,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// Files
+// Files: PivotApproach. In fact, the directory path is provided through the Initialization function, which is called from hiroArm. But these are here for reference or manual use.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Read DATA
 #define PIVOT_APPROACH_FILE 	"./data/PivotApproach/pivotApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
@@ -18,8 +17,7 @@
 #define ANGLES_FILE			"./data/Results/Angles.dat"		// Save joint angles of robot
 #define CARTPOS_FILE		"./data/Results/CartPos.dat"	// Save CartPos of End-Effector in world coordinates
 #define STATE_FILE			"./data/Results/State.dat"		// Save State Transition times for SideApproach
-#define FORCES_FILE			"./data/Results/Torques.dat"	// Save Joint Torques for robot
-//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define FORCES_FILE			"./data/Results/Torques.dat"	// Save Joint Torques for robot//----------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Design Parameters
 //----------------------------------------------------------------------------------------------------------------------------------------------------

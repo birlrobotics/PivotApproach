@@ -30,7 +30,7 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
   :f_moving(false), 	f_reached(false),
    f_gc(false),     	f_gc_init(false),   	step_gc(0),
    mass(0.0),       	GACC(9.8),          	wait_step(200),
-   /*fs(0),*/           	step_fs(0),        	 	max_step_fs(500),
+   /*fs(0),*/           step_fs(0),        	 	max_step_fs(500),
    MAX_JVEL(0.5),   	TIME_LIMIT(100.0), 		MIN_PERIOD(1.0e-9), TOLERANCE(1.0e-6)
 {
 #ifdef DEBUG_PLUGIN2
@@ -38,22 +38,20 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 #endif
 
   // Save to local members
-  name 	= name_in;										// Right or left arm
-  body 	= body_in;										// Body object extracted from ModelLoader
+  name 		= name_in;										// Right or left arm
+  body 		= body_in;										// Body object extracted from ModelLoader
   NUM_q0 	= num_q0_in;									// Which joint is the starting joint. Right arm=3, Left arm=9
   DEL_T 	= period_in;									// Time step set at 0.0005 secs in calling function
-  for(int i = 0; i < ARM_DOF; i++)
-    {
-      for(int j = 0; j < 5; j++)
-	{
-	  ang_limits[i][j] = ang_limits_in[i][j];			// Set angle limits
-	}
-    }
+  for(int i = 0; i < ARM_DOF; i++){
+	  for(int j = 0; j < 5; j++){
+		  ang_limits[i][j] = ang_limits_in[i][j];			// Set angle limits
+	  }
+  }
 
   // Arms' Current state
-  ePh = ePh_in;											// Wrist 2 End Effector Left: <0.0715, 0.0, 0.0>, Right: <-0.12,0.0,0.0>
-  eRh = eRh_in;											// Equivalent Rotation matrix. Set to the identity matrix.
-  hPfs = hPfs_in;											//
+  ePh 	= ePh_in;											// Wrist 2 End Effector Left: <0.0715, 0.0, 0.0>, Right: <-0.12,0.0,0.0>
+  eRh 	= eRh_in;											// Equivalent Rotation matrix. Set to the identity matrix.
+  hPfs 	= hPfs_in;											//
 
 
 #ifdef DEBUG_PLUGIN2
@@ -120,7 +118,7 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
   // Takes the following parameters int NUM_q0, vector3 base2endEffectorPos, matrix33 base2endEffectorRot, dmatrix jacobian, double curr_time, vector6 curr_force
   vector3 pos(0);
   matrix33 rot;//x(0);
-  double momentGainFactor = 10.0;
+  double momentGainFactor = 10.0;	// Used to scale the gain for the control basis for the moment.
 
 #ifdef DEBUG_PLUGIN2
   std::cerr << "hiroArm(): Getting current position and attitude values" << std::endl;
@@ -231,9 +229,8 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
 
   // Path trunk
   // Folder where robot joint angles, cart. position, and forces will be saved and desired trajectory read from.
-  //const char readDirectory[]  = "/home/grxuser/src/OpenHRP-3.0/Controller/IOserver/plugin/forceSensorPlugin/data/PivotApproach/";
-  const char readDirectory[]  = "../data/PivotApproach/";
-  const char writeDirectory[] = "../data/Results/";
+  const char readDirectory[]  = "./data/PivotApproach/";
+  const char writeDirectory[] = "./data/Results/";
 
   // Assign path trunk to each of the FIVE char variables
   strcpy(TrajState1,	readDirectory);
@@ -241,16 +238,16 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
   strcpy(manipTest,  	readDirectory);
   strcpy(Angles,	    writeDirectory);
   strcpy(CartPos,		writeDirectory);
-  strcpy(State,	    writeDirectory);
+  strcpy(State,	    	writeDirectory);
   strcpy(Forces,	    writeDirectory);
 
   // Concatenate with appropriate endings
   strcat(TrajState1,	"pivotApproachState1.dat");	// Desired Trajectory
   strcat(TrajState2,	"pivotApproachState2.dat");	// Desired Trajectory
-  strcat(manipTest,	"manipulationTestAxis.dat");	// What test axis do you want to try
+  strcat(manipTest,		"manipulationTestAxis.dat");	// What test axis do you want to try
   strcat(Angles,		"Angles.dat");			// Robot Joint Angles
   strcat(CartPos,		"CartPos.dat");			// Cartesian Positions
-  strcat(State,		"State.dat");			// New States Time Ocurrence
+  strcat(State,			"State.dat");			// New States Time Ocurrence
   strcat(Forces,		"Torques.dat");			// Robot Forces/Moments
 
   // Initialize PA with these directories
