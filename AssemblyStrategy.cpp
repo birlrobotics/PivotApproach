@@ -696,13 +696,12 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	    //--------------------------------------------------------------------------
 #ifdef SIMULATION
 	    /*------------------------ WORLD COORDINATES -------------------------------*/
-//	    DesForce(UP_AXIS) 	= VERTICAL_FORCE;
-//	    DesForce(FWD_AXIS) 	= TRANSVERSE_FORCE;
-//	    DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-//	    DesMoment(1) 		= ROTATIONAL_FORCE;
+	    // +X: Downwards
+	    // +Y: Moves right
+	    // +Z: Moves forward (and a bit left)
 	    DesForce(UP_AXIS) 	= VERTICAL_FORCE;
+	    DesForce(SIDE_AXIS) = -1*HORIZONTAL_FORCE;
 	    DesForce(FWD_AXIS) 	= TRANSVERSE_FORCE;
-	    DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
 	    DesMoment(1) 		= ROTATIONAL_FORCE;
 #else
 	    DesForce(UP_AXIS) = VERTICAL_FORCE;
@@ -1352,163 +1351,168 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				    double 		cur_time)
 {
   //        std::cerr << "pos:" << pos(2) << std::endl;
-  if(approach==PivotApproach)
-    {
-      // Local Variables
-      Vector3 position(0), attitude(0);
-      position = pos;
-      attitude = rpyFromRot(rot);
-
-      // Motion params
-      //int cPt = 0;
-      //float afterContactDip 	= 0.004;
-      //float sinkStep 			= afterContactDip;
-
-      // Transition States
-      switch(State)
+	if(approach==PivotApproach)
 	{
-	  // Transition from State 1 to State 2: linear descent to rotating motion
-	  // Large contact force in the x-direction (could also measure along all other axis)
-	case 1:
-	  {
-	    // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
-	    if( cur_time>(ex_time[0]*0.80) )
-	      if(avgSig(0)>9)				// Lateral contact for x-axis
+		// Local Variables
+		Vector3 position(0), attitude(0);
+		position = pos;
+		attitude = rpyFromRot(rot);
+
+		// Motion params
+		//int cPt = 0;
+		//float afterContactDip 	= 0.004;
+		//float sinkStep 			= afterContactDip;
+
+		// Transition States
+		switch(State)
 		{
-		  NextStateActions(cur_time);
+			// Transition from State 1 to State 2: linear descent to rotating motion
+			// Large contact force in the x-direction (could also measure along all other axis)
+			case 1:
+			{
+				// Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
+				if( cur_time>(ex_time[0]*0.80) )
+					if(avgSig(0)>9)				// Lateral contact for x-axis
+					{
+							NextStateActions(cur_time);
+					}
+			}
+			break;
+
+			// Transition from State 2 to 3: rotation to Alignment
+			case 2:
+			{
+				// At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
+				if( cur_time>(ex_time[1]*0.90) )
+					if(avgSig(4)>0.60) // upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+						{
+						NextStateActions(cur_time);
+						}
+			}
+			break;
+
+			// Transition from State 3 to 4: from alignment to compliant insertion
+			case 3:
+			{
+				// Transition Condition: if it is aligned
+				if(CurJointAngles(4)<0.1745) // if the wrist pitch joint angle is less than 10 degrees
+				{
+					NextStateActions(cur_time);
+				}
+			}
+			break;
+
+			// Transition from final insertion to stop/desnapping.
+			case 4:
+			{
+
+				// Finish when there is no more forward motion, measured at a given step size.
+				float zPosDifference = 0;
+
+				// Record the z-position
+				state3_zPos = pos(2);
+
+				// Record the difference
+				zPosDifference = state3_zPos - state3_zPrevPos;
+
+				// Assign current value to previous value
+				state3_zPrevPos = state3_zPos;
+
+				// Conditions: straight up attitude, no motion, and low moment.
+				if(CurJointAngles(4)>1.57 && CurJointAngles(4)<1.5718)
+					if(abs(zPosDifference)<=0.000001)		// in testing i realized that for each step the motion may be much smaller than 0.0001 giving a fall sense of finish.
+						NextStateActions(cur_time);			// it could be done through a time-window
+			}
+			break;
 		}
-	  }
-	  break;
-
-	  // Transition from State 2 to 3: rotation to Alignment
-	case 2:
-	  {
-	    // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
-	    if( cur_time>(ex_time[1]*0.90) )
-	      if(avgSig(4)>0.60) // upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
-		{
-		  NextStateActions(cur_time);
-		}
-	  }
-	  break;
-
-	  // Transition from State 3 to 4: from alignment to compliant insertion
-	case 3:
-	  {
-	    // Transition Condition: if it is aligned
-	    if(CurJointAngles(4)<0.1745) // if the wrist pitch joint angle is less than 10 degrees
-	      {
-		NextStateActions(cur_time);
-	      }
-	  }
-	  break;
-
-	  // Transition from final insertion to stop/desnapping.
-	case 4:
-	  {
-	    // Finish when there is no more forward motion, measured at a given step size.
-	    float zPosDifference = 0;
-
-	    // Record the z-position
-	    state3_zPos = pos(2);
-
-	    // Record the difference
-	    zPosDifference = state3_zPos - state3_zPrevPos;
-
-	    // Assign current value to previous value
-	    state3_zPrevPos = state3_zPos;
-
-	    // Conditions: straight up attitude, no motion, and low moment.
-	    if(CurJointAngles(4)>1.57 && CurJointAngles(4)<1.5718)
-	      if(abs(zPosDifference)<=0.000001)		// in testing i realized that for each step the motion may be much smaller than 0.0001 giving a fall sense of finish.
-		NextStateActions(cur_time);			// it could be done through a time-window
-	  }
-	  break;
 	}
-    }
 
-  else if(approach==SideApproach)
-    {
-      //      std::cerr << "State:::" << State << std::endl;
-      //std::cerr << "pos:" << pos(2) << std::endl;
-      // Local Variables
-      Vector3 position(0), attitude(0);
-      position = pos;
-      attitude = rpyFromRot(rot);
-
-      // Transition States
-      switch(State)
+	else if(approach==SideApproach)
 	{
-	  // Transition from State 1 to State 2: linear descent to rotating motion
-	  // Large contact force in the x-direction (could also measure along all other axis)
-	case 1:
-	  {
-	    // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
-	    if( cur_time>(ex_time[0]*0.80) )
-	      if(avgSig(0)>2.5)
-	      //if(avgSig(0)>9)				// Lateral contact for x-axis
-		{
-		  NextStateActions(cur_time);
-		}
-	  }
-	  break;
+		#ifdef DEBUG_PLUGIN3
+		  std::cerr << "State:::" << State  << std::endl;
+		  std::cerr << "pos:" 	  << pos(2) << std::endl;
+		#endif
+		  // Local Variables
+		  Vector3 position(0), attitude(0);
+		  position = pos;
+		  attitude = rpyFromRot(rot);
 
-	  // Transition from State 2 to 3: rotation to Insertion
-	case 2:
-	  {
-	    // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
-#ifdef SIMULATION 
-	    if( cur_time>(ex_time[1]*0.90) )
-	      // if(avgSig(4)>0.60) // upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
-		{
-		  NextStateActions(cur_time);
-		}
-#else
-	    if(CurJointAngles(4)<0.1919)
-	      {
-		NextStateActions(cur_time);
-	      }
-#endif
-	  }
-	  break;
+		  // Transition States
+		  switch(State)
+		  {
+		  	  /*************************** Approach to Rotation Transition ******************************************************************************************************************************************/
+		  	  // Large contact force in the x-direction in local coordinates
+			  case Approach2Rotation:
+			  {
+				  // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
+				  float endApproachTime=ex_time[0];
+				  if( cur_time>(endApproachTime*0.80) )					// Want to make sure we are near the region of contact before we start measuring.
+					  if(avgSig(Fx)>HSA_App2Rot_Fx)						// Vertical Contact Force along X-Direction in local coordinates. // Lateral contact for x-axis
+					  {
+							  NextStateActions(cur_time);
+					  }
+			  }
+			  break;
 
-	  // Transition from State 3a to 3b: Snap Insertion to Push Down insertion
-	case 3:
-	  {
-#ifdef SIMULATION
-	    if(CurJointAngles(4)<0.116877)//for simulation
-	      //if(CurJointAngles(4)<0.097688)
-	    // if(CurJointAngles(4)<-0.264) // if the wrist pitch joint angle is less than 14 degrees
-	    //if(CurJointAngles(4)<-0.104717333)
-	    //if(CurJointAngles(4)<0.104717333) // if the wrist pitch joint angle is less than 6 degrees
-	      {
-		NextStateActions(cur_time);
-	      }
-#else
-	    //if(CurJointAngles(4)<0.1919)
-	    if(CurJointAngles(4)<0.1395)
-	      {
-		NextStateActions(cur_time);
-	      }
-#endif
-	  }
-	  break;
+			  /*************************** Rotation to Insertion Transition ******************************************************************************************************************************************/
+			  case Rotation2Insertion:
+			  {
+				  // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
+				  //float endRotationTime=ex_time[1];
+				  #ifdef SIMULATION
+					  //if( cur_time>(endRotationTime*0.90) ) 			// Cannot currently use time here in SideApproach because it is a state dominated by a ForceMoment composition.
+				  	  if(avgSig(My)>HSA_Rot2Ins_My) 						// Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+					  {
+							  NextStateActions(cur_time);
+					  }
 
-	  // Transition from State 3b to 4: PushDown Insertion to mating
-	case 4:
-	  {
-	    // If the height of the wrist is less than 0.7290 we are finished
-	    //if(pos(2)<0.533) for simulation
-	      //	    if(pos(2)<0.07290)
-	    if(pos(2) < 0.30)
-	      {
-		NextStateActions(cur_time);
-		return PA_FINISH;
-	      }
-	  }
-	  break;
-	}
-    }
+				  #else
+					  if(CurJointAngles(4)<0.1919)
+					  {
+						  NextStateActions(cur_time);
+					  }
+				  #endif
+			  }
+			  break;
+
+			  // Transition from State 3a to 3b: Snap Insertion to Push Down insertion
+			  case Insertion2Mating:
+			  {
+				#ifdef SIMULATION
+				  if(CurJointAngles(4)<0.116877)//for simulation
+					  //if(CurJointAngles(4)<0.097688)
+					  // if(CurJointAngles(4)<-0.264) // if the wrist pitch joint angle is less than 14 degrees
+					  //if(CurJointAngles(4)<-0.104717333)
+					  //if(CurJointAngles(4)<0.104717333) // if the wrist pitch joint angle is less than 6 degrees
+					  {
+						  NextStateActions(cur_time);
+					  }
+				#else
+				  //if(CurJointAngles(4)<0.1919)
+				  if(CurJointAngles(4)<0.1395)
+				  {
+					  NextStateActions(cur_time);
+				  }
+				#endif
+			  }
+			  break;
+
+			  // Transition from State 3b to 4: PushDown Insertion to mating
+			  case 4:
+			  {
+				  // If the height of the wrist is less than 0.7290 we are finished
+				  //if(pos(2)<0.533) for simulation
+				  //	    if(pos(2)<0.07290)
+				  if(pos(2) < 0.30)
+				  {
+					  NextStateActions(cur_time);
+					  return PA_FINISH;
+				  }
+			  }
+			  break;
+		  } // End Switch
+    }		// End if==PivotApproach
 
   return 0;
 }
@@ -1516,8 +1520,8 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 // Increase the value of the state variable by one and reset nextState and ctrlInitFlags.
 void AssemblyStrategy::NextStateActions(double cur_time)
 {
-  nextState	= true;
-  ctrlInitFlag= true;
+  nextState		= true;
+  ctrlInitFlag	= true;
   State++;
 
   // Enter the time at which the state changed. Start with State 0 moving at the home position, State 1 moving towards part...

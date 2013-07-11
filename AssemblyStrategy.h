@@ -11,42 +11,24 @@
  */
 #ifndef ASSEMBLYSTRATEGY_H_
 #define ASSEMBLYSTRATEGY_H_
-
-// OpenHRP Classes
-//#include "/home/juan/openhrp/OpenHRP-3.0.0-HIRO/DynamicsSimulator/server/Link.h"			// Needed for full definitino of the LinkPath Clas
-////#include "/home/juan/openhrp/OpenHRP-3.0.0-HIRO/DynamicsSimulator/server/LinkPath.h"		// Used to compute inverse kinematics and jacobian
-//#include "/home/juan/openhrp/OpenHRP-3.0.0-HIRO/DynamicsSimulator/server/Body.h"			// Used to retrieve the position//joint angles/rot matrix of the kinematic body
-
-// In QNX
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/LinkPath.h"			// Does not exist in the new DynamicsSimulator class. Need to include LinkTraverse.h
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/Link.h"
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/LinkTraverse.h"			// LinkTraverse.h depends on Link.h. Include the latter first.
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/Body.h"
-#include "hrpModelHeaders.h"
+//---------------------------------------------------------------------------------------------------------------------------
+#include "hrpModelHeaders.h"			// Dynamics Simulator Folder
+//---------------------------------------------------------------------------------------------------------------------------
 // TVMet Files
 #include <tvmet/Matrix.h>
 #include <tvmet/Vector.h>
 #include <tvmet/VectorFunctions.h>
-
+//---------------------------------------------------------------------------------------------------------------------------
 // Boost Files
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-
-// Control Basis
-// In Linux
-//#include "/home/juan/openhrp/OpenHRP-3.1.2-Release/sample/controller/ControlBasis/ControlBasis.h"
-
-// In QNX
+//---------------------------------------------------------------------------------------------------------------------------
+// Supporting Libraries: ControlBasis, FilterTools, and OpenRave.
 #include "ControlBasis.h"
-
-// Filter
-// In Linux
-//#include "/home/juan/openhrp/OpenHRP-3.0.0-HIRO/Controller/IOserver/include/FilterTools.h"
-// In QNX
 #include "FilterTools.h"
 #include "OpenRAVE/OpenRAVE_IK.h"
-
-// Local include files
+//---------------------------------------------------------------------------------------------------------------------------
+// STL Libraries.
 #include <iostream>
 #include <math.h>
 #include <fstream>
@@ -60,47 +42,48 @@
 //#include <sys/syspage.h>
 #include <vector>
 #include <dlfcn.h>
-
+//---------------------------------------------------------------------------------------------------------------------------
 // Namespaces
 using namespace std;
 using namespace OpenHRP;
-using OpenHRP::BodyPtr;
-
-//---------------------------------------------------------------------------------------------------------------------------
-// TVMET DEFS
-//---------------------------------------------------------------------------------------------------------------------------
 using namespace tvmet;
+using OpenHRP::BodyPtr;
+//---------------------------------------------------------------------------------------------------------------------------
+// Typedef's
 typedef tvmet::Vector<double, 6> vector6;
 //---------------------------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------------------------
 // GLOBAL VARIABLES
 //---------------------------------------------------------------------------------------------------------------------------
-//OpenRAVE IK
-//#define USE_OPENRAVE_IK
 // String length
 #define STR_LEN			    256
 //---------------------------------------------------------------------------------------------------------------------------
 // Degrees of Freedom for body and arm
-#define ARM_DOF               6
-#define ROBOT_DOF            15							// HIRO has 15 DOF. 3 in torso/head and six in each arm.
+#define ARM_DOF               		6			// Right and left arm only have 6 DOF.
+#define ROBOT_DOF            		15			// HIRO has 15 DOF. 3 in torso/head and six in each arm.
 //---------------------------------------------------------------------------------------------------------------------------
 // Filter parameters
-#define HISTBUFF_LENGTH 	 12 						// This value determines the size of the possible number of samples to be included to perform a moving average for data signals.
+#define HISTBUFF_LENGTH 	 		12 			// This value determines the size of the possible number of samples to be included to perform a moving average for data signals.
 //---------------------------------------------------------------------------------------------------------------------------
 // FORCE CONSTANTS FOR CONTROL POLICY
-#define CONST_FORCE_STATE3     5						// All forces need to be in world coordinates
-#define VERTICAL_FORCE	      10.0						// Used in state 3 and 4 of pivot approach/stage 3 of side approach. pos value pushes down. 10kg Force pointing downwards
-#define TRANSVERSE_FORCE      0.25						// Moves out of the screen. Towards the desired wall of the mold in the side approach
-#define HORIZONTAL_FORCE      0.30						// There is a natural push to the left by the robot and gravity. This compensates for that during the rotation.
+#define CONST_FORCE_STATE3     		5.0			// All forces need to be in world coordinates. Used in Hiro Side Approach (HSA) execution.
+#define VERTICAL_FORCE	      		10.0		// HSA: Used in state 3 and 4 of pivot approach/stage 3 of side approach. pos value pushes down. 10kg Force pointing downwards
+#define TRANSVERSE_FORCE      		0.25		// HSA: Moves out of the screen. Towards the desired wall of the mold in the side approach
+#define HORIZONTAL_FORCE      		0.30		// HSA: There is a natural push to the left by the robot and gravity. This compensates for that during the rotation.
+//---------------------------------------------------------------------------------------------------------------------------
+// ROTATIONAL Time and Force Variables
+#define ROTATIONAL_FORCE     		20.0		// Used in state 3 of side approach to close camera mold with a snap. 20N-m
+#define ROTATION_TIME_SLOW    		3.0			// Slow time for testing and faster time for optimized trajectory
+//---------------------------------------------------------------------------------------------------------------------------
+// CONTACT Transitional Parameters
+#define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
+#define HSA_Rot2Ins_My				0.6			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 
-// Rotational variables
-#define ROTATIONAL_FORCE     20.0						// Used in state 3 of side approach to close camera mold with a snap. 20N-m
-#define ROTATION_TIME_SLOW    3.0						// Slow time for testing and faster time for optimized trajectory
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables
-#define PI 		      3.1416
-#define RAD2DEG             180.0/PI
+#define PI 		      				3.1416
+#define RAD2DEG            			180.0/PI
 //---------------------------------------------------------------------------------------------------------------------------
 
 // Class Forwarding
@@ -175,8 +158,22 @@ class AssemblyStrategy {
     MFPComposition,
   };
 
+  // Enumerate the six force-moment axes for easy indexing.
+  enum forceAxes
+  {
+	  Fx, Fy, Fz, Mx, My, Mz,
+  };
+
+  // Transitions for the SideApproach using HIRO. To be used in the switch-case statements.
+  enum HSATransitions
+  {
+	  Approach2Rotation = 1,
+	  Rotation2Insertion,
+	  Insertion2Mating,
+  };
+
   // *** Strategy ***/
-  int			approachType;				// Save the kind of approach.
+  int		approachType;				// Save the kind of approach.
   bool 		approachFlag;				// Used to switch values
   bool 		ctrlInitFlag;				// Ussed to determine if its our first time in a state
 
