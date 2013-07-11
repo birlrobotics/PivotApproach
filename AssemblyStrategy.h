@@ -238,13 +238,13 @@ class AssemblyStrategy {
   double angle_o[7]; 						// rhand_org, lhand_org, hando[2],
 
   // Files
-  ifstream data;										// Input Streams
+  ifstream ifstr_pivApproachState1;																			// Input Streams
   ofstream ostr_TrajState2, ostr_cartPos, ostr_angles, ostr_state, ostr_Forces, ostr_des, ostr_cur; 		// Output Streams
   char strTrajState1[STR_LEN], strTrajState2[STR_LEN], strCartPos[STR_LEN], strAngles[STR_LEN], strState[STR_LEN], strForces[STR_LEN];
 
   // Imported values
   double 		cur_time;												// Save current tiem
-  dvector6 	avgSig;													// contains filtered/moving average result signal
+  dvector6 		avgSig;													// contains filtered/moving average result signal
   /**************************************************************************** Methods **********************************************************************************/
 
   int StateMachine(TestAxis 		axis,																		// Used exclusively for AssemblyStrategy::manipulatorTest

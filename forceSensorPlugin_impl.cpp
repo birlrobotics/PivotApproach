@@ -44,9 +44,6 @@
 #include <sys/time.h>
 #include "iob.h"				// Controller/IOServer/include
 #include "forceSensorPlugin_impl.h"
-//#include <sys/syspage.h>
-//#include "iob_special.h"		// Controller/IOserver/robot/HRP3STEP2/
-//#include "/home/grxuser/src/OpenHRP-3.0/Controller/IOserver/plugin/forceSensorPlugin/server/forceSensorPlugin_impl.h"
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 extern "C" {
 #include <unistd.h>			// Provides access to the POSIX operating system API
@@ -64,10 +61,10 @@ extern "C" {
 #define DTES  0x08000000    // DT enable switch (for data acquisition)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Debugging
-#define DB_TIME	0			// Used to print timing duration of functions
-#define FORCE_TEST 0 			// Used to test if force drivers are working in Old HIRO
-#define SIMULATION_TEST 1	 	// Used to test certain pieces of code within the control method for testing purposes
-#define DEBUG 1 			// Used to test temporary cerr statements
+#define DB_TIME 			0			// Used to print timing duration of functions
+#define FORCE_TEST 			0 			// Used to test if force drivers are working in Old HIRO
+#define SIMULATION_TEST 	1	 		// Used to test certain pieces of code within the control method for testing purposes
+#define DEBUG 				1 			// Used to test temporary cerr statements
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // GLOBALS
 unsigned long long distate; // Digital state parameter. Holds bit values.

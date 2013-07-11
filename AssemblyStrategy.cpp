@@ -14,11 +14,11 @@
 #define SL_APPROACH_FILE 		"./data/PivotApproach/PA10/pivotApproachState1.dat"		// Waypoints for State1 in StraightLineApproach for the PA10 Robot
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
-#define ANGLES_FILE			"./data/Results/Angles.dat"		// Save joint angles of robot
-#define CARTPOS_FILE		"./data/Results/CartPos.dat"	// Save CartPos of End-Effector in world coordinates
-#define STATE_FILE			"./data/Results/State.dat"		// Save State Transition times for SideApproach
-#define FORCES_FILE			"./data/Results/Torques.dat"	// Save Joint Torques for robot//----------------------------------------------------------------------------------------------------------------------------------------------------
-
+#define ANGLES_FILE				"./data/Results/Angles.dat"				// Save joint angles of robot
+#define CARTPOS_FILE			"./data/Results/CartPos.dat"			// Save CartPos of End-Effector in world coordinates
+#define STATE_FILE				"./data/Results/State.dat"				// Save State Transition times for SideApproach
+#define FORCES_FILE				"./data/Results/Torques.dat"			// Save Joint Torques for robot
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 // Design Parameters
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
@@ -2151,131 +2151,128 @@ int AssemblyStrategy::ProcessTrajFile(char path[STR_LEN], int State, vector3 pos
 {
 
 #ifdef DEBUG_PLUGIN3
-  std::cerr << "\nAssemblyStrategy::ProcessTrajFile - Entering" << std::endl;
+	std::cerr << "\nAssemblyStrategy::ProcessTrajFile - Entering" << std::endl;
 #endif	
 
-  string filename = "pivotApproachState1.dat";
-  // If we enter state 2
-  if(State==2)
-    {
-#ifdef DEBUG_PLUGIN3
-      std::cerr << "AssemblyStrategy::ProcessTrajFile - Entering State 2" << std::endl;
-#endif
-        
-      // 1) Open the trajectory file where we will place time and position data for the second state
-      ostr_TrajState2.open("pivotApproachState2.dat");
-      if (!ostr_TrajState2.is_open())
-	std::cerr << path << " not opened" << std::endl;
-
-      // 2) Insert current data in the first line and the desired data in the second line
-      float traj2_goaltime = cur_time + ROTATION_TIME_SLOW;	// Goal time is one second later
-		
-      // Insert a Start and End position for State 2.
-      // The first line is the current position
-      // The second line keeps the same pose, but sets the goal orientation to be parallel to the ground
-      ostr_TrajState2 << cur_time 		<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << rpy(0) << "\t" << rpy(1)  << "\t" << rpy(2) << "\n";
-      ostr_TrajState2 << traj2_goaltime 	<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << 0.00   << "\t" << -1.5708 << "\t" << -1.5708;
-
-      // 3) Close file
-      if(ostr_TrajState2.is_open())
-	ostr_TrajState2.close();
-      ostr_TrajState2.clear();
-
-      // Clear data
-      ex_time.clear();
-      x_pos.clear();
-      y_pos.clear();
-      z_pos.clear();
-      roll_angle.clear();
-      pitch_angle.clear();
-      yaw_angle.clear();
-
-      filename = "pivotApproachState2.dat";
-    }
-
-  // State 1
-  // Open an input stream
-#ifdef DEBUG_PLUGIN3
-  cerr << "AssemblyStrategy::processTrajFile() - state 1 processing" << std::endl;
-#endif
-	
-  ifstream fp;
-
-
-
-  struct stat st;
-  if(stat(filename.c_str(), &st)==0)
-    {	  
-#ifdef DEBUG_PLUGIN3
-      cerr << "AssemblyStrategy::processTrajFile() - the file exists!!" << std::endl;
-#endif
-    }
-
-
-  fp.open(filename.c_str());
-
-  // Save data stored in motion.dat into <vector> of doubles for t,xyz,rpy
-  double x;
-  if( fp.is_open() )
-    { 
-#ifdef DEBUG_PLUGIN3
-      cerr << "The waypoint file was opened successfully." << std::endl;
-#endif
-
-      while( !fp.eof() )
+	string filename = "pivotApproachState1.dat";
+	// If we enter state 2
+	if(State==2)
 	{
-	  // Read data into x, and then push it into the relevant vector.
-	  fp >> x;
+#ifdef DEBUG_PLUGIN3
+		std::cerr << "AssemblyStrategy::ProcessTrajFile - Entering State 2" << std::endl;
+#endif
 
-	  if(fp.eof()) break;
-	
-	  ex_time.push_back(x);								// Waypoint time
-		
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "Time: " << x << std::endl;
-#endif
-			
-	  fp >> x;  x_pos.push_back(x);								// Waypoint x-pos
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "x-pos: " << x << std::endl;
-#endif
-			
-	  fp >> x;  y_pos.push_back(x);								// Waypoint y-pos
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "y-pos: " << x << std::endl;
-#endif
-		
-	  fp >> x;  z_pos.push_back(x);								// Waypoint z-pos
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "z-pos: " << x << std::endl;
-#endif
-		
-	  fp >> x;  roll_angle.push_back(x);							// Waypoint roll angle
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "R-rot " << x << std::endl;
-#endif
-		
-	  fp >> x;  pitch_angle.push_back(x);							// Waypoint pitch angle
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "P-rot " << x << std::endl;
-#endif
-		
-	  fp >> x;  yaw_angle.push_back(x);							// Waypoint yaw angle
-#ifdef DEBUG_PLUGIN3
-	  std::cerr << "Y-rot " << x << std::endl;
-#endif	
+		// 1) Open the trajectory file where we will place time and position data for the second state
+		ostr_TrajState2.open("./data/PivotApproach/pivotApproachState2.dat");
+		if (!ostr_TrajState2.is_open())
+			std::cerr << path << " not opened" << std::endl;
+
+		// 2) Insert current data in the first line and the desired data in the second line
+		float traj2_goaltime = cur_time + ROTATION_TIME_SLOW;	// Goal time is one second later
+
+		// Insert a Start and End position for State 2.
+		// The first line is the current position
+		// The second line keeps the same pose, but sets the goal orientation to be parallel to the ground
+		ostr_TrajState2 << cur_time 		<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << rpy(0) << "\t" << rpy(1)  << "\t" << rpy(2) << "\n";
+		ostr_TrajState2 << traj2_goaltime 	<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << 0.00   << "\t" << -1.5708 << "\t" << -1.5708;
+
+		// 3) Close file
+		if(ostr_TrajState2.is_open())
+			ostr_TrajState2.close();
+		ostr_TrajState2.clear();
+
+		// Clear data
+		ex_time.clear();
+		x_pos.clear();
+		y_pos.clear();
+		z_pos.clear();
+		roll_angle.clear();
+		pitch_angle.clear();
+		yaw_angle.clear();
+
+		filename = "pivotApproachState2.dat";
 	}
-    }
-  else
-    {
-      std::cerr << "The file was not opened successfully." << std::endl;
-    }
 
+	/*---------------------------------------------- State 1 ------------------------------------------------------------*/
+	// Open an input stream
 #ifdef DEBUG_PLUGIN3
-  std::cerr << "AssemblyStrategy::ProcessTrajFile - Exiting" << std::endl;
+	cerr << "AssemblyStrategy::processTrajFile() - state 1 processing" << std::endl;
 #endif
 
-  return 1;
+	//ifstream fp;
+	struct stat st;
+	if(stat(path, &st)==0)
+	{
+#ifdef DEBUG_PLUGIN3
+		cerr << "AssemblyStrategy::processTrajFile() - the file exists!!" << std::endl;
+#endif
+	}
+
+	// Use input file stream to open the pivotApproachState1.dat file
+	ifstr_pivApproachState1.open(path);
+
+	// Save data stored in motion.dat into <vector> of doubles for t,xyz,rpy
+	double x;
+	if( ifstr_pivApproachState1.is_open() )
+	{
+#ifdef DEBUG_PLUGIN3
+		cerr << "The waypoint file was opened successfully." << std::endl;
+#endif
+
+		while( !ifstr_pivApproachState1.eof() )
+		{
+			// Read data into x, and then push it into the relevant vector.
+			ifstr_pivApproachState1 >> x;
+
+			if(ifstr_pivApproachState1.eof()) break;
+
+			ex_time.push_back(x);								// Waypoint time
+
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "Time: " << x << std::endl;
+#endif
+
+			ifstr_pivApproachState1 >> x;  x_pos.push_back(x);								// Waypoint x-pos
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "x-pos: " << x << std::endl;
+#endif
+
+			ifstr_pivApproachState1 >> x;  y_pos.push_back(x);								// Waypoint y-pos
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "y-pos: " << x << std::endl;
+#endif
+
+			ifstr_pivApproachState1 >> x;  z_pos.push_back(x);								// Waypoint z-pos
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "z-pos: " << x << std::endl;
+#endif
+
+			ifstr_pivApproachState1 >> x;  roll_angle.push_back(x);							// Waypoint roll angle
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "R-rot " << x << std::endl;
+#endif
+
+			ifstr_pivApproachState1 >> x;  pitch_angle.push_back(x);							// Waypoint pitch angle
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "P-rot " << x << std::endl;
+#endif
+
+			ifstr_pivApproachState1 >> x;  yaw_angle.push_back(x);							// Waypoint yaw angle
+#ifdef DEBUG_PLUGIN3
+			std::cerr << "Y-rot " << x << std::endl;
+#endif	
+		}
+	}
+	else
+	{
+		std::cerr << "The file was not opened successfully." << std::endl;
+	}
+
+#ifdef DEBUG_PLUGIN3
+	std::cerr << "AssemblyStrategy::ProcessTrajFile - Exiting" << std::endl;
+#endif
+
+	return 1;
 }
 
 bool AssemblyStrategy::IK_arm(JointPathPtr arm_path, Link *base, Link *waist, const vector3& p, const matrix33& R){

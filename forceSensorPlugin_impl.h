@@ -18,13 +18,6 @@ extern "C" {
 }
 #include "Plugin_impl.h"
 #include "forceSensorPlugin.h"
-//#include "interpolator.h"
-//#include "bodyinfo.h"
-//#include "hrpModelHeaders.h"	        // DynamicsSimulator/server
-//#include "quaternion.h"                 // DynamicSimulator/server
-//#include "../corba0418/forceSensorPlugin.h"
-// InQNX
-
 //---------------------------------------------------------------------------------------------------------------------------------- 
 // Force
 //#include "nittaFS.h" 

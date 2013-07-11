@@ -5,7 +5,6 @@
  * @date   2011/02/16
  * @note
  */
-
 #ifndef HIRO_ARM_H
 #define HIRO_ARM_H
 
@@ -24,19 +23,8 @@
 #include "tvmet3d.h"
 //#--------------------------------------------------------------------------------------------------------------------#--------------------------------------------------------------------------------------------------------------------
 // OpenHRP
-// In Linux
-//#include "/home/juan/openhrp/OpenHRP3.0-HIRO/DynamicsSimulator/server/Link.h"			
-//#include "/home/juan/openhrp/OpenHRP3.0-HIRO/DynamicsSimulator.orig/server/LinkPath.h"		// Used to compute inverse kinematics and jacobian
-//#include "/home/juan/openhrp/OpenHRP3.0-HIRO/DynamicsSimulator/server/Body.h"				// Used to retrieve the position/joint angles/rot matrix of the kinematic body
-
-// In QNX
 #include "bodyinfo.h"
 #include "hrpModelHeaders.h"			// DynamicSimulator/server
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/quaternion.h"   				// DynamicSimulator/server
-
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/Link.h"					// Needed for full definitino of the LinkPath Class
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/LinkTraverse.h"				// Used to compute inverse kinematics and jacobian. Need this file when running the QNX version
-//#include "/home/grxuser/src/OpenHRP-3.0/DynamicsSimulator/server/Body.h"					// Used to retrieve the position/joint angles/rot matrix of the kinematic body
 
 // TVMet Files
 #include <tvmet/Matrix.h>
@@ -47,8 +35,10 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
-// tvmet
+// Namespaces
 using namespace tvmet;
+
+// Type Define's
 typedef tvmet::Vector<double, 6> vector6;
 typedef tvmet::Vector<double, 3> Vector3;
 
@@ -56,28 +46,22 @@ typedef boost::numeric::ublas::bounded_vector<double, 7> dvector7;				 // Define
 typedef boost::numeric::ublas::bounded_vector<double, 9> dvector9;
 typedef boost::numeric::ublas::bounded_matrix<double, 7, 6, boost::numeric::ublas::column_major> dmatrix76;
 typedef boost::numeric::ublas::bounded_matrix<double, 7, 7, boost::numeric::ublas::column_major> dmatrix77;
-
-
 //#--------------------------------------------------------------------------------------------------------------------#--------------------------------------------------------------------------------------------------------------------
-
-
-
 // Force library
 //#include "nittaFS.h"
 extern "C" {
-#include "ifs_com.h"
+	#include "ifs_com.h"
 }
 
 // Pivot Approach / Control Basis Framework
 #include "AssemblyStrategy.h"			     							// Pivot Approach Strategy. Control Basis is embeded in the approach.
-extern "C"
-{
-#include <stdio.h>
+extern "C" {
+	#include <stdio.h>
 }
+
 
 /********************************** Namespaces *******************************************/
 using OpenHRP::matrix33;
-//using OpenHRP::vector3;
 using OpenHRP::dvector6;
 using OpenHRP::dvector3;
 using OpenHRP::BodyPtr;
@@ -108,12 +92,12 @@ class hiroArm
   /****************************** PATH GENERATION PARAMETERS ***************************/
   struct path_params
   {
-    interpolation method;						// Interpolation method. See enumeration above.
+    interpolation method;					// Interpolation method. See enumeration above.
     double        	max_jvel;				// Joint velocity limit
     dvector6 		q_start;				// Starting joint angle configuration
     dvector6 		q_goal;					// Ending joint angle configuration
     dvector6 		distance;				// Distance measure
-    double 		duration;				// Desired Duration
+    double 			duration;				// Desired Duration
     dvector6 		jvel;					// Joint velocity
     //dvector6 duration;
     //double max_duration;
@@ -137,14 +121,14 @@ class hiroArm
 
   /********************************************** METHODS *********************************************/
 
-  hiroArm(std::string  name_in, 							// String variable indicating right or left arm
-	  BodyPtr      body_in, 					// Body (link objects) Pointer
+  hiroArm(std::string  name_in, 				// String variable indicating right or left arm
+	  BodyPtr      	body_in, 					// Body (link objects) Pointer
 	  unsigned int num_q0_in, 					// Number of Starting joint
 	  double 		 period_in, 				// Sampling Time
-	  float 		 ang_limits_in[6][5], 			// Angle Limits
-	  vector3 	 ePh_in, 					// Tranlation from wrist to end effector
-	  matrix33 	 eRh_in, 					// Rotation   from wrist to end effector
-	  vector3 	 hPfs_in);					//
+	  float 		 ang_limits_in[6][5], 		// Angle Limits
+	  vector3 	 	ePh_in, 					// Tranlation from wrist to end effector
+	  matrix33 	 	eRh_in, 					// Rotation   from wrist to end effector
+	  vector3 	 	hPfs_in);					//
 
   virtual ~hiroArm();
 
@@ -165,20 +149,20 @@ class hiroArm
   dvector6 get_qcur();							// Get current joint angles
 
   // Forces
-  //void set_FSptr(nittaFS *fs_in, int NO_fs_in);	                       // Set force sensor pointer from nittaFs clas
+  //void set_FSptr(nittaFS *fs_in, int NO_fs_in);	                       		// Set force sensor pointer from nittaFs clas
   virtual void update_currforcedata();
-  virtual bool get_forces(vector3 &rFh_gc_out, 				                                // Force
-			  vector3 &rMh_gc_out);		                                                                // Moment
+  virtual bool get_forces(vector3 &rFh_gc_out, 				                 // Force
+			  	  	  	     vector3 &rMh_gc_out);		                         // Moment
 
   // Hand position
   void get_curr_handpos(vector3 &rPh_out, 					                // Get current base2endeffector position
-			matrix33 &rRh_out);		                                                                // Rotation
+			matrix33 &rRh_out);		                                            // Rotation
 
   void get_ref_handpos(vector3 &rPh_ref_out, 					                // Get desired base2endeffector position
-		       matrix33 &rRh_ref_out);		                                                                // Rotation
+		       matrix33 &rRh_ref_out);		                                    // Rotation
 
   void set_ref_handpos(vector3 rPh_ref_in, 					                // Set desired base2endeffector position
-		       matrix33 rRh_ref_in);		                                                                // Rotation
+		       matrix33 rRh_ref_in);		                                    // Rotation
 
   // Time
   unsigned long get_Iteration();
