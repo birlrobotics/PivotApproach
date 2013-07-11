@@ -727,7 +727,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 #ifdef SIMULATION
 		  DesForce(UP_AXIS) 	=  1.200*VERTICAL_FORCE;
 		  //DesForce(SIDE_AXIS) =  1.000*HORIZONTAL_FORCE;
-		  DesForce(FWD_AXIS) 	= -5.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+		  DesForce(FWD_AXIS) 	= -10.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
 		  DesMoment(1) 			=  1.500*ROTATIONAL_FORCE;
 #else
 		  DesForce(UP_AXIS) = VERTICAL_FORCE;
@@ -1459,7 +1459,8 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  case Insertion2Mating:
 			  {
 				#ifdef SIMULATION
-				  if(CurJointAngles(My)<0.116877)			//for simulation
+				  if(CurJointAngles(My)<0.3600)				//For 2013July-Rojas, this is the figure that is coming up. I wonder if it is related to the environmental setup.
+				  //if(CurJointAngles(My)<0.116877)			//for simulation
 					  //if(CurJointAngles(4)<0.097688)
 					  // if(CurJointAngles(4)<-0.264) 		// if the wrist pitch joint angle is less than 14 degrees
 					  //if(CurJointAngles(4)<-0.104717333)
