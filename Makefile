@@ -1,4 +1,4 @@
-# To make ROBOT=HRP3STEP2
+# To make ROBOT=HRP2STEP1
 # The makefile in which the target plugin is actually made is found in /Sample/IOServer/Make.rules.common
 include Makefile.robot
 all: target
@@ -13,13 +13,13 @@ DYNAMICSSIMULATOR = $(TOP)DynamicsSimulator/
 # Rules                                                                                                                                 
 include $(TOP)Controller/IOserver/plugin/Make.rules
 #--------------------------------------------- Compile Commands -----------------------------------------------------------
-CXX_FLAGS += -g -Wall -O0										# Compilation Flags
+#CXX_FLAGS += -g -Wall -O0										# Compilation Flags
 CXX_FLAGS:=$(CXX_FLAGS) -I/usr/include/qdbm
 CXX_FLAGS += -fno-schedule-insns -fno-schedule-insns2 -fno-strict-aliasing
-#CXX_FLAGS += -DDEBUG_PLUGIN -DDEBUG_PLUGIN2 -DDEBUG_PLUGIN3			 	#// used in forceSensorPlugin=#1 // hiroArm=#2 // AssemblyStrat=3 respectively
+#CXX_FLAGS += -DDEBUG_PLUGIN -DDEBUG_PLUGIN2 -DDEBUG_PLUGIN3			 			# Flag DEBUG_PLUGIN is used in forceSensorPlugin.cpp,...PLUGIN_2 in hiroArm, ...PLUGIN3, in  AssemblyStrat.
 CXX_FLAGS += -DPIVOTAPPROACH #-DIMPEDANCE 
 CXX_FLAGS += -DSIMULATION
-CXX_FLAGS += -DWRITELOG
+#CXX_FLAGS += -DWRITELOG
 CXX_FLAGS += -I$(TOP)Controller/IOserver/include   
 CXX_FLAGS += -I$(TOP)Controller/IOserver/robot/HRP2STEP1/
 CXX_FLAGS += -I$(TOP)Common -I$(TOP)Controller/IOserver/robot/HRP2STEP1/iob/ 
@@ -29,7 +29,7 @@ CXX_FLAGS += -I../corba -I$(TOP)DynamicsSimulator/server -I$(MODELLOADER)/$(CORB
 #------------------------------------------ Linking Commands  --------------------------------------------------------
 LINK += -L$(TOP)Controller/IOserver/robot/HRP2STEP1/bin 
 LINK += -L$(TOP)Controller/IOserver/robot/HRP2STEP1/iob/hrp_servo/ifspci/
-LINK += #-lAssemblyStrategy -lFilterTools
+#LINK += -lAssemblyStrategy -lFilterTools
 
 #CXX_FLAGS += -I/usr/include/boost
 #CXX_FLAGS += -I$(HOME)/src/Matrix/boost-cvs/boost-sandbox

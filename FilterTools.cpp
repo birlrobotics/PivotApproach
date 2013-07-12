@@ -15,12 +15,15 @@ FilterTools::FilterTools()
 		avgSig(i)    = 0.0;
 	}
 
+	// Flags
+	ctrlInitFlag = true;
+	dataHistFlag = true;
+
+	// Filter Parameters generated from Matlab. See the description in ::LowPassFilter.
+	A=0.8541; B=0.2064; C=0.6555; D=0.0730;
 }
 
-FilterTools::~FilterTools()
-{
-
-}
+FilterTools::~FilterTools(){}
 
 /********************************************************************************************************
 * Low pass filter - 1st order
@@ -31,7 +34,7 @@ FilterTools::~FilterTools()
 * Where Xn starts as zero.
 *
 * The variables A,B,C,D are obtained from matlab for a filter of:
-* 	order: 1 and a cutoff frequncies. The best one yet is 0.05.
+* 	order: 1 and a cutoff frequencies. The best one yet is 0.05.
 *
 * 	cutoff freq: 0.5
 * 	double A=5.5511e-017, B=1.4142, C=0.3536, D=0.5;
@@ -47,12 +50,9 @@ FilterTools::~FilterTools()
 int FilterTools::LowPassFilter(double in[6], double out[6])
 {
 	double A=0.8541; double B=0.2064; double C=0.6555;
-	//double D=0.0730;
+	// double D=0.0730;
 
-//	if(stateVar6.size()!=6)
-//		return -1;
-
-	// First write the output equation: Y   = CXn + Bu
+	// First write the output equation: Y = CXn + Bu
 	for(int i=0;i<6;i++)
 	{
 		out[i] = C*stateVar6(i) + B*in[i];
@@ -60,6 +60,17 @@ int FilterTools::LowPassFilter(double in[6], double out[6])
 		// Second write the state vec equation: Xn+1= AXn + Bu
 		stateVar6(i) = A*stateVar6(i) + B*in[i];
 	}
+
+	return 0;
+}
+
+int FilterTools::LowPassFilter(dvector6 in, dvector6& out)
+{
+	// First write the output equation: Y = CXn + Bu
+	out = C*stateVar6 + B*in;
+
+	// Second write the state vector equation: Xn+1= AXn + Bu
+	stateVar6 = A*stateVar6 + B*in;
 
 	return 0;
 }
