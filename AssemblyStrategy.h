@@ -164,15 +164,47 @@ class AssemblyStrategy {
 	  Fx, Fy, Fz, Mx, My, Mz,
   };
 
-  // Transitions for the SideApproach using HIRO. To be used in the switch-case statements.
-  enum HSATransitions
+  /*-------------------------------------------------- STATES -----------------------------------------------------*/
+  /*---------------------------------------- States: PA10 Pivot Approach -------------------------------------------*/
+  enum PA10_PA_States
   {
-	  Approach2Rotation = 1,
-	  Rotation2Insertion,
-	  Insertion2Mating,
+	  paApproach= 1,
+	  paRotation,
+	  paAlignment,
+	  paInsertion,
+	  paMating,
+	  paFinish,
+  };
+  /*---------------------------------------- States: HIRO Side Approach -------------------------------------------*/
+  enum HIRO_SA_States
+  {
+	  hsaApproach= 1,
+	  hsaRotation,
+	  hsaInsertion,
+	  hsaMating,
+	  hsaFinish,
   };
 
-  // *** Strategy ***/
+  /*-------------------------------------------------- TRANSITIONS -----------------------------------------------------*/
+  /*---------------------------------------- Transitions: PA10 Pivot Approach -------------------------------------------*/
+  enum PA10_PA_Transitions
+  {
+	  paApproach2Rotation = 1,
+	  paRotation2IAlignment,
+	  paAlignment2Insertion,
+	  paInsertion2Mating,
+	  paMating2FinishTime,
+  };
+  /*---------------------------------------- Transitions: HIRO Side Approach -------------------------------------------*/
+  enum HIRO_SA_Transitions
+  {
+	  hsaApproach2Rotation = 1,
+	  hsaRotation2Insertion,
+	  hsaInsertion2Mating,
+	  hsaMating2FinishTime,
+  };
+
+  /*--------------------------------------------------- Strategy --------------------------------------------------------*/
   int		approachType;				// Save the kind of approach.
   bool 		approachFlag;				// Used to switch values
   bool 		ctrlInitFlag;				// Ussed to determine if its our first time in a state
@@ -214,11 +246,11 @@ class AssemblyStrategy {
 
   // Data vectors
   dvector6 DesIKin;						// Final Desired Position
-  dvector6 CurCartPos;						// 6 element vector to hold xyz rpy
+  dvector6 CurCartPos;					// 6 element vector to hold xyz rpy
   dvector6 DesCartPos;
-  dvector6 contactPos;						// Position versions for strategies that use inverse kinematics.
-  dvector6 CurJointAngles;					// Save current joint angles
-  dvector6 JointAngleUpdate;					// It's the output of the control basis computation (single or primitive controllers) used to update the joint angle position
+  dvector6 contactPos;					// Position versions for strategies that use inverse kinematics.
+  dvector6 CurJointAngles;				// Save current joint angles
+  dvector6 JointAngleUpdate;			// It's the output of the control basis computation (single or primitive controllers) used to update the joint angle position
 
   // Filter Objects
   FilterTools* ft;
@@ -226,16 +258,16 @@ class AssemblyStrategy {
   // Kinematics
   int IKinTestFlag;						// Used to indicate IKin to control basis
   int zerothJoint;						// Zero index
-  vector3 transWrist2CamXEff;					// Translation from wrist to end-effector holding camera. TCP is on edge of camera
+  vector3 transWrist2CamXEff;			// Translation from wrist to end-effector holding camera. TCP is on edge of camera
   vector3 ContactWristAngle;
   dmatrix Jacobian;
 
   // Motion
-  vector3 		wrist_p, EndEff_p, EndEff_p_org;	// Original and updated position angles for the wrist
-  vector3 		wrist_r, EndEff_r, EndEff_r_org;	// Original and updated rotational angles
-  vector<double> 	ex_time, x_pos, y_pos, z_pos;		// Save robot position in vectors
-  vector<double>	roll_angle, pitch_angle, yaw_angle;		// Save robot orientation in vectors
-  double angle_o[7]; 						// rhand_org, lhand_org, hando[2],
+  vector3 			wrist_p, EndEff_p, EndEff_p_org;			// Original and updated position angles for the wrist
+  vector3 			wrist_r, EndEff_r, EndEff_r_org;			// Original and updated rotational angles
+  vector<double> 	ex_time, x_pos, y_pos, z_pos;				// Save robot position in vectors
+  vector<double>	roll_angle, pitch_angle, yaw_angle;			// Endeffector orientation in terms of roll picth angle
+  double angle_o[7]; 											// rhand_org, lhand_org, hando[2],
 
   // Files
   ifstream ifstr_pivApproachState1;																			// Input Streams
@@ -248,64 +280,64 @@ class AssemblyStrategy {
   /**************************************************************************** Methods **********************************************************************************/
 
   int StateMachine(TestAxis 		axis,																		// Used exclusively for AssemblyStrategy::manipulatorTest
-		   CtrlStrategy 	approach,																	// Straight Line Approach or Pivot Approach
-		   JointPathPtr 	m_path,																		// Kinematics
-		   BodyPtr 		bodyPtr,																	// Kinematics
-		   double 		cur_time,																	// Simulation time
-		   vector3& 		pos,																		// TCP position
-		   matrix33& 		rot,																		// TCP rotation
-		   dvector6 		currForces,																	//
-		   dvector6& 		JointAngleUpdate,
-		   dvector6& 		CurrAngles,
-		   dmatrix 		Jacobian,
-		   dmatrix 		PseudoJacobian);
+				   CtrlStrategy 	approach,																	// Straight Line Approach or Pivot Approach
+				   JointPathPtr 	m_path,																		// Path structure. Use for right/left arm.
+				   BodyPtr 			bodyPtr,																	// Body structure. Can access all 15 DOF
+				   double 			cur_time,																	// Internal simulation time
+				   vector3& 		pos,																		// TCP position
+				   matrix33& 		rot,																		// TCP rotation
+				   dvector6 		currForces,																	//	Forces in world coordinates
+				   dvector6& 		JointAngleUpdate,
+				   dvector6& 		CurrAngles,
+				   dmatrix 			Jacobian,
+				   dmatrix 			PseudoJacobian);
 
   int StateSwitcher(CtrlStrategy 	approach,
-		    int& 			State,
-		    double 		ErrorNorm1,
-		    double 		ErrorNorm2,
-		    vector3 		pos,
-		    matrix33 		rot,
-		    dvector6 		CurJointAngles,
-		    dvector6		currForces,
-		    double 		cur_time);																			// Switches the states of the state machine according to approach.
+					int& 			State,
+					double 			ErrorNorm1,
+					double 			ErrorNorm2,
+					vector3 		pos,
+					matrix33 		rot,
+					dvector6 		CurJointAngles,
+					dvector6		currForces,
+					double 			cur_time);																			// Switches the states of the state machine according to approach.
 
   void NextStateActions(double cur_time);																				// Fixed number of operations to be done between switching of states
 
   // Call any combination of legal control compositions (upto three for now), and pass desired data.
   int ControlCompositions(JointPathPtr 	m_path,
-			  BodyPtr 		bodyPtr,
-			  dvector6& 		JointAngleUpdate,
-			  dvector6& 		CurrAngles,
-			  CtrlStrategy 	strat,
-			  ctrlComp 		type,
-			  vector3& 		DesData1,
-			  vector3& 		DesData2,
-			  dvector6& 		DesIKin, 															// Optional arguments for subordinate controllers if they exist.
-			  double& 		ErrorNorm1,
-			  double& 		ErrorNorm2,
-			  vector3& 		pos,
-			  matrix33& 		rot,
-			  double 			cur_time,
-			  dmatrix 		Jacobian,
-			  dmatrix 		PseudoJacobian);
+							  BodyPtr 		bodyPtr,
+							  dvector6& 	JointAngleUpdate,
+							  dvector6& 	CurrAngles,
+							  CtrlStrategy 	strat,
+							  ctrlComp 		type,
+							  vector3& 		DesData1,
+							  vector3& 		DesData2,
+							  dvector6& 	DesIKin, 															// Optional arguments for subordinate controllers if they exist.
+							  double& 		ErrorNorm1,
+							  double& 		ErrorNorm2,
+							  vector3& 		pos,
+							  matrix33& 	rot,
+							  double 		cur_time,
+							  dmatrix 		Jacobian,
+							  dmatrix 		PseudoJacobian);
 
   // Motion
   bool moveRobot(double cur_time);
   int manipulationTest(TestAxis 		axis,
-		       bool&			completionFlag,
-		       JointPathPtr 	m_path,
-		       BodyPtr 		bodyPtr,
-		       dvector6& 		JointAngleUpdate,
-		       dvector6& 		CurrAngles,
-		       vector3& 		DesData1,
-		       vector3& 		DesData2,
-		       dvector6& 		DesIKin, 															// Optional arguments for subordinate controllers if they exist.
-		       vector3 		pos,
-		       matrix33 		rot,
-		       double 		cur_time,
-		       dmatrix 		Jacobian,
-		       dmatrix 		PseudoJacobian);
+					   bool&			completionFlag,
+					   JointPathPtr 	m_path,
+					   BodyPtr 			bodyPtr,
+					   dvector6& 		JointAngleUpdate,
+					   dvector6& 		CurrAngles,
+					   vector3& 		DesData1,
+					   vector3& 		DesData2,
+					   dvector6& 		DesIKin, 															// Optional arguments for subordinate controllers if they exist.
+					   vector3 			pos,
+					   matrix33 		rot,
+					   double 			cur_time,
+					   dmatrix 			Jacobian,
+					   dmatrix 			PseudoJacobian);
 
   // Other
   int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN], vector3 pos, matrix33 rot, double CurAngles[15]);
@@ -320,7 +352,6 @@ class AssemblyStrategy {
   int  ProcessTrajFile(char path[STR_LEN], int State, vector3 pos, vector3 rpy, double cur_time);
   bool checkArmLimit(JointPathPtr arm_path);
   bool IK_arm(JointPathPtr arm_path, Link *base, Link *waist, const vector3& p, const matrix33& R);
-
 };
 
 #endif /* ASSEMBLYSTRATEGY_H_ */
