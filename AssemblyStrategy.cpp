@@ -470,12 +470,12 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 					  Jacobian,PseudoJacobian);
   }
 
-  /*************************************************************** PIVOT APPROACH ********************************************************************************/
+  /*------------------------------------------------------------------ PIVOT APPROACH -------------------------------------------------------------------*/
   else if(approach==PivotApproach)
   {
 	  switch (State)
 	  {
-	  /****************************************** Approach ***************************************************************/
+	  /*-------------------------------------------------- Approach --------------------------------------------------*/
 	  case paApproach:// Move, such that the TCP makes contact with the docking pivot in the male camera part at an angle.
 	  {								
 		  // Initialize
@@ -498,7 +498,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
 	  break;
 
-	  /****************************************** Rotation ***************************************************************/
+	  /*-------------------------------------------------- Rotation --------------------------------------------------*/
 	  case paRotation: // Rotate until contact
 	  {
 		  // Initialize
@@ -524,7 +524,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
 	  break;
 
-	  /****************************************** Alignment ***************************************************************/
+	  /*-------------------------------------------------- Alignment --------------------------------------------------*/
 	  case paAlignment:
 	  {
 		  // Initialize
@@ -552,7 +552,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
 	  break;
 
-	  /****************************************** Compliant Insertion Controller ***************************************************************/
+	  /*-------------------------------------------------- Compliant Insertion Controller --------------------------------------------------*/
 	  case paInsertion:
 	  {
 		  // Initialize
@@ -579,7 +579,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
 	  break;
 
-	  /****************************************** Mating ***************************************************************/
+	  /*--------------------------------------------------Mating --------------------------------------------------*/
 	  case paMating: // Maintain Position
 	  {
 		  // Change the paradigm to call directcompliancecontrol directly
@@ -601,12 +601,12 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
   }
 
-  /******************************************************************** SIDE APPROACH **********************************************************************************************/
+  /*---------------------------------------------------------------------- SIDE APPROACH ------------------------------------------------------------------------*/
   else if(approach==SideApproach)
   {
 	  switch (State)
 	  {
-	  /****************************************** Approach ***************************************************************/
+	  /*-------------------------------------------------- Approach --------------------------------------------------*/
 	  case hsaApproach:// Move, such that the TCP makes contact with the docking pivot in the male camera part at an angle.
 	  {
 		  // Initialize
@@ -645,7 +645,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
 	  break;
 
-	  /****************************************** Rotation ***************************************************************/
+	  /*-------------------------------------------------- Rotation --------------------------------------------------*/
 	  case hsaRotation: // Rotate until contact
 	  {
 		  // Initialize
@@ -692,7 +692,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  break;
 
 
-	  /****************************************** Compliant Insertion Controller ***************************************************************/
+	  /*-------------------------------------------------- Compliant Insertion Controller --------------------------------------------------*/
 	  case hsaInsertion:
 	  {
 		  // Initialize
@@ -729,7 +729,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	  }
 	  break;
 
-	  /****************************************** Mating ***************************************************************/
+	  /*-------------------------------------------------- Mating --------------------------------------------------*/
 	  case hsaMating: // Maintain Position
 	  {
 		  // Initialize
