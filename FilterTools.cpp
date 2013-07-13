@@ -49,7 +49,7 @@ FilterTools::~FilterTools(){}
 ********************************************************************************************************/
 int FilterTools::LowPassFilter(double in[6], double out[6])
 {
-	double A=0.8541; double B=0.2064; double C=0.6555;
+	double A=0.8541; double B=0.13527; /*0.2064*/; double C=1; /*0.6555*/;
 	// double D=0.0730;
 
 	// First write the output equation: Y = CXn + Bu

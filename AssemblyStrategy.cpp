@@ -36,7 +36,7 @@
 											// With control basis DCC = 0 seems most appropriate.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Filtering
-#define   FILT_FLAG				1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
+#define   FILT_FLAG				0			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
 //------------------------------------------------------------- DEBUGGING ----------------------------------------------------------------------------
 #define DEBUG_AS				0			// Flag used to test functions with hard-coded data
 #define DB_PRINT				0 			// Used to write angles, cart positions, forces, and states to std::cerr
@@ -459,6 +459,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			avgSig(i) = filteredSig[i];
 		//ft->LowPassFilter(currForces,avgSig);
 	}
+	else
+		avgSig = currForces;
 
 	/****************************************** Wrist/EndEffecter Transformation *****************************************************/
 	// Convert from wrist position/rotation to endEffector position/rotation. I.e:
