@@ -33,7 +33,7 @@ FilterTools::~FilterTools(){}
 *
 * Where Xn starts as zero.
 *
-* The variables A,B,C,D are obtained from matlab for a filter of:
+* The variables A,B,C,D are obtained from Matlab's butter filter function using:
 * 	order: 1 and a cutoff frequencies. The best one yet is 0.05.
 *
 * 	cutoff freq: 0.5
