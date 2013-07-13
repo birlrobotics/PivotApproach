@@ -57,17 +57,17 @@ typedef tvmet::Vector<double, 6> vector6;
 // GLOBAL VARIABLES
 //---------------------------------------------------------------------------------------------------------------------------
 // String length
-#define STR_LEN			    256
+#define STR_LEN			    		256
 //---------------------------------------------------------------------------------------------------------------------------
 // Degrees of Freedom for body and arm
-#define ARM_DOF               		6			// Right and left arm only have 6 DOF.
+#define ARM_DOF               		 6			// Right and left arm only have 6 DOF.
 #define ROBOT_DOF            		15			// HIRO has 15 DOF. 3 in torso/head and six in each arm.
 //---------------------------------------------------------------------------------------------------------------------------
 // Filter parameters
 #define HISTBUFF_LENGTH 	 		12 			// This value determines the size of the possible number of samples to be included to perform a moving average for data signals.
 //---------------------------------------------------------------------------------------------------------------------------
 // FORCE CONSTANTS FOR CONTROL POLICY
-#define CONST_FORCE_STATE3     		5.0			// All forces need to be in world coordinates. Used in Hiro Side Approach (HSA) execution.
+#define CONST_FORCE_STATE3     		 5.0		// All forces need to be in world coordinates. Used in Hiro Side Approach (HSA) execution.
 #define VERTICAL_FORCE	      		10.0		// HSA: Used in state 3 and 4 of pivot approach/stage 3 of side approach. pos value pushes down. 10kg Force pointing downwards
 #define TRANSVERSE_FORCE      		0.25		// HSA: Moves out of the screen. Towards the desired wall of the mold in the side approach
 #define HORIZONTAL_FORCE      		0.30		// HSA: There is a natural push to the left by the robot and gravity. This compensates for that during the rotation.
@@ -79,7 +79,6 @@ typedef tvmet::Vector<double, 6> vector6;
 // CONTACT Transitional Parameters
 #define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 #define HSA_Rot2Ins_My				0.8			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
-
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables
 #define PI 		      				3.1416
@@ -275,7 +274,10 @@ class AssemblyStrategy {
   char strTrajState1[STR_LEN], strTrajState2[STR_LEN], strCartPos[STR_LEN], strAngles[STR_LEN], strState[STR_LEN], strForces[STR_LEN];
 
   // Imported values
-  double 		cur_time;												// Save current tiem
+  double 		cur_time;												// Save current time
+
+  // Filtering
+  bool 			flagFiltering;
   dvector6 		avgSig;													// contains filtered/moving average result signal
   /**************************************************************************** Methods **********************************************************************************/
 

@@ -19,7 +19,7 @@
 #define STATE_FILE				"./data/Results/State.dat"				// Save State Transition times for SideApproach
 #define FORCES_FILE				"./data/Results/Torques.dat"			// Save Joint Torques for robot
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// Design Parameters
+// Design Parameters and Flags
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
 #define HIRO					1
@@ -35,6 +35,8 @@
 #define DCC			   			0			// Direct Compliance control w/ gravitational compensation. Should be zero if traditional PD torque control used.
 											// With control basis DCC = 0 seems most appropriate.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+// Filtering
+#define   FILT_FLAG				1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
 //------------------------------------------------------------- DEBUGGING ----------------------------------------------------------------------------
 #define DEBUG_AS				0			// Flag used to test functions with hard-coded data
 #define DB_PRINT				0 			// Used to write angles, cart positions, forces, and states to std::cerr
@@ -146,8 +148,8 @@ AssemblyStrategy::AssemblyStrategy()
   strcpy(strTrajState1,  MOTION_FILE);			// File that contains the desired position trajectory to be followed
 
   // Imported Values
-  cur_time				= 0.0;				// used in transitions
-
+  cur_time				= 0.0;					// used in transitions
+  flagFiltering 		= FILT_FLAG;				// Set filtering flag to parameter define in preprocessor
   // Control Basis
   momentGainFactor 		= 1.0;
 
@@ -271,6 +273,9 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 
   // ControlBasis
   momentGainFactor = momentGainFac;
+
+  // Filtering
+  flagFiltering = FILT_FLAG;
 
 #ifdef DEBUG_PLUGIN3
   std::cerr << "AssemblyStrategy::AssemblyStrategy(num_q0,base2endeffPoss,base2endeffRot,ePh,momentGainFac) - exiting\n/*********************************************************************************************************/" << std::endl;
@@ -443,15 +448,17 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		gettimeofday(&startTime,NULL); 		// Start computing cycle time for the control function
 
 	/************************************************* LOW PASS FILTERING *************************************************************/
-	// Copy force/torque data into a double array to be used by the Low-Pass Filter
-	for(int i=0; i<ARM_DOF; i++)
-		temp[i]=currForces(i);
+	if(flagFiltering)	// Copy force/torque data into a double array to be used by the Low-Pass Filter
+	{
+		for(int i=0; i<ARM_DOF; i++)
+			temp[i]=currForces(i);
 
-	ft->LowPassFilter(temp,filteredSig);
+		ft->LowPassFilter(temp,filteredSig);
 
-	for(int i=0;i<6;i++)
-		avgSig(i) = filteredSig[i];
-	//ft->LowPassFilter(currForces,avgSig);
+		for(int i=0;i<6;i++)
+			avgSig(i) = filteredSig[i];
+		//ft->LowPassFilter(currForces,avgSig);
+	}
 
 	/****************************************** Wrist/EndEffecter Transformation *****************************************************/
 	// Convert from wrist position/rotation to endEffector position/rotation. I.e:
