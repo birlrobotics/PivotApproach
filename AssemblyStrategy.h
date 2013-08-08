@@ -218,10 +218,11 @@ class AssemblyStrategy {
   bool initialFlag;
   bool completionFlag;
 
-  // Transtion
+  // Transition
   double  	signChanger;				// Changes the sign of data after a certain amount of time.
   bool 		switchFlag;					// Flag to be triggered to change signs
   bool 		nextState;					// Used to tell the state machine when to move to the next state
+  bool		InsSubFlag;					// 2013Aug - used as a substage in insertion.
   int 		State;						// What state are we in
   float 		transitionTime;					// Time between a two state stransition
   bool 		transitionTimebool;				// Flag for transition time

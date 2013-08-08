@@ -36,7 +36,7 @@
 											// With control basis DCC = 0 seems most appropriate.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Filtering
-#define   FILT_FLAG				0			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
+#define   FILT_FLAG				1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
 //------------------------------------------------------------- DEBUGGING ----------------------------------------------------------------------------
 #define DEBUG_AS				0			// Flag used to test functions with hard-coded data
 #define DB_PRINT				0 			// Used to write angles, cart positions, forces, and states to std::cerr
@@ -454,6 +454,9 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			temp[i]=currForces(i);
 
 		ft->LowPassFilter(temp,filteredSig);
+//		ft->LowPassFilter(currForces,avgSig);
+//		ft->secOrderFilter(temp,filteredSig);
+//		ft->secOrderFilter(currForces,avgSig);
 
 		for(int i=0;i<6;i++)
 			avgSig(i) = filteredSig[i];
@@ -687,7 +690,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Z: Moves forward (and a bit left)
 			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;
 			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	=  -10.000*TRANSVERSE_FORCE;
+			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE;
 			DesMoment(1) 		=  3.0*ROTATIONAL_FORCE;
 #else
 			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
@@ -723,10 +726,10 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Y: Moves right
 			// +Z: Moves forward (and a bit left)
 #ifdef SIMULATION
-			DesForce(UP_AXIS) 	=  1.250*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) =  1.000*HORIZONTAL_FORCE;
+			DesForce(UP_AXIS) 	=   1.300*VERTICAL_FORCE;
+			DesForce(SIDE_AXIS) =   2.000*HORIZONTAL_FORCE;
 			DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
-			DesMoment(1) 		=  3.00*ROTATIONAL_FORCE;
+			DesMoment(1) 		=   3.750*ROTATIONAL_FORCE;
 #else
 			DesForce(UP_AXIS) = VERTICAL_FORCE;
 			// DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
@@ -768,9 +771,9 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			//DesForce(FWD_AXIS)  =  TRANSVERSE_FORCE; //
 
 #ifdef SIMULATION
-			DesForce(UP_AXIS) 	=  1.250*VERTICAL_FORCE;
+			DesForce(UP_AXIS) 	=  1.300*VERTICAL_FORCE;
 			//DesForce(SIDE_AXIS) =  0.000*HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+			//DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
 
 #else
 			DesForce(UP_AXIS) = 3*VERTICAL_FORCE;
@@ -1442,7 +1445,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  //float endRotationTime=ex_time[2];
 				  #ifdef SIMULATION
 					  //if( cur_time>(endRotationTime*0.90) ) 			// Time-based Condition: Cannot currently use time here in SideApproach because it is a state dominated by a ForceMoment composition.
-				  	  if(CurJointAngles(4)<0.5093)						// Joint-based Angle Condition: Can be coupled with the pitch angle in pivotApproachState1.dat. Notice that a flat horizontal maleCam corresponds to a pitch angle of -1.57 but a joint angle 4 of 0
+				  	  if(CurJointAngles(4)<0.44550) //5093)						// Joint-based Angle Condition: Can be coupled with the pitch angle in pivotApproachState1.dat. Notice that a flat horizontal maleCam corresponds to a pitch angle of -1.57 but a joint angle 4 of 0
 				  	  //if(avgSig(My)>HSA_Rot2Ins_My) 					// Force-based Condition: Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
 					  {
 							  NextStateActions(cur_time);
@@ -1482,7 +1485,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  break;
 
 			  /*------------------------------------------------------------ Mating2Finish Transition ------------------------------------------------------------------------------------------------------------------------*/
-			  case hsaMating2FinishTime:
+			  /*case hsaMating2FinishTime:
 			  {
 				  // If the height of the wrist is less than 0.7290 we are finished
 				  // if(pos(2)<0.07290)
@@ -1494,7 +1497,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 					  return PA_FINISH;
 				  }
 			  }
-			  break;
+			  break;*/
 
 			  // default case
 			  default:
