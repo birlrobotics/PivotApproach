@@ -1006,17 +1006,17 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
     {
       // Invoke the state machine to run the pivot approach using the control basis
       ret = PA->StateMachine( PA->none,						// use all axis to run test. Not applicable here since the flag test is off.
-			      PA->SideApproach,				// Type of approach. Can choose between the straight line approach and the pivot approach
-			      m_path,
-			      body,							// JointPathPtr and BodyPtr. Used to compute kinematic variables.
-			      cur_time,
-			      pos,
-			      rot,
-			      currForces,						// Current time, base2EndEff position/rotation
-			      JointAngleUpdate,				// Joint Angle Update produced by control basis
-			      CurrAngles,						
-			      Jac,
-			      PseudoJac);						// Jacobian and Pseudo Jacobian
+							  PA->SideApproach,				// Type of approach. Can choose between the straight line approach and the pivot approach
+							  m_path,
+							  body,							// JointPathPtr and BodyPtr. Used to compute kinematic variables.
+							  cur_time,
+							  pos,
+							  rot,
+							  currForces,					// Current time, base2EndEff position/rotation
+							  JointAngleUpdate,				// Joint Angle Update produced by control basis
+							  CurrAngles,
+							  Jac,
+							  PseudoJac);					// Jacobian and Pseudo Jacobian
     }
 
   // Copy CurrAngles to qref if kinematics did not fail

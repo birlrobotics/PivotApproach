@@ -1465,9 +1465,9 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
 				  float endApproachTime=ex_time[1];
 				  #ifdef SIMULATION
-					  if( cur_time > endApproachTime ) 								// Time-based Condition: Must be at least greater than the end of ApproachTime. Should be near rotation.
+					  if( cur_time > endApproachTime ) 					// Time-based Condition: Must be at least greater than the end of ApproachTime. Should be near rotation.
 						  if(CurJointAngles(4)<0.44550) //5093)			// Joint-based Angle Condition: Can be coupled with the pitch angle in pivotApproachState1.dat. Notice that a flat horizontal maleCam corresponds to a pitch angle of -1.57 but a joint angle 4 of 0
-							  //if(avgSig(My)>HSA_Rot2Ins_My) 					// Force-based Condition: Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+							  //if(avgSig(My)>HSA_Rot2Ins_My) 			// Force-based Condition: Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
 						  {
 							  NextStateActions(cur_time,hsaHIROTransitionExepction);
 						  }
@@ -1486,20 +1486,19 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  case hsaInsertion2InsPartB:
 			  {
 				#ifdef SIMULATION
-				  if( attitude(1) < -1.55200 || CurJointAngles(My) < 0.3850 )			//For 2013July-Rojas, This is about 20 degrees.This angle is not very precise because it changes depending on the pose of the elbow. If the male part is closer to the robot, the more bending there will be. This is in local coordinates, we need the angles in world coordinates.
 				  //if(CurJointAngles(My)<0.116877)			//for simulation
-					  //if(CurJointAngles(4)<0.097688)
-					  //if(CurJointAngles(4)<-0.264) 		// if the wrist pitch joint angle is less than 14 degrees
-					  //if(CurJointAngles(4)<-0.104717333)
-					  //if(CurJointAngles(4)<0.104717333) 	// if the wrist pitch joint angle is less than 6 degrees
+				  //if(CurJointAngles(4)<0.097688)
+				  //if(CurJointAngles(4)<-0.264) 		// if the wrist pitch joint angle is less than 14 degrees
+				  //if(CurJointAngles(4)<-0.104717333)
+				  //if(CurJointAngles(4)<0.104717333) 	// if the wrist pitch joint angle is less than 6 degrees
+				  if( attitude(1) < -1.55200 || CurJointAngles(My) < 0.3850 )			//For 2013July-Rojas, This is about 20 degrees.This angle is not very precise because it changes depending on the pose of the elbow. If the male part is closer to the robot, the more bending there will be. This is in local coordinates, we need the angles in world coordinates.
 					  {
 					  	  hsaHIROTransitionExepction = Ins2InsSubPart; 						// Used to tell NextStateActions not to insert an entry in the time transition vector.
 						  NextStateActions(cur_time,hsaHIROTransitionExepction);
 						  hsaHIROTransitionExepction = normal;
 					  }
 				#else
-				  //if(CurJointAngles(4)<0.1919)
-				  if(CurJointAngles(4)<0.1395)
+				  if(CurJointAngles(4)<0.1395)	//if(CurJointAngles(4)<0.1919)
 				  {
 					  NextStateActions(cur_time,hsaHIROTransitionExepction);
 				  }
