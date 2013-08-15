@@ -1,0 +1,25 @@
+# -*- Makefile -*-
+STUBS = $(CONTROLLER)/corba/OpenHRPCommon.o $(CONTROLLER)/IOserver/corba/HRPcontroller.o
+DYN_STUBS = $(CONTROLLER)/corba/DynamicsSimulator.o $(CONTROLLER)/corba/ModelLoader.o $(CONTROLLER)/corba/ViewSimulator.o
+
+#DYN_FLAGS = -I$(DYNAMICSSIMULATOR)/server -I$(BOOST_INC_DIR) -I$(TVMET_INC_DIR)
+DYN_FLAGS = -I$(DYNAMICSSIMULATOR)/server
+
+RBT_FLAGS = -I$(CONTROLLER)/IOserver/robot/$(ROBOT)
+
+#EXTRA_CXX_FLAGS = -I$(CONTROLLER)/$(CORBA_DIR) -I$(CONTROLLER)/IOserver/corba -I$(CONTROLLER)/IOserver/include -D$(ROBOT) -D$(ROBOT_OPT) -I../corba $(EXTRA_INC) $(DYN_FLAGS) $(RBT_FLAGS)
+#EXTRA_CXX_FLAGS = -I$(CONTROLLER)/$(CORBA_DIR) -I$(CONTROLLER)/IOserver/corba -I$(CONTROLLER)/IOserver/include -D$(ROBOT) -I../corba $(EXTRA_INC) $(DYN_FLAGS) $(RBT_FLAGS)
+EXTRA_CXX_FLAGS = -I$(CONTROLLER)/$(CORBA_DIR) -I$(CONTROLLER)/IOserver/corba -I$(CONTROLLER)/IOserver/include -I$(CONTROLLER)/IOserver/corba -D$(ROBOT) -I../corba $(EXTRA_INC) $(DYN_FLAGS) $(RBT_FLAGS)
+
+$(OBJS):
+	$(CXX) $(CXX_FLAGS) $(EXTRA_CXX_FLAGS) $(OBJOPT)$@ $(*F).cpp
+
+DYN_LIBS = $(LPOPT)$(DYNAMICSSIMULATOR)/server $(LIBOPT)hrpModel3$(LIBSFX)
+
+target: $(PLUGIN)
+
+$(PLUGIN): $(ALL_OBJS)
+	$(LINK) $(LINK_FLAGS) $(SOFLAGS) $(OUTOPT)$@ $(ALL_OBJS) $(LPOPT)$(BIN_DIR) $(LIBOPT)plugin$(LIBSFX) $(LIBOPT)bodyinfo$(LIBSFX) $(LIBOPT)iob$(LIBSFX) $(OB_LIBS) $(EXT_LIBS) $(DYN_LIBS)
+
+clean: del_generic
+	$(RM) $(PLUGIN) $(PLUGIN:.dll=.dll.manifest) $(PLUGIN:.dll=.exp) $(PLUGIN:.dll=.lib) $(OBJS)
