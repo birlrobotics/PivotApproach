@@ -94,27 +94,29 @@ AssemblyStrategy::AssemblyStrategy()
   noContact = true;
 
   // Manipulation Test
-  testCounter 		= 0;
+  testCounter 			= 0;
   compositionTypeTest	= 0;	// Force or Moment
   DesForceSwitch		= 0;	// Switch which element to activate
-  initialFlag 		= true;
+  initialFlag 			= true;
   completionFlag 		= false;
 
   // State Transition
-  signChanger		= 0.0;
-  switchFlag 		= true;
-  nextState 		= false;
-  State 			= 1;
+  signChanger			= 0.0;
+  switchFlag 			= true;
+  nextState 			= false;
+  hsaHIROTransitionExepction = normal;
+  State 				= 1;
   transitionTime		= 0.0;
-  transitionTimebool 	= false;
+  transitionTimebool	= false;
   state3_zPos			= 0.0;
   state3_zPrevPos		= 0.0;
-  SA_S4_Height 	 	= 0.0;
+  SA_S4_Height 	 		= 0.0;
+  mating2EndTime 		= 1.0;
 
   // Control Basis Members
-  NumCtlrs		= 1;
-  ErrorFlag 		= true;
-  ctrlInitFlag		= true;
+  NumCtlrs				= 1;
+  ErrorFlag 			= true;
+  ctrlInitFlag			= true;
 
   // Data vectors
   // DesIKin holds the final desired position for contact with the pivoting dock
@@ -190,26 +192,28 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
   noContact = true;
 
   // Manipulation Test
-  testCounter 		= 0;
+  testCounter 			= 0;
   compositionTypeTest	= 0;	// Force or Moment
   DesForceSwitch		= 0;	// Switch which element to activate
-  initialFlag 		= true;
+  initialFlag 			= true;
 
   // State Transition
-  signChanger			= 0.0;
-  switchFlag 			= true;
-  nextState 			= false;
-  State 				= 1;
-  transitionTime		= 0.0;
-  transitionTimebool 	= false;
-  state3_zPos			= 0.0;
-  state3_zPrevPos		= 0.0;
-  SA_S4_Height 	 	= 0.0;
+  signChanger				= 0.0;
+  switchFlag 				= true;
+  nextState 				= false;
+  hsaHIROTransitionExepction = normal;
+  State 					= 1;
+  transitionTime			= 0.0;
+  transitionTimebool 		= false;
+  state3_zPos				= 0.0;
+  state3_zPrevPos			= 0.0;
+  SA_S4_Height 	 			= 0.0;
+  mating2EndTime 			= 1.00;
 
   // Control Basis Members
-  NumCtlrs			= 1;
+  NumCtlrs				= 1;
   ErrorFlag 			= true;
-  ctrlInitFlag		= true;
+  ctrlInitFlag			= true;
 
   // Data vectors
   // DesIKin holds the final desired position for contact with the pivoting dock
@@ -236,17 +240,17 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 
   for(int i=0; i<6; i++)
     {
-      CurCartPos(i)		= 0.0;
-      DesCartPos(i)		= 0.0;
-      contactPos(i)		= 0.0;
-      CurJointAngles(i)	= 0.0;
+      CurCartPos(i)			= 0.0;
+      DesCartPos(i)			= 0.0;
+      contactPos(i)			= 0.0;
+      CurJointAngles(i)		= 0.0;
       JointAngleUpdate(i)	= 0.0;
     }
 
   // Kinematcs
-  IKinTestFlag  			= 0;
+  IKinTestFlag  		= 0;
   zerothJoint 			= NUM_q0;
-  transWrist2CamXEff		= ePh;					// wrist2endeffecter
+  transWrist2CamXEff	= ePh;					// wrist2endeffecter
   ContactWristAngle		= 0.0, -1.5708, 0.0;
 
 #ifdef DEBUG_PLUGIN3
@@ -265,8 +269,8 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 #endif
 
   // File Paths: save global path's to internal variables
-  strcpy(strState, 		STATE_FILE);				// File designed to save the time at which new states occur
-  strcpy(strForces,		FORCES_FILE);				// File designed to save the value of forces and moments registered in the task
+  strcpy(strState, 			STATE_FILE);				// File designed to save the time at which new states occur
+  strcpy(strForces,			FORCES_FILE);				// File designed to save the value of forces and moments registered in the task
   strcpy(strTrajState1,  	MOTION_FILE);				// File that contains the desired position trajectory to be followed
   strcpy(strAngles,  		ANGLES_FILE);				// File that contains the desired position trajectory to be followed
   strcpy(strCartPos, 		CARTPOS_FILE);				// File that contains the desired position trajectory to be followed
@@ -744,19 +748,20 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		}
 		break;
 
-		/*-------------------------------------------------- Mating --------------------------------------------------*/
-		case hsaMating: // Maintain Position
+		/*-------------------------------------------------- SubInsertionStage --------------------------------------------------*/
+		// Introduced in 2013Aug to deal with lack of empalement at end. Contains the same information that was formally used in the hsaMating state.
+		case hsaSubInsertion: // Only push down
 		{
 			// Initialize
 			if(ctrlInitFlag)
 			{
 #ifdef DEBUG_PLUGIN3
-				std::cerr << "State 4: in AssemblyStrategy::StateMachine" << std::endl;
+				std::cerr << "State 3b: in AssemblyStrategy::StateMachine" << std::endl;
 #endif	 
 
 				nextState	 = false;
 				ctrlInitFlag = false;
-				SA_S4_Height = pos(2);
+				//SA_S4_Height = pos(2);
 			}
 
 			// Set a DesForce that pushes down and against the wall of the camera model
@@ -771,8 +776,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			//DesForce(FWD_AXIS)  =  TRANSVERSE_FORCE; //
 
 #ifdef SIMULATION
-			DesForce(UP_AXIS) 	=  1.300*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) =  0.000*HORIZONTAL_FORCE;
+			DesForce(UP_AXIS)		=   1.5000*VERTICAL_FORCE;
+			//DesForce(SIDE_AXIS) 	=   0.000*HORIZONTAL_FORCE;
 			//DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
 
 #else
@@ -787,8 +792,19 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// Check for Approach termination condition
 			ret=StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 
+			break;
+
 		}
+
+		case hsaMating:
+				{
+					// 2013Aug. When mating takes place under current simulation circumstances, there is penetration from the male snap into the walls of the female snap.
+					// So even when no force is applied, the simulation produces a jittery effect that is seen as very high noise and large force jumps in the plots.
+					// This exponential decay for the force values registered by the FT sensor are an attempt to reproduce the decay that would take place upon proper mating.
+					avgSig = avgSig * exp(-cur_time/2.5);
+				}
 		break;
+		// case hsaFinsih
 		}
 	}
 	else
@@ -842,7 +858,12 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			  handRPY = rpyFromRot(m_path->joint(5)->segmentAttitude());
 			  }*/
 
-			WriteFiles(cur_time, CurrAngles, JointAngleUpdate, handPos, handRPY, transformedForce);	// Current time, current robot joint angles, current endeffector cartesian position, current endeffector rpy, current endeffector force/moments.
+			WriteFiles(cur_time, 				// Current time
+					   CurrAngles, 				// Current robot joint angles
+					   JointAngleUpdate, 		// Changes in Joint Angles in the last iteration
+					   handPos,					// Current end-effector Cartesian position
+					   handRPY,					// Current end-effector RPY
+					   transformedForce);		// Current end-effector force and moments.
 		}
 
 		// Timing
@@ -1354,7 +1375,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				if( cur_time>(ex_time[0]*0.80) )
 					if(avgSig(0)>9)				// Lateral contact for x-axis
 					{
-							NextStateActions(cur_time);
+							NextStateActions(cur_time,hsaHIROTransitionExepction);
 					}
 			}
 			break;
@@ -1366,7 +1387,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				if( cur_time>(ex_time[1]*0.90) )
 					if(avgSig(4)>0.60) // upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
 						{
-						NextStateActions(cur_time);
+						NextStateActions(cur_time,hsaHIROTransitionExepction);
 						}
 			}
 			break;
@@ -1377,7 +1398,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				// Transition Condition: if it is aligned
 				if(CurJointAngles(4)<0.1745) // if the wrist pitch joint angle is less than 10 degrees
 				{
-					NextStateActions(cur_time);
+					NextStateActions(cur_time,hsaHIROTransitionExepction);
 				}
 			}
 			break;
@@ -1401,7 +1422,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				// Conditions: straight up attitude, no motion, and low moment.
 				if(CurJointAngles(4)>1.57 && CurJointAngles(4)<1.5718)
 					if(abs(zPosDifference)<=0.000001)		// in testing i realized that for each step the motion may be much smaller than 0.0001 giving a fall sense of finish.
-						NextStateActions(cur_time);			// it could be done through a time-window
+						NextStateActions(cur_time,hsaHIROTransitionExepction);			// it could be done through a time-window
 			}
 			break;
 
@@ -1433,7 +1454,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  if( cur_time>(endApproachTime*0.80) )					// Want to make sure we are near the region of contact before we start measuring.
 					  if(avgSig(Fx)>HSA_App2Rot_Fx)						// Vertical Contact Force along X-Direction in local coordinates. // Lateral contact for x-axis
 					  {
-							  NextStateActions(cur_time);
+							  NextStateActions(cur_time,hsaHIROTransitionExepction);
 					  }
 			  }
 			  break;
@@ -1442,66 +1463,75 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  case hsaRotation2Insertion:
 			  {
 				  // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
-				  //float endRotationTime=ex_time[2];
+				  float endApproachTime=ex_time[1];
 				  #ifdef SIMULATION
-					  //if( cur_time>(endRotationTime*0.90) ) 			// Time-based Condition: Cannot currently use time here in SideApproach because it is a state dominated by a ForceMoment composition.
-				  	  if(CurJointAngles(4)<0.44550) //5093)						// Joint-based Angle Condition: Can be coupled with the pitch angle in pivotApproachState1.dat. Notice that a flat horizontal maleCam corresponds to a pitch angle of -1.57 but a joint angle 4 of 0
-				  	  //if(avgSig(My)>HSA_Rot2Ins_My) 					// Force-based Condition: Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
-					  {
-							  NextStateActions(cur_time);
-					  }
-
+					  if( cur_time > endApproachTime ) 								// Time-based Condition: Must be at least greater than the end of ApproachTime. Should be near rotation.
+						  if(CurJointAngles(4)<0.44550) //5093)			// Joint-based Angle Condition: Can be coupled with the pitch angle in pivotApproachState1.dat. Notice that a flat horizontal maleCam corresponds to a pitch angle of -1.57 but a joint angle 4 of 0
+							  //if(avgSig(My)>HSA_Rot2Ins_My) 					// Force-based Condition: Upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+						  {
+							  NextStateActions(cur_time,hsaHIROTransitionExepction);
+						  }
 				  #else
 					  if(CurJointAngles(4)<0.1919)
 					  {
-						  NextStateActions(cur_time);
+						  NextStateActions(cur_time,hsaHIROTransitionExepction);
 					  }
 				  #endif
 			  }
 			  break;
 
 			  /*------------------------------------------------------------ Insertion2Mating Transition ------------------------------------------------------------------------------------------------------------------------*/
-			  // Transition Insertion2Mating
-			  case hsaInsertion2Mating:
+			  // Transition Insertion2InsertionPart2
+			  /*-----Transition Insertion2Mating-----*/
+			  case hsaInsertion2InsPartB:
 			  {
 				#ifdef SIMULATION
-				  if(CurJointAngles(My)<0.366)				//For 2013July-Rojas, This is about 20 degrees.This angle is not very precise because it changes depending on the pose of the elbow. If the male part is closer to the robot, the more bending there will be. This is in local coordinates, we need the angles in world coordinates.
+				  if( attitude(1) < -1.55200 || CurJointAngles(My) < 0.3850 )			//For 2013July-Rojas, This is about 20 degrees.This angle is not very precise because it changes depending on the pose of the elbow. If the male part is closer to the robot, the more bending there will be. This is in local coordinates, we need the angles in world coordinates.
 				  //if(CurJointAngles(My)<0.116877)			//for simulation
 					  //if(CurJointAngles(4)<0.097688)
 					  //if(CurJointAngles(4)<-0.264) 		// if the wrist pitch joint angle is less than 14 degrees
 					  //if(CurJointAngles(4)<-0.104717333)
 					  //if(CurJointAngles(4)<0.104717333) 	// if the wrist pitch joint angle is less than 6 degrees
 					  {
-						  NextStateActions(cur_time);
+					  	  hsaHIROTransitionExepction = Ins2InsSubPart; 						// Used to tell NextStateActions not to insert an entry in the time transition vector.
+						  NextStateActions(cur_time,hsaHIROTransitionExepction);
+						  hsaHIROTransitionExepction = normal;
 					  }
 				#else
 				  //if(CurJointAngles(4)<0.1919)
 				  if(CurJointAngles(4)<0.1395)
 				  {
-					  NextStateActions(cur_time);
+					  NextStateActions(cur_time,hsaHIROTransitionExepction);
 				  }
 				#endif
 			  }
 			  break;
 
-			  /*------------------------------------------------------------ Mating2Finish Transition ------------------------------------------------------------------------------------------------------------------------*/
-			  /*case hsaMating2FinishTime:
+			  /*------------------------------------------------------------ Insertion2b2Mating Transition ------------------------------------------------------------------------------------------------------------------------*/
+			  case hsaInsPartB2Mating:
 			  {
 				  // If the height of the wrist is less than 0.7290 we are finished
 				  // if(pos(2)<0.07290)
-				  //if(pos(2)<0.533) 	// for simulation
-				  //if(pos(2) < 0.575)  // This number is relative and can change depending on where to put the object of interest
-				  if(CurJointAngles(My)<0.3655)
+				  // if(pos(2)<0.533) 	// for simulation
+				  // if(pos(2) < 0.575)  // This number is relative and can change depending on where to put the object of interest
+				  // 2013Aug. New parameters.
+				  // if(attitude(1) < -1.5400 || CurJointAngles(My) < 0.3700)
+				  // if( (attitude(1) < -1.5330 && currForces(4) > 1.2) || (CurJointAngles(My) < 0.3870 && currForces(4) > 1.2) )	Used with 2nd Order Filter of Cutoff Freq 0.1
+				  if( (attitude(1) < -1.5330 && currForces(4) > 0.9) || (CurJointAngles(My) < 0.3870 && currForces(4) > 0.9) )		// Used with 2nd Order Filter of Cutoff Freq 0.095
 				  {
-					  NextStateActions(cur_time);
+					  NextStateActions(cur_time,	 			hsaHIROTransitionExepction);		// Enter a time entry for the mating state
+					  hsaHIROTransitionExepction = DoNotIncreaseStateNum;
+					  NextStateActions(cur_time+mating2EndTime,	hsaHIROTransitionExepction);		// Enter a hard-coded time entry for the end of the experiment one second later
+					  hsaHIROTransitionExepction = normal;
 					  return PA_FINISH;
 				  }
 			  }
-			  break;*/
+			  break;
 
 			  // default case
 			  default:
 				  break;
+
 		  } // End Switch
     }		// End if==PivotApproach
 
@@ -1510,14 +1540,31 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 
 /*----------------------------------------------------------------------------------------------------*/
 // Increase the value of the state variable by one and reset nextState and ctrlInitFlags.
-void AssemblyStrategy::NextStateActions(double cur_time)
+// Except for listed exceptions.
+void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionExepction)
 {
 	nextState		= true;
 	ctrlInitFlag	= true;
-	State++;
 
-	// Enter the time at which the state changed. Start with State 0 moving at the home position, State 1 moving towards part...
-	ostr_state << cur_time << std::endl;
+	// 1) If flag is normal, then increase state and write output to file.
+	if(hsaHIROTransitionExepction==normal)
+	{
+		State++;
+
+		// Enter the time at which the state changed. Start with State 0 moving at the home position, State 1 moving towards part...
+		ostr_state << cur_time << std::endl;
+	}
+
+	// 2) If flag is Ins2InsSubPart, then increase state but do not write output to file.
+	else if(hsaHIROTransitionExepction==Ins2InsSubPart)
+		State++;
+
+	//
+	else if(hsaHIROTransitionExepction==DoNotIncreaseStateNum)
+	{
+		// Enter the time at which the state changed. Start with State 0 moving at the home position, State 1 moving towards part...
+		ostr_state << cur_time << std::endl;
+	}
 }
 
 //**********************************************************************************************************************
