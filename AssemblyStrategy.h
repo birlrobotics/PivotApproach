@@ -180,6 +180,7 @@ class AssemblyStrategy {
 	  hsaApproach= 1,
 	  hsaRotation,
 	  hsaInsertion,
+	  hsaSubInsertion,
 	  hsaMating,
 	  hsaFinish,
   };
@@ -199,8 +200,16 @@ class AssemblyStrategy {
   {
 	  hsaApproach2Rotation = 1,
 	  hsaRotation2Insertion,
-	  hsaInsertion2Mating,
+	  hsaInsertion2InsPartB,
+	  hsaInsPartB2Mating,
 	  hsaMating2FinishTime,
+  };
+  /*---------------------------------------- Transitions: HIRO Side Approach Exceptions-------------------------------------------*/
+  enum HIRO_SA_Trnasition_Exceptions
+  {
+	  normal=1,							// Increases state number and writes time entry to state vector file
+	  Ins2InsSubPart,					// Increases state number but does not write entry into state vector file
+	  DoNotIncreaseStateNum				// Does not increase state number but writes entry into state vector file
   };
 
   /*--------------------------------------------------- Strategy --------------------------------------------------------*/
@@ -222,13 +231,14 @@ class AssemblyStrategy {
   double  	signChanger;				// Changes the sign of data after a certain amount of time.
   bool 		switchFlag;					// Flag to be triggered to change signs
   bool 		nextState;					// Used to tell the state machine when to move to the next state
-  bool		InsSubFlag;					// 2013Aug - used as a substage in insertion.
+  int 		hsaHIROTransitionExepction;	// Flag to activate different kinds of transitions
   int 		State;						// What state are we in
-  float 		transitionTime;					// Time between a two state stransition
-  bool 		transitionTimebool;				// Flag for transition time
-  double		state3_zPos;					// Used to identify the position in the z-direction of the wrist
-  double		state3_zPrevPos;				// Keeps the previous record
-  double 		SA_S4_Height;
+  float 	transitionTime;				// Time between a two state stransition
+  bool 		transitionTimebool;			// Flag for transition time
+  double	state3_zPos;				// Used to identify the position in the z-direction of the wrist
+  double	state3_zPrevPos;			// Keeps the previous record
+  double 	SA_S4_Height;
+  float		mating2EndTime;				// Hard-coded time interval used to indicate the end-time of the task. It is some x secs after mating has ocurred.
 
   // Control Basis Objects
   ControlBasis* c1;
@@ -305,7 +315,7 @@ class AssemblyStrategy {
 					dvector6		currForces,
 					double 			cur_time);																			// Switches the states of the state machine according to approach.
 
-  void NextStateActions(double cur_time);																				// Fixed number of operations to be done between switching of states
+  void NextStateActions(double cur_time, int insertionStateSubFlag);												// Fixed number of operations to be done between switching of states
 
   // Call any combination of legal control compositions (upto three for now), and pass desired data.
   int ControlCompositions(JointPathPtr 	m_path,
