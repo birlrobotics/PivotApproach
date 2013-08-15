@@ -1,0 +1,13 @@
+Sometimes when you try to install OpenHRP3.0.5 and you run the simulator. As soon as you press play, you will get a message that says that the DynamicsSimulator is not initialized.
+
+I first tried to remake the DynamicsSimulator folder to no avail, but later I discovered from the OpenHRP Installation website that if you remove the ipv6 line from the etc/host folder, it can be fixed. Here are the detailed instructions:
+
+$ openhrp-aist-dynamics-simulator -ORBInitRef NameService=corbaloc:iiop:localhost:2809/NameService
+if you get the output as follows,
+IDL:omg.org/CORBA/TRANSIENT:1.0
+the problem has occured because ipv6 on Ubuntu-9.04 has not been enabled by default.
+
+To resolve this problem, locate "/etc/hosts" file and comment-out the line "::1 localhost ip6-localhost ip6-loopback" where keeps localhost settings of IPv6.
+
+-- Did not work. 
+-- I was surprised to find that when I run this code in vmware with linux ubuntu 10,04 with a working version of openhrp when i used a copy of this system (and properly made and with the right software) same result. This leads me to believe there is some corrupted code inside. I can run the forceSensorPlugin code fine in the other system that is appropriately working.

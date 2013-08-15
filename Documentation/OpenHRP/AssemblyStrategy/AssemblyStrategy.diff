@@ -1,0 +1,695 @@
+*** C:/Users/ohchi/Downloads/OpenHRP3.0-HRP2STEP1/OpenHRP3.0-HRP2STEP1/Controller/IOserver/plugin/forceSensorPlugin/server/AssemblyStrategy.cpp	Mon Jan 28 11:53:21 2013
+--- C:/Users/ohchi/Downloads/original/Controller/IOserver/plugin/forceSensorPlugin/server/AssemblyStrategy.cpp AssemblyStrategy.cpp	Fri Aug 10 16:10:50 2012
+***************
+*** 690,711 ****
+  	    //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;	// move towards open end on the side
+  
+  	    // In QNX
+! 	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;	// In world coordinates
+! 	    //DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // I.e. fwd/backwards
+  	    //--------------------------------------------------------------------------
+! 	    //DesMoment(1) 		= ROTATIONAL_FORCE; //ROTATIONAL_FORCE;
+  	    //--------------------------------------------------------------------------
+- #ifdef SIMULATION
+- 			DesForce(2) = VERTICAL_FORCE;
+- 			//DesForce(0) = 50*TRANSVERSE_FORCE;
+- 			//DesForce(1) = HORIZONTAL_FORCE;
+- 			DesMoment(1) = 1*ROTATIONAL_FORCE;
+- #else
+- 			DesForce(2) = VERTICAL_FORCE;
+- 			//DesForce(1) = HORIZONTAL_FORCE;
+- 			DesMoment(1) = 4*ROTATIONAL_FORCE;
+- 			DesForce(0) = 40 * TRANSVERSE_FORCE;
+- #endif
+  			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+  
+  	    // Check for state termination. Also free allocated resources.
+--- 690,700 ----
+  				//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;	// move towards open end on the side
+  
+  				// In QNX
+! 				DesForce(UP_AXIS)   = VERTICAL_FORCE;	// In world coordinates
+! 				DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // I.e. fwd/backwards
+  				//--------------------------------------------------------------------------
+! 				DesMoment(1) 		= ROTATIONAL_FORCE;
+  				//--------------------------------------------------------------------------
+  				ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+  
+  				// Check for state termination. Also free allocated resources.
+***************
+*** 731,759 ****
+  	    // Set a DesForce that pushes down and against the wall of the camera model
+  	    //--------------------------------------------------------------------------
+  	    // Linux
+! 	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;
+! 
+! 	    // In world coordinates
+  	    //DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+  	    //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;																// move towards open end on the side
+  				
+  	    // QNX
+! 	    //DesForce(UP_AXIS)   = VERTICAL_FORCE;																	// In world coordinates
+! 	    //DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // push against the wall				
+  	    //--------------------------------------------------------------------------
+! 	    //DesMoment(1) 		= ROTATIONAL_FORCE;//ROTATIONAL_FORCE;///2.0;
+  	    //--------------------------------------------------------------------------
+- #ifdef SIMULATION
+- 			DesForce(2) = VERTICAL_FORCE;
+- 			//DesForce(0) = 50*TRANSVERSE_FORCE;
+- 			DesForce(1) = HORIZONTAL_FORCE;
+- 			DesMoment(1) = 1*ROTATIONAL_FORCE;
+- #else
+- 			DesForce(2) =  VERTICAL_FORCE;
+- 			// DesForce(1) = HORIZONTAL_FORCE;
+- 			DesMoment(1) = 4*ROTATIONAL_FORCE;
+- 			DesForce(0) = 20 * TRANSVERSE_FORCE;
+- #endif	    
+  			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+  
+  	    // Check for state termination. Also free allocated resources.
+--- 720,735 ----
+  				// Set a DesForce that pushes down and against the wall of the camera model
+  				//--------------------------------------------------------------------------
+  				// Linux
+! 				//DesForce(UP_AXIS)   = VERTICAL_FORCE;																	// In world coordinates
+  				//DesForce(FWD_AXIS)  = -13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+  				//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;																// move towards open end on the side
+  				
+  				// QNX
+! 				DesForce(UP_AXIS)   = VERTICAL_FORCE;																	// In world coordinates
+! 				DesForce(FWD_AXIS)  = TRANSVERSE_FORCE; // push against the wall				
+  				//--------------------------------------------------------------------------
+! 				DesMoment(1) 		= ROTATIONAL_FORCE;///2.0;
+  				//--------------------------------------------------------------------------
+  				ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+  
+  				// Check for state termination. Also free allocated resources.
+***************
+*** 784,801 ****
+  	    //DesForce(SIDE_AXIS) = HORIZONTAL_FORCE/10.0;
+  
+  	    // QNX
+! 	    //DesForce(UP_AXIS)   =  VERTICAL_FORCE;   // In world coords
+! 	    //DesForce(FWD_AXIS)  =  TRANSVERSE_FORCE; //
+! 
+! #ifdef SIMULATION
+! 	    DesForce(2) = 1.25*VERTICAL_FORCE;
+! 	    DesForce(0) = -TRANSVERSE_FORCE;
+! #else
+! 			DesForce(2) = 4*VERTICAL_FORCE;
+! 			DesForce(0) = 10*TRANSVERSE_FORCE;
+! #endif
+! 	    
+! 	    //	    DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+  	    //--------------------------------------------------------------------------
+  	    ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,MomentForceComposition,DesMoment,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+  
+--- 760,767 ----
+  				//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE/10.0;
+  
+  				// QNX
+! 				DesForce(UP_AXIS)   =  VERTICAL_FORCE;   // In world coords
+! 				DesForce(FWD_AXIS)  =  TRANSVERSE_FORCE; //
+  				//--------------------------------------------------------------------------
+  				ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,MomentForceComposition,DesMoment,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+  
+***************
+*** 843,864 ****
+  	    }
+  	
+  	  /*****************************  Position transformations *************************/
+! 	  //	  	  if(State==1)
+! 	  //	    {
+  	      for(int i=0;i<3; i++)
+  		handPos(i) = pos(i);
+  	      handRPY = rpyFromRot(rot);
+! 	      //	    }
+! 	      /*	  	      else
+  	    {
+  	      handPos = m_path->joint(5)->p;
+- 	      
+  	      //handRPY = rpyFromRot(m_path->joint(5)->attitude()); // Used in linux simulations
+  	      handRPY = rpyFromRot(m_path->joint(5)->segmentAttitude());
+- 	      }*/
+- 				if(cur_time < 120){
+- 					WriteFiles(cur_time, CurrAngles, JointAngleUpdate, handPos, handRPY, transformedForce);	// Current time, current robot joint angles, current endeffector cartesian position, current endeffector rpy, current endeffector force/moments.
+  				}
+  	}
+  		
+        // Timing
+--- 809,828 ----
+  			}
+  	
+  			/*****************************  Position transformations *************************/
+! 			if(State==1)
+! 			{
+  				for(int i=0;i<3; i++)
+  					handPos(i) = pos(i);
+  				handRPY = rpyFromRot(rot);
+! 			}
+! 			else
+  			{
+  				handPos = m_path->joint(5)->p;
+  				//handRPY = rpyFromRot(m_path->joint(5)->attitude()); // Used in linux simulations
+  				handRPY = rpyFromRot(m_path->joint(5)->segmentAttitude());
+  			}
++ 	
++ 			WriteFiles(cur_time, CurrAngles, JointAngleUpdate, handPos, handRPY, transformedForce);	// Current time, current robot joint angles, current endeffector cartesian position, current endeffector rpy, current endeffector force/moments.
+  		}
+  		
+  		// Timing
+***************
+*** 1027,1033 ****
+  	    }
+  
+  	// A2) Rotate frame of reference from the base to the wrist for the forces.
+! 	DesWristForce = DesData1;                               // Desired force
+  	CurWristForce = attitude*CurForce;							// Current Force
+  
+  	// A4) Copy to class
+--- 992,998 ----
+  				}
+  
+  			// A2) Rotate frame of reference from the base to the wrist for the forces.
+! 			DesWristForce = attitude*DesData1;							// Desired force
+  			CurWristForce = attitude*CurForce;							// Current Force
+  
+  			// A4) Copy to class
+***************
+*** 1106,1116 ****
+  	    }
+  
+  	// 4) Rotate frame of reference from the base to the wrist for the forces.
+! 	DesWristForce = DesData1;							// Desired force
+  	CurWristForce = attitude*CurForce;							// Current Force
+- #ifdef DEBUG_PLUGIN3
+  	std::cerr << "\nThe desired force in local coords:\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2);
+! #endif
+  	// 5) Copy to class
+  	for(int i=0; i<3; i++)
+  	  {
+--- 1071,1080 ----
+  				}
+  
+  			// 4) Rotate frame of reference from the base to the wrist for the forces.
+! 			DesWristForce = attitude*DesData1;							// Desired force
+  			CurWristForce = attitude*CurForce;							// Current Force
+  			std::cerr << "\nThe desired force in local coords:\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2);
+! 
+  			// 5) Copy to class
+  			for(int i=0; i<3; i++)
+  			{
+***************
+*** 1162,1191 ****
+  	  }
+  
+  	// 4) Rotate desired and current data from the world coordinate frame of reference to the wrist frame of reference.
+! 
+! 	DesWristMoment = DesData1;											// Moment
+  	CurWristMoment = attitude*CurMoment;
+  
+! 	DesWristForce  = DesData2;											// Force
+  	CurWristForce  = attitude*CurForce;
+- #if WRITELOG
+- 	if(cur_time < 120){
+- 		for(int i=0;i<3;i++){
+- 			ostr_des << DesWristForce(i) << "\t";
+- 			ostr_cur << CurWristForce(i) << "\t";
+- 		}
+- 		for(int i=0;i<3;i++){
+- 			ostr_des << DesWristMoment(i) << "\t";
+- 			ostr_cur << CurWristMoment(i) << "\t";
+- 		}
+- 	
+- 		ostr_des << std::endl;
+- 		ostr_cur << std::endl;
+- 	}
+- #endif
+- #ifdef DEBUG_PLUGIN3
+  	std::cerr << "\nThe desired force in local coords:\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2)  << "\t" << DesWristMoment(0) << "\t" << DesWristMoment(1) << "\t" << DesWristMoment(2);
+! #endif
+  	// 5) Copy values to class objects
+  	for(int i=3; i<6; i++)												// Moment
+  	  {
+--- 1126,1138 ----
+  			}
+  
+  			// 4) Rotate desired and current data from the world coordinate frame of reference to the wrist frame of reference.
+! 			DesWristMoment = attitude*DesData1;											// Moment
+  			CurWristMoment = attitude*CurMoment;
+  
+! 			DesWristForce  = attitude*DesData2;											// Force
+  			CurWristForce  = attitude*CurForce;
+  			std::cerr << "\nThe desired force in local coords:\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2)  << "\t" << DesWristMoment(0) << "\t" << DesWristMoment(1) << "\t" << DesWristMoment(2);
+! 
+  			// 5) Copy values to class objects
+  			for(int i=3; i<6; i++)												// Moment
+  			{
+***************
+*** 1245,1280 ****
+  	    for(int i=0; i<3; i++) CurMoment(i) = avgSig(i+3); 				// Zeroed out during tests for clear numbers
+  	  }
+  
+- 	
+  	// 4) Rotate desired and current data from the world coordinate frame of reference to the wrist frame of reference.
+! 
+! 	DesWristForce  = DesData1;											// Force
+  	CurWristForce  = attitude*CurForce;
+  
+! 	DesWristMoment = DesData2;											// Moment
+  	CurWristMoment = attitude*CurMoment;
+- 
+- #if WRITELOG
+- 
+- 	if(cur_time < 120){
+- 	for(int i=0;i<3;i++){
+- 	  ostr_des << DesWristForce(i) << "\t";
+- 	  ostr_cur << CurWristForce(i) << "\t";
+- 	}
+- 	for(int i=0;i<3;i++){
+- 	  ostr_des << DesWristMoment(i) << "\t";
+- 	  ostr_cur << CurWristMoment(i) << "\t";
+- 	}
+- 	
+- 	ostr_des << std::endl;
+- 	ostr_cur << std::endl;
+- 	}
+- 	
+- #endif
+- 
+- #ifdef DEBUG_PLUGIN3
+  	std::cerr << "\nThe desired force in local coords:\t" << DesWristMoment(0) << "\t" << DesWristMoment(1) << "\t" << DesWristMoment(2)  << "\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2);
+! #endif
+  	// 5) Copy values to class objects
+  	for(int i=0; i<3; i++)												// Moment
+  	  {
+--- 1192,1205 ----
+  				for(int i=0; i<3; i++) CurMoment(i) = avgSig(i+3); 				// Zeroed out during tests for clear numbers
+  			}
+  
+  			// 4) Rotate desired and current data from the world coordinate frame of reference to the wrist frame of reference.
+! 			DesWristForce  = attitude*DesData1;											// Force
+  			CurWristForce  = attitude*CurForce;
+  
+! 			DesWristMoment = attitude*DesData2;											// Moment
+  			CurWristMoment = attitude*CurMoment;
+  			std::cerr << "\nThe desired force in local coords:\t" << DesWristMoment(0) << "\t" << DesWristMoment(1) << "\t" << DesWristMoment(2)  << "\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2);
+! 
+  			// 5) Copy values to class objects
+  			for(int i=0; i<3; i++)												// Moment
+  			{
+***************
+*** 1349,1355 ****
+  				    dvector6 	currForces,
+  				    double 		cur_time)
+  {
+-   //        std::cerr << "pos:" << pos(2) << std::endl;
+    if(approach==PivotApproach)
+      {
+        // Local Variables
+--- 1274,1279 ----
+***************
+*** 1427,1434 ****
+  
+    else if(approach==SideApproach)
+      {
+-       //      std::cerr << "State:::" << State << std::endl;
+-       //std::cerr << "pos:" << pos(2) << std::endl;
+        // Local Variables
+        Vector3 position(0), attitude(0);
+        position = pos;
+--- 1351,1356 ----
+***************
+*** 1443,1450 ****
+  	  {
+  	    // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
+  	    if( cur_time>(ex_time[0]*0.80) )
+! 	      if(avgSig(0)>1.0)
+! 	      //if(avgSig(0)>9)				// Lateral contact for x-axis
+  		{
+  		  NextStateActions(cur_time);
+  		}
+--- 1365,1371 ----
+  			{
+  				// Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
+  				if( cur_time>(ex_time[0]*0.80) )
+! 					if(avgSig(0)>9)				// Lateral contact for x-axis
+  					{
+  						NextStateActions(cur_time);
+  					}
+***************
+*** 1455,1496 ****
+  	case 2:
+  	  {
+  	    // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
+- #ifdef SIMULATION 
+  	    if( cur_time>(ex_time[1]*0.90) )
+! 	      // if(avgSig(4)>0.60) // upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+  		{
+  		  NextStateActions(cur_time);
+  		}
+- #else
+- 	    //if(CurJointAngles(4)<0.1919)
+- 	    //{
+- 		NextStateActions(cur_time);
+- 		//}
+- #endif
+  	  }
+  	  break;
+  
+  	  // Transition from State 3a to 3b: Snap Insertion to Push Down insertion
+  	case 3:
+  	  {
+! #ifdef SIMULATION
+! 	    if(attitude(1) < -1.550)
+! 	      //	    if(CurJointAngles(4)<0.116877)//for simulation
+! 	      //if(CurJointAngles(4)<0.097688)
+! 	    // if(CurJointAngles(4)<-0.264) // if the wrist pitch joint angle is less than 14 degrees
+! 	    //if(CurJointAngles(4)<-0.104717333)
+! 	    //if(CurJointAngles(4)<0.104717333) // if the wrist pitch joint angle is less than 6 degrees
+  	      {
+  		NextStateActions(cur_time);
+  	      }
+- #else
+- 	    //if(CurJointAngles(4)<0.1919)
+- 	    //if(CurJointAngles(4)<0.1395)
+- 	    if(attitude(1) < -1.555)
+- 	      {
+- 		NextStateActions(cur_time);
+- 	      }
+- #endif
+  	  }
+  	  break;
+  
+--- 1376,1396 ----
+  			case 2:
+  			{
+  				// At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
+  				if( cur_time>(ex_time[1]*0.90) )
+! 					if(avgSig(4)>0.60) // upon first contact it surpasses 0.5 but then descends for some time until another interior contact raies it past 0.75
+  					{
+  						NextStateActions(cur_time);
+  					}
+  			}
+  			break;
+  
+  			// Transition from State 3a to 3b: Snap Insertion to Push Down insertion
+  			case 3:
+  			{
+! 				if(CurJointAngles(4)<0.104717333) // if the wrist pitch joint angle is less than 6 degrees
+  				{
+  					NextStateActions(cur_time);
+  				}
+  			}
+  			break;
+  
+***************
+*** 1498,1506 ****
+  	case 4:
+  	  {
+  	    // If the height of the wrist is less than 0.7290 we are finished
+! 	    //if(pos(2)<0.533) for simulation
+! 	      //	    if(pos(2)<0.07290)
+! 	    if(pos(2) < 0.30)
+  	      {
+  		NextStateActions(cur_time);
+  		return PA_FINISH;
+--- 1398,1404 ----
+  			case 4:
+  			{
+  				// If the height of the wrist is less than 0.7290 we are finished
+! 				if(pos(2)<0.07290)
+  				{
+  					NextStateActions(cur_time);
+  					return PA_FINISH;
+***************
+*** 1571,1579 ****
+  	EndEff_p_org(1) + (y_pos[i]-EndEff_p_org(1)) * coswt,
+  	EndEff_p_org(2) + (z_pos[i]-EndEff_p_org(2)) * coswt;
+  
+!       EndEff_r = 	EndEff_r_org(0) + (diffAngle( roll_angle[i],EndEff_r_org(0))) * coswt,
+! 	EndEff_r_org(1) + (diffAngle(pitch_angle[i],EndEff_r_org(1))) * coswt,
+! 	EndEff_r_org(2) + (diffAngle(yaw_angle[i],EndEff_r_org(2))) * coswt;
+  
+        //		hand[0] = 	lhand_org + (l_hand[i] - lhand_org) * coswt;
+        //		hand[1] = 	rhand_org + (r_hand[i] - rhand_org) * coswt;
+--- 1469,1477 ----
+  					EndEff_p_org(1) + (y_pos[i]-EndEff_p_org(1)) * coswt,
+  					EndEff_p_org(2) + (z_pos[i]-EndEff_p_org(2)) * coswt;
+  
+! 		EndEff_r = 	EndEff_r_org(0) + ( roll_angle[i]-EndEff_r_org(0)) * coswt,
+! 					EndEff_r_org(1) + (pitch_angle[i]-EndEff_r_org(1)) * coswt,
+! 					EndEff_r_org(2) + (  yaw_angle[i]-EndEff_r_org(2)) * coswt;
+  
+  //		hand[0] = 	lhand_org + (l_hand[i] - lhand_org) * coswt;
+  //		hand[1] = 	rhand_org + (r_hand[i] - rhand_org) * coswt;
+***************
+*** 1588,1596 ****
+  	y_pos[i-1] + (y_pos[i]-y_pos[i-1]) * coswt,
+  	z_pos[i-1] + (z_pos[i]-z_pos[i-1]) * coswt;
+  
+!       EndEff_r = 	roll_angle[i-1]  + (diffAngle(  roll_angle[i] , roll_angle[i-1]))  * coswt,
+!       	pitch_angle[i-1] + (diffAngle( pitch_angle[i] , pitch_angle[i-1])) * coswt,
+!       	yaw_angle[i-1]   + (diffAngle(yaw_angle[i] , yaw_angle[i-1]))   * coswt;
+  
+        //		hand[0] = 	l_hand[i-1] + (l_hand[i] - l_hand[i-1]) * coswt;
+        //		hand[1] = 	r_hand[i-1] + (r_hand[i] - r_hand[i-1]) * coswt;
+--- 1486,1494 ----
+  					y_pos[i-1] + (y_pos[i]-y_pos[i-1]) * coswt,
+  					z_pos[i-1] + (z_pos[i]-z_pos[i-1]) * coswt;
+  
+! 		EndEff_r = 	roll_angle[i-1]  + (  roll_angle[i] - roll_angle[i-1])  * coswt,
+! 					pitch_angle[i-1] + ( pitch_angle[i] - pitch_angle[i-1]) * coswt,
+! 					yaw_angle[i-1]   + (   yaw_angle[i] - yaw_angle[i-1])   * coswt;
+  
+  //		hand[0] = 	l_hand[i-1] + (l_hand[i] - l_hand[i-1]) * coswt;
+  //		hand[1] = 	r_hand[i-1] + (r_hand[i] - r_hand[i-1]) * coswt;
+***************
+*** 1620,1632 ****
+    return ret;
+  }
+  
+- double AssemblyStrategy::diffAngle(double to,double from){
+-   double offset = 0.0;
+-   if(to-from > 3.1415) offset = -6.283;
+-   if(to-from < -3.1415) offset = 6.283;
+-   return to - from + offset;
+- }
+- 
+  /******************************************** Other Functions ********************************************************/
+  // manipulationTest()
+  // Designed to test the performance of force and moment controllers individually for each axis: +/-X, +/-Y, +/-Z
+--- 1518,1523 ----
+***************
+*** 1955,1968 ****
+  void AssemblyStrategy::FreeResources(ctrlComp type)
+  {
+    // Free allocated resources
+!   if(type==ForceComposition || type==ForceIKinComposition)
+!     delete c1;
+!   if(type==MomentForceComposition ||type==ForceMomentComposition){
+  		delete c1;
+      delete c2;
+- 	}
+- 		
+- 	
+    //	if(c3!=NULL)
+    //		delete c3;
+  }
+--- 1846,1855 ----
+   void AssemblyStrategy::FreeResources(ctrlComp type)
+   {
+  	// Free allocated resources
+! 	if(type==ForceComposition)
+  		delete c1;
++ 	if(type==MomentForceComposition)
+  		delete c2;
+  //	if(c3!=NULL)
+  //		delete c3;
+   }
+***************
+*** 2045,2063 ****
+    std::cerr << "\nAssemblyStrategy::OpenFiles - Entering" << std::endl;	
+  #endif	
+  
+- 	ifstream fp;
+- 	string x,y,z;
+- 	fp.open("./position_offset.txt");
+- 	fp >> x >> y >> z;
+- 	fp.close();
+- 	string suffix = "_x" + x + "y" + y + "z" + z;
+    /*************************************** Robot Angles ***************************************/
+    //	#ifdef LINUX
+    //		ostr_angles.open(strAngles);
+    //		std::cerr << "\nWorking with linux";
+    //	#elif
+! 	string filename = "Angles" + suffix + ".dat";
+!   ostr_angles.open(filename.c_str()); //strAngles);
+    //	#endif
+    if (!ostr_angles.is_open())
+      std::cerr << ANGLES_FILE << " was not opened." << std::endl;
+--- 1932,1943 ----
+  		std::cerr << "\nAssemblyStrategy::OpenFiles - Entering" << std::endl;	
+   	#endif	
+  
+  	/*************************************** Robot Angles ***************************************/
+  //	#ifdef LINUX
+  //		ostr_angles.open(strAngles);
+  //		std::cerr << "\nWorking with linux";
+  //	#elif
+! 		ostr_angles.open("Angles.dat"); //strAngles);
+  //	#endif
+  	if (!ostr_angles.is_open())
+  		std::cerr << ANGLES_FILE << " was not opened." << std::endl;
+***************
+*** 2067,2074 ****
+    //		ostr_cartPos.open(strCartPos);
+    //		std::cerr << "\nWorking with linux";
+    //	#elif
+! 	filename = "CartPos" + suffix + ".dat";
+!   ostr_cartPos.open(filename.c_str()); //strCartPos);
+    //	#endif
+    if (!ostr_cartPos.is_open())
+      std::cerr << CARTPOS_FILE << " was not  opened." << std::endl;
+--- 1947,1953 ----
+  //		ostr_cartPos.open(strCartPos);
+  //		std::cerr << "\nWorking with linux";
+  //	#elif
+! 	ostr_cartPos.open("CartPos.dat"); //strCartPos);
+  //	#endif
+  	if (!ostr_cartPos.is_open())
+  		std::cerr << CARTPOS_FILE << " was not  opened." << std::endl;
+***************
+*** 2078,2085 ****
+    //		ostr_state.open(strState);
+    //		std::cerr << "\nWorking with linux";
+    //	#elif
+! 		filename = "State" + suffix + ".dat";
+!   ostr_state.open(filename.c_str()); //strState);
+    //	#endif
+    if (!ostr_state.is_open())
+      std::cerr << STATE_FILE << " was not opened." << std::endl;
+--- 1957,1963 ----
+  //		ostr_state.open(strState);
+  //		std::cerr << "\nWorking with linux";
+  //	#elif
+! 	ostr_state.open("State.dat"); //strState);
+  //	#endif
+  	if (!ostr_state.is_open())
+  		std::cerr << STATE_FILE << " was not opened." << std::endl;
+***************
+*** 2091,2109 ****
+    //		ostr_Forces.open(strForces);
+    //		std::cerr << "\nWorking with linux";
+    //	#elif
+! 		filename = "Torques" + suffix + ".dat";
+!   ostr_Forces.open(filename.c_str());//strForces);
+    //	#endif
+    if (!ostr_Forces.is_open())
+      std::cerr << FORCES_FILE << " was not opened." << std::endl;
+- 	filename = "Des" + suffix + ".dat";
+-   ostr_des.open(filename.c_str());
+-   if(!ostr_des.is_open())
+-     std::cerr << "des.dat was not opened." << std::endl;
+- 	filename = "Cur" + suffix + ".dat";
+-   ostr_cur.open(filename.c_str());
+-   if(!ostr_cur.is_open())
+-     std::cerr << "cur.dat was not opened." << std::endl;
+    
+  #ifdef DEBUG_PLUGIN3
+    std::cerr << "\nAssemblyStrategy::OpenFiles - Exiting" << std::endl;	
+--- 1969,1978 ----
+  //		ostr_Forces.open(strForces);
+  //		std::cerr << "\nWorking with linux";
+  //	#elif
+! 	ostr_Forces.open("Torques.dat");//strForces);
+  //	#endif
+  	if (!ostr_Forces.is_open())
+  		std::cerr << FORCES_FILE << " was not opened." << std::endl;
+  
+  		#ifdef DEBUG_PLUGIN3
+  		std::cerr << "\nAssemblyStrategy::OpenFiles - Exiting" << std::endl;	
+***************
+*** 2134,2148 ****
+    if(ostr_state.is_open())
+      ostr_state.close();
+    ostr_state.clear();
+- 
+-   if(ostr_des.is_open())
+-     ostr_des.close();
+-   ostr_des.clear();
+- 
+-   if(ostr_cur.is_open())
+-     ostr_cur.close();
+-   ostr_cur.clear();
+- 
+  }
+  
+  /*********************************************************************************************************************************************************/
+--- 2003,2008 ----
+***************
+*** 2220,2226 ****
+    std::cerr << "\nAssemblyStrategy::ProcessTrajFile - Entering" << std::endl;
+  #endif	
+  
+-   string filename = "pivotApproachState1.dat";
+    // If we enter state 2
+    if(State==2)
+      {
+--- 2080,2085 ----
+***************
+*** 2240,2246 ****
+        // The first line is the current position
+        // The second line keeps the same pose, but sets the goal orientation to be parallel to the ground
+        ostr_TrajState2 << cur_time 		<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << rpy(0) << "\t" << rpy(1)  << "\t" << rpy(2) << "\n";
+!       ostr_TrajState2 << traj2_goaltime 	<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << 0.00   << "\t" << -1.5708 << "\t" << 0.00;
+  
+        // 3) Close file
+        if(ostr_TrajState2.is_open())
+--- 2099,2105 ----
+  		// The first line is the current position
+  		// The second line keeps the same pose, but sets the goal orientation to be parallel to the ground
+  		ostr_TrajState2 << cur_time 		<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << rpy(0) << "\t" << rpy(1)  << "\t" << rpy(2) << "\n";
+! 		ostr_TrajState2 << traj2_goaltime 	<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << 0.00   << "\t" << -1.5708 << "\t" << -1.5708;
+  
+  		// 3) Close file
+  		if(ostr_TrajState2.is_open())
+***************
+*** 2255,2262 ****
+        roll_angle.clear();
+        pitch_angle.clear();
+        yaw_angle.clear();
+- 
+-       filename = "pivotApproachState2.dat";
+      }
+  
+    // State 1
+--- 2114,2119 ----
+***************
+*** 2266,2272 ****
+  #endif
+  	
+    ifstream fp;
+! 
+  
+  
+    struct stat st;
+--- 2123,2129 ----
+  	#endif
+  	
+  	ifstream fp;
+! 	string filename = "pivotApproachState1.dat";
+  
+  
+  	struct stat st;
+***************
+*** 2293,2300 ****
+  	  // Read data into x, and then push it into the relevant vector.
+  	  fp >> x;
+  
+- 	  if(fp.eof()) break;
+- 	
+  	  ex_time.push_back(x);								// Waypoint time
+  		
+  #ifdef DEBUG_PLUGIN3
+--- 2150,2155 ----

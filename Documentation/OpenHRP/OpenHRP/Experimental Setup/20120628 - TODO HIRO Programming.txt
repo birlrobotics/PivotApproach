@@ -1,0 +1,99 @@
+TODO: hiro
+
+- In QNX, create timed folders to save results for each experiment
+
+----------------------------------------------------------------------------------------------
+snapVerification.m
+----------------------------------------------------------------------------------------------
+Primitives
+----------------------------------------------------------------------------------------------
+1) changed plotType (L23) from a row cell, to a col vec of strings. 
+
+
+fitRegressionCurves.m
+1) Change statData from cell to zeros vector (L58).
+	2) statisticalData.m is changed to render dLabel from cell to INT in (L197, L245).
+	gradLbl2gradInt: -Imp -Big -Med -Small Const Small Med Big Imp
+			  -4   -3   -2     -1   0       1   2   3   4		
+
+3) Change dLabel from string to int (L202).
+4) gradLabels. Changed from row cell vector to column string array. (L78).
+5) WRAP-UP (L264): For the computation of "Range=indexStart:wFinish;" as soon as the second
+   iteration starts, indexStart is updated to be a number that is greater than the size of the rows.
+   In online generation we are doing piece-wise analysis at this moment, so we can replace
+   indexStart with the value of 1.
+6) Commented out dataFit. Datafit data will not belong to previous segments of data for now. So we do not need to compute its boundaries.
+
+primitivesCleanup.m
+- change all stateData and gradLabels
+
+MergePrimitives.m
+- change data from cell array to row int array
+
+DeleteEmptyRows.m
+- change all data from cell to array.
+- change [isempty()] to all(data(i,:)==0)
+
+resizeData.m
+- change isempty to all(data(i,:)==0)
+
+
+
+CELL ARRAYS THAT WERE MODIFIED
+
+Primitives Layer
+- statData
+- gradLabels
+
+----------------------------------------------------------------------------------------------
+Composites
+----------------------------------------------------------------------------------------------
+
+1) CompoundMotionCompositions
+- Changed motComps from cell to int array. 
+- Changed curly brackets for statData and gradLabels to parenthesis
+- Changed arguments for gradLabels from (lbl) to (lbl,:) to account for the new string vector
+- include a gradInt2gradLbl to all statData(index,#) commands
+
+2) primMatchEval
+- changed the actionLbl cell array to a int row vector with values of [10,20,..,80].
+- Changed empty motcomps cell (L106) to a vector of zeros. Also in (L784)
+- Changed statData{} to statData()
+- Changed gradLabels{} to gradLabels()
+- Inserted a gradInt2gradLbl for statData lines that use strcmp
+
+3) CleanUp
+- motComps{} to motComps()
+- actionLbl{} to actionLbl()
+- strcmp's
+
+4) MergeCompositions
+- data{} to data()
+
+5) computePercentageThresh
+- {} to ()
+
+6) plotMotionCompositions
+- {} to ()
+
+----------------------------------------------------------------------------------------------
+Low-Level Behavior
+----------------------------------------------------------------------------------------------
+1) llbehComposition
+- add global DB_PRINT, DB_WRITE
+- llbehStruc{} to []
+- actionLbl{} to []
+- motComps{} to []
+- strcmp to intcmp
+- add actionLbl2actionInt on actionLbl lines
+
+2) motCompsMatchEval
+- llbehStruc{} to []
+- actionLbl{} to []
+- motComps{} to []
+- strcmp to intcmp
+- llbehLbl{} to ()
+
+3) Refinement
+{} to ()
+strings to 

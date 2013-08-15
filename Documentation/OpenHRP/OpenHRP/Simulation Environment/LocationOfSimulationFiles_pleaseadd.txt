@@ -1,0 +1,10 @@
+Please note that the main simulation file is:
+
+HRP2STEP1_Pivot.xml or variable. Found at: $(OPENHRPHOME)/client/gui/project.
+
+This file includes 3 references to other files:
+1) main.wrl: located at  $(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/model
+2) main_pivot.wrl: located at $(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/model
+3) femaleCam.wrl could be locaTED AT $(OPENHRPHOME)/etc/model or $(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/model.
+
+Additionally, main_pivot.wrl includes the file upper_vrml_1000.wrl which is located at: $(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/model.

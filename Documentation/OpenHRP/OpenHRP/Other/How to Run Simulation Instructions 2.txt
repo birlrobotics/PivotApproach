@@ -1,0 +1,12 @@
+Follow the next 4 steps to setup Chorenoid after installation:
+
+1) Change all paths that include /harada/src to /juan/openhrp
+
+
+2) Remove "rtc" and "bridge" from two Makefile's found at: /Controller and /Controller/server
+
+
+3) Change the path for the TOP variable found at: forceSensorPlugin/Makefile.setup
+
+
+4) Install libqdbm++-dev
