@@ -175,23 +175,6 @@ hiroArm::~hiroArm()
 /*************************************************************************************************************/
 void hiroArm::init()
 {
-  //~ std::string f_name1 = "/home/hrpuser/yamanobe/data/" + name + "_force.dat";
-  //~ std::string f_name2 = "/home/hrpuser/yamanobe/data/" + name + "_pos.dat";
-  //~ std::string f_name3 = "/home/hrpuser/yamanobe/data/" + name + "_vel.dat";
-  //~ std::string f_name1 = "./data/" + name + "_force.dat";
-  //~ std::string f_name2 = "./data/" + name + "_pos.dat";
-  //~ std::string f_name3 = "./data/" + name + "_vel.dat";
-
-  //~ if((fp1=fopen(f_name1.c_str(),"w"))==NULL){
-  //~ std::cerr<< "file open error!!" << std::endl;
-  //~ }
-  //~ if((fp2=fopen(f_name2.c_str(),"w"))==NULL){
-  //~ std::cerr<< "file open error!!" << std::endl;
-  //~ }
-  //~ if((fp3=fopen(f_name3.c_str(),"w"))==NULL){
-  //~ std::cerr<< "file open error!!" << std::endl;
-  //~ }
-
   update_currposdata();
   rPh_ref = rPh;
   rRh_ref = rRh;
@@ -199,7 +182,7 @@ void hiroArm::init()
 }
 
 /*************************************************************************************************************/
-// Init()
+// init()
 // Initialization Routine for a selected arm. Compute the position vector and rotation matrix from base to end effector
 // Different behavior according to user.
 // Kensuke: Open position and force data for left and right arms.
@@ -211,15 +194,12 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
 #ifdef DEBUG_PLUGIN2
   std::cerr << "\nhiroArm::init - entered" << std::endl;
 #endif 
-
   int ret = 0;
 
 #ifdef PIVOTAPPROACH
-
-  /*************************************** Initialize Strategy ***************************************/
-
   //******************************************** Pivot Approach ***********************************************************************/
 
+  /*************************************** Initialize Strategy ***************************************/
   // PA can use three optional user specified files to read or write information (designed for one arm):
   // Read: Trajectory File - Reads Trajectory.
   // Write: State File - writes times at which new states start.
@@ -245,10 +225,10 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
   strcat(TrajState1,	"/pivotApproachState1.dat");	// Desired Trajectory
   strcat(TrajState2,	"/pivotApproachState2.dat");	// Desired Trajectory
   strcat(manipTest,		"/manipulationTestAxis.dat");	// What test axis do you want to try
-  strcat(Angles,		"/Angles.dat");			// Robot Joint Angles
-  strcat(CartPos,		"/CartPos.dat");			// Cartesian Positions
-  strcat(State,			"/State.dat");			// New States Time Ocurrence
-  strcat(Forces,		"/Torques.dat");			// Robot Forces/Moments
+  strcat(Angles,		"/Angles.dat");					// Robot Joint Angles
+  strcat(CartPos,		"/CartPos.dat");				// Cartesian Positions
+  strcat(State,			"/State.dat");					// New States Time Occurrence
+  strcat(Forces,		"/Torques.dat");				// Robot Forces/Moments
 
   // Initialize PA with these directories
   ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, pos, rot, CurAngles);	// Initialize: Records waypoints from desired trajectory file
@@ -259,7 +239,7 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
   update_currposdata();
   rPh_ref = rPh;			// Base2EndEff position translation
   rRh_ref = rRh;			// Base2EndEff rotation matrix
-  q_ref = q;			// At home joint angles
+  q_ref = q;				// At home joint angles
 
 #ifdef DEBUG_PLUGIN2
   std::cerr << "\nhiroArm::init - exited" << std::endl;
@@ -280,21 +260,17 @@ void hiroArm::savedata()
 	  rRh(0,0),rRh(0,1),rRh(0,2),	// Rotation matrix terms for base 2 end effector
 	  rRh(1,0),rRh(1,1),rRh(1,2),
 	  rRh(2,0),rRh(2,1),rRh(2,2));
-  /*//~ fprintf(fp1,"%f %f %f %f %f %f\n",rFfs_gc[0],rFfs_gc[1],rFfs_gc[2],rMfs_gc[0],rMfs_gc[1],rMfs_gc[2]); arm terms
-  //~ vector3 tmp = OpenHRP::rpyFromRot(rRh);
-  //~ fprintf(fp2,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",rPh[0],rPh[1],rPh[2],tmp[0],tmp[1],tmp[2], rRh(0,0),rRh(0,1),rRh(0,2), rRh(1,0),rRh(1,1),rRh(1,2), rRh(2,0),rRh(2,1),rRh(2,2));
+  /*printf(fp1,"%f %f %f %f %f %f\n",rFfs_gc[0],rFfs_gc[1],rFfs_gc[2],rMfs_gc[0],rMfs_gc[1],rMfs_gc[2]); arm terms
+	vector3 tmp = OpenHRP::rpyFromRot(rRh);
+	fprintf(fp2,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",rPh[0],rPh[1],rPh[2],tmp[0],tmp[1],tmp[2], rRh(0,0),rRh(0,1),rRh(0,2), rRh(1,0),rRh(1,1),rRh(1,2), rRh(2,0),rRh(2,1),rRh(2,2));
   */
 }
-
 
 /*******************************************************************************************************
  // get_name()
  // Return whether right or left arm
  *******************************************************************************************************/
-std::string hiroArm::get_name()
-{
-  return name;
-}
+std::string hiroArm::get_name() { return name; }
 
 /********************************************************************************
  * update_currposdata()
@@ -308,21 +284,21 @@ std::string hiroArm::get_name()
  *********************************************************************************/
 void hiroArm::update_currposdata()
 {
-  // base2wrist position. Homing pos: <0.3019, -0.1724, 0.064>
-  rPe = body->joint(NUM_q0 + ARM_DOF -1)->p;
+	// base2wrist position. Homing pos: <0.3019, -0.1724, 0.064>
+	rPe = body->joint(NUM_q0 + ARM_DOF -1)->p;
 #ifdef DEBUG_PLUGIN2
-  cerr << "hiroArm::updated_currposdata - rPe is: " << rPe(0) << " " << rPe(1) << " " << rPe(2) << std::endl;
+	cerr << "hiroArm::updated_currposdata - rPe is: " << rPe(0) << " " << rPe(1) << " " << rPe(2) << std::endl;
 #endif
-  // base2wrist rotation matrix
-  rRe = body->joint(NUM_q0 + ARM_DOF -1)->segmentAttitude();
+	// base2wrist rotation matrix
+	rRe = body->joint(NUM_q0 + ARM_DOF -1)->segmentAttitude();
 
-  // Current joint angles
-  for(int i=0; i<ARM_DOF; i++)
-    q[i] = body->joint(NUM_q0 + i)->q;
+	// Current joint angles
+	for(int i=0; i<ARM_DOF; i++)
+		q[i] = body->joint(NUM_q0 + i)->q;
 
-  wrist2EndEffXform(/*in*/rPe, /*in*/rRe, /*out*/rPh, /*out*/rRh);
+	wrist2EndEffXform(/*in*/rPe, /*in*/rRe, /*out*/rPh, /*out*/rRh);
 #ifdef DEBUG_PLUGIN2
-  cerr << "hiroArm::updated_currposdata - rPh is: " << rPh(0) << " " << rPh(1) << " " << rPh(2) << std::endl;
+	cerr << "hiroArm::updated_currposdata - rPh is: " << rPh(0) << " " << rPh(1) << " " << rPh(2) << std::endl;
 #endif
 }
 
@@ -384,30 +360,30 @@ dvector6 hiroArm::get_qcur()
  *******************************************************************************************************/
 void hiroArm::update_currforcedata()
 {
-  // update current force-moment data
-  //	if(fs != 0)
-  //	{
-  double f_out[6];
+	// update current force-moment data
+	//	if(fs != 0)
+	//	{
+	double f_out[6];
 
-  // A) Read raw forces
-  //get_raw_forces(f_out); // Updated Aug 2012 for OldHiro
-  ifs_read_data(0,f_out);
+	// A) Read raw forces
+	//get_raw_forces(f_out); // Updated Aug 2012 for OldHiro
+	ifs_read_data(0,f_out);
 
-  // B) Separate them into force and moment
-  for(int i=0; i<3; i++)
-    {
-      fsF_raw[i] = f_out[i];
-      fsM_raw[i] = f_out[i+3];
-    }
+	// B) Separate them into force and moment
+	for(int i=0; i<3; i++)
+	{
+		fsF_raw[i] = f_out[i];
+		fsM_raw[i] = f_out[i+3];
+	}
 
-  // If gravitational component flag is true
-  if(f_gc)
-    {
-      // Calculate the hand's gravitational force and moment
-      calc_gc_forces(rFfs_gc, rMfs_gc);			// Arm's force and moment
-      calc_gc_forces_at_hand(rFh_gc, rMh_gc);		// Hand's force and moment
-    }
-  //	}
+	// If gravitational component flag is true
+	if(f_gc)
+	{
+		// Calculate the hand's gravitational force and moment
+		calc_gc_forces(rFfs_gc, rMfs_gc);			// Arm's force and moment
+		calc_gc_forces_at_hand(rFh_gc, rMh_gc);		// Hand's force and moment
+	}
+	//	}
 }
 
 #if 0
@@ -504,7 +480,7 @@ bool hiroArm::velocity_control(vector3 rdP, vector3 rW, bool f_new)
 
   // 1) Calculate the next step joint-angle using the Jacobian.
   dvector6 q_next, dq;
-  dvector6 dx; 														// velocity at the arm end frame
+  dvector6 dx; 															// velocity at the arm end frame
 
   // Change the input velocity from endeffector to wrist
   vector3 rdPe, rWe;													// base-to-wrist
@@ -513,7 +489,7 @@ bool hiroArm::velocity_control(vector3 rdP, vector3 rW, bool f_new)
   rdPe = rdP + cross(rW, (rRe*(-ePh)));
   for(int i=0; i<3; ++i)
     {
-      dx(i)	=rdPe(i);												// Lin Velocity at wrist
+      dx(i)	=rdPe(i);													// Lin Velocity at wrist
       dx(i+3)	=rWe(i);												// Angular Velocity at Wrist
       //~ dx(i)=rdP(i);
       //~ dx(i+3)=rW(i);
@@ -529,7 +505,7 @@ bool hiroArm::velocity_control(vector3 rdP, vector3 rW, bool f_new)
 
   // Compute the Jacobian and the Pseudoinverse
   jacob 	 = m_path->Jacobian(); 										//inv_jacob = OpenHRP::inverse(jacob);
-  bool ret = OpenHRP::calcPseudoInverse(jacob, inv_jacob,1.0e-18);
+  bool ret   = OpenHRP::calcPseudoInverse(jacob, inv_jacob,1.0e-18);
 
   // Check if correct
   if(ret !=0)

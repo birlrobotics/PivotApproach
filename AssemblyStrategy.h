@@ -221,11 +221,11 @@ class AssemblyStrategy {
   bool 		noContact;					// Flag become true when after a contact, the private member m_ContactPt return to the zero value.
 
   // Manipulation Test
-  int testCounter;
-  int compositionTypeTest;
-  int DesForceSwitch;
-  bool initialFlag;
-  bool completionFlag;
+  int 		testCounter;
+  int 		compositionTypeTest;
+  int 		DesForceSwitch;
+  bool 		initialFlag;
+  bool 		completionFlag;
 
   // Transition
   double  	signChanger;				// Changes the sign of data after a certain amount of time.
@@ -278,6 +278,9 @@ class AssemblyStrategy {
   vector<double> 	ex_time, x_pos, y_pos, z_pos;				// Save robot position in vectors
   vector<double>	roll_angle, pitch_angle, yaw_angle;			// Endeffector orientation in terms of roll picth angle
   double angle_o[7]; 											// rhand_org, lhand_org, hando[2],
+
+  // Failure Case Characterization
+  dvector6 divPoint;											// This vector will hold x,y, and roll, yall values that will be added to the way-points in order to control which directions we want to modify to test failure case scenarios
 
   // Files
   ifstream ifstr_pivApproachState1;																			// Input Streams
@@ -335,8 +338,12 @@ class AssemblyStrategy {
 							  dmatrix 		Jacobian,
 							  dmatrix 		PseudoJacobian);
 
-  // Motion
+  // Motion Methods
+  // moveRobot: take waypoints, convert them from end-effector coords to wrist coordinates and write the values to the private member vars. Later used by Inverse Kinematics functions to convert the wrist position into joint angle variables.
   bool moveRobot(double cur_time);
+
+  // manipulationTest:
+  // User can assign axis of motion in which one would like to test either the force controllers or the moment controllers
   int manipulationTest(TestAxis 		axis,
 					   bool&			completionFlag,
 					   JointPathPtr 	m_path,
