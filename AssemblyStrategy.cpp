@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE 0.01
+#define PATH_DEVIATION_MAGNITUDE 0.0075
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1548,7 +1548,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				break;
 		}
 	}
-
+	/*--------------------------------------------------------------------------------- SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
 	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
 		#ifdef DEBUG_PLUGIN3
@@ -1711,12 +1711,12 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   // Trajectory-stage Divider
   // If the time-stamp (from way-point file) is less than the accumulated time of our simulation, increase counter i.
   for(int j=0; j<T; j++)
-    {
-      // Compare cur_time, which is the time recorded in code (every cycle of onExecute updates by 0.001) with the waypoint time slots (i.e. 4 secs, 7 secs, 10 secs).
-      if(ex_time[j] < cur_time)
-	i++;						// Increments when new time stage arrives but it is never equal to the last one.
-      // So, I can be 0,1, but it is not set to two.
-    }
+  {
+	  // Compare cur_time, which is the time recorded in code (every cycle of onExecute updates by 0.001) with the waypoint time slots (i.e. 4 secs, 7 secs, 10 secs).
+	  if(ex_time[j] < cur_time)
+		  i++;						// Increments when new time stage arrives but it is never equal to the last one.
+	  // So, I can be 0,1, but it is not set to two.
+  }
 
   // Trajectory-stages with/without noise
   // Create vector for current position/rotation of the wrist. Can also be computed for the gripper if we used the array: hand[2]
@@ -1762,11 +1762,15 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   }
   //-------------------------------------------------------------------------------------------------------------------------------------------
   // Stage 3: third Waypoint: assign the previous position, which is at the desired and final waypoint.
-  //-------------------------------------------------------------------------------------------------------------------------------------------
+  //---------------	----------------------------------------------------------------------------------------------------------------------------
   else
     {
-      EndEff_p = 	x_pos[i-1],		 y_pos[i-1],		z_pos[i-1];
-      EndEff_r = 	roll_angle[i-1], pitch_angle[i-1],	yaw_angle[i-1];
+      EndEff_p = x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
+    		  	 y_pos[i-1]			+divPoint(1),
+    		  	 z_pos[i-1]			+divPoint(2);
+      EndEff_r = roll_angle[i-1]	+divPoint(3),
+    		     pitch_angle[i-1]	+divPoint(4),
+    		     yaw_angle[i-1]		+divPoint(5);
       //		hand[0] = 	l_hand[i-1];
       //		hand[1] = 	r_hand[i-1];
       ret = false;

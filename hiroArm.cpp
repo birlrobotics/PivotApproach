@@ -127,12 +127,13 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
   // Set Body linksOB
   //Link* S0 = body->link(CHEST_JOINT);						// SO link starts at the chest joint. It's the first link, then two for the head, then six for the right arm, then six for the left arm
   Link* S0 = body->joint(CHEST_JOINT0);
+
   //Link* W6 = body->joint(NUM_q0 + ARM_DOF - 1);			// The wrist occurs six links later (i.e.start+6-1).
   Link* W6;
   if(NUM_q0 == RARM_JOINT0)
-    W6 = body->joint(RARM_JOINT5); // Is it joint or link?
+	  W6 = body->joint(RARM_JOINT5); // Is it joint or link?
   else
-    W6 = body->joint(LARM_JOINT5); // Is it joint or link?
+	  W6 = body->joint(LARM_JOINT5); // Is it joint or link?
 	
   if(!S0)
     std::cerr << "S0 is null\n";
@@ -1012,6 +1013,7 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
       std::cerr << "Duration of Jacobian Computations in hiroArm::PivotApproach() is: " << dJ << "ms." << std::endl;		
     }
 #endif	
+
   // Run test or actual pivot approach strategy
   if(TEST)
     {
@@ -1051,18 +1053,18 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
   else
     {
       // Invoke the state machine to run the pivot approach using the control basis
-      ret = PA->StateMachine( PA->none,						// use all axis to run test. Not applicable here since the flag test is off.
-							  PA->SideApproach,				// Type of approach. Can choose between the straight line approach and the pivot approach
-							  m_path,
-							  body,							// JointPathPtr and BodyPtr. Used to compute kinematic variables.
-							  cur_time,
-							  pos,
-							  rot,
-							  currForces,					// Current time, base2EndEff position/rotation
-							  JointAngleUpdate,				// Joint Angle Update produced by control basis
-							  CurrAngles,
-							  Jac,
-							  PseudoJac);					// Jacobian and Pseudo Jacobian
+      ret = PA->StateMachine( PA->none,											// Use all axis to run test. Not applicable here since the flag test is off.
+    		  	  	  	  	  (AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,	// Type of approach. Can choose between the straight line approach and the pivot approach
+							  m_path,											// Pointer containing Arm Path (joints and links)
+							  body,												// Pointer containting whole body (joints and links)
+							  cur_time,											// Current internal clock time (not synced to GrxUI Simulation clock)
+							  pos,												// Current wrist position in Cartesian Coordinates
+							  rot,												// Rotation state of wrist
+							  currForces,										// Current Torques and Moments at the wrist
+							  JointAngleUpdate,									// Joint Angle Update produced by control basis
+							  CurrAngles,										// Current Arm Joint Angles
+							  Jac,												// Jacobian
+							  PseudoJac);										// JPseudo Jacobian
     }
 
   // Copy CurrAngles to qref if kinematics did not fail
