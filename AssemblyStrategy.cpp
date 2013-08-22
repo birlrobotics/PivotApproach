@@ -3,9 +3,9 @@
   *  Created on: Mar 19, 2012
   *      Author: juan
   --------------------------------*/
-
 #include <sys/types.h>
 #include <sys/stat.h>
+/* The following definitions are here for Reference. They are used in hiroArm.cpp
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Files: PivotApproach. In fact, the directory path is provided through the Initialization function, which is called from hiroArm. But these are here for reference or manual use.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -20,19 +20,44 @@
 #define CARTPOS_FILE			"./data/Results/CartPos.dat"								// Save CartPos of End-Effector in world coordinates
 #define STATE_FILE				"./data/Results/State.dat"									// Save State Transition times for SideApproach
 #define FORCES_FILE				"./data/Results/Torques.dat"								// Save Joint Torques for robot
+#define MANIP_TEST_FILE			"/manipulationTestAxis.dat"									// Used to test force and moment controllers behavior
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+#define USE_MOTION_DAT 			0			// Should be zero if used with control basis approach or reading a trajectory from file
+#define CONTROL_BASIS			1			// If using the control basis approach
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define STRAIGHT_LINE_APPROACH  0 			// If using the straight line approach for the assembly strategy. If true, then pivot approach should be 0
+#define PIVOT_APPROACH 			0			// Pivot approach. If true, straight line approach should be 0.
+#define SIDE_APPROACH			1			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
+#define FAILURE_CHARAC 			0			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Assigning Strategy File depending on Strategy.
+#if(USE_MOTION_DAT==0) //I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
+
+	// (A) Define the Control Strategy
+	#define CONTROL_TYPE CONTROL_BASIS
+
+	// (B) Define the Assembly Strategy
+	#if(STRAIGHT_LINE_APPROACH)
+		#define MOTION_FILE 	SL_APPROACH_FILE
+		#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+	#elif(PIVOT_APPROACH)
+		#define MOTION_FILE 	PIVOT_APPROACH_FILE
+		#define APPROACH_TYPE 	PIVOT_APPROACH
+	#elif(SIDE_APPROACH)
+		#define MOTION_FILE 	SIDE_APPROACH_FILE
+		#define APPROACH_TYPE 	SIDE_APPROACH
+	#elif(FAILURE_CHARAC)
+		#define MOTION_FILE 	FAILURE_CHARAC_FILE
+		#define APPROACH_TYPE 	FAILURE_CHARAC
+	#endif
+#else
+	#define CONTROL_TYPE USE_MOTION_DAT
+#endif*/
+///----------------------------------------------------------------------------------------------------------------------------------------------------
 // Design Parameters and Flags
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
 #define HIRO					1
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define USE_MOTION_DAT 			0			// Should be zero if used with control basis approach or reading a trajectory fromo file
-#define CtrlBasisFlag			1			// If using the control basis approach
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define STRAIGHT_LINE_APPROACH 0 			// If using the straight line approach for the assembly strategy. If true, then pivot approach should be 0
-#define PIVOT_APPROACH 			0			// Pivot approach. If true, straight line approach should be 0.
-#define SIDE_APPROACH			0			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
-#define FAILURE_CHARAC 			1			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // PA10 & OpenHRP-3.1.* version
 #define DCC			   			0			// Direct Compliance control w/ gravitational compensation. Should be zero if traditional PD torque control used.
@@ -46,17 +71,6 @@
 #define DB_WRITE				1	   		// Used to write angles, cart position, forces, and states to FILE.
 #define DB_TIME 				0		 	// Used to print timing duration of functions
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#if(USE_MOTION_DAT==0) //I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
-	#if(STRAIGHT_LINE_APPROACH)
-		#define MOTION_FILE SL_APPROACH_FILE
-	#elif(PIVOT_APPROACH)
-		#define MOTION_FILE PIVOT_APPROACH_FILE
-	#elif(SIDE_APPROACH)
-		#define MOTION_FILE SIDE_APPROACH_FILE
-	#elif(FAILURE_CHARAC)
-		#define MOTION_FILE FAILURE_CHARAC_FILE
-	#endif
-#endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Vertical Axes in WORLD coordinates using a right handed coordinate system: +Z:Up, +Y:Right, +X:Out
 #if(PA10==1)
@@ -71,31 +85,21 @@
 #define PA_FINISH 10 // value returned when the assembly is finished
 #include "AssemblyStrategy.h"
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Default Constructor
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 AssemblyStrategy::AssemblyStrategy()
 {
 #ifdef DEBUG_PLUGIN3
   std::cerr << "AssemblyStrategy(): Entering Constructor" << std::endl;
 #endif
 
-  // Control
-  if(USE_MOTION_DAT)
-    {
-      CONTROL_PARADIGM = motionData;
-    }
-  else // Control Basis Approach
-    CONTROL_PARADIGM = controlBasis;
+  // Control Method
+  controlType = controlBasis;
 
-  // Strategy Selection
-  if(STRAIGHT_LINE_APPROACH)
-    {
-      approachFlag = true;
-      approachType = StraightLineApproach;
-    }
-  else
-    {
-      approachFlag = false;
-      approachType = PivotApproach;
-    }
+  // Strategy Default
+  approachType = SideApproach;
+  approachFlag = false;
 
   // Pivot Approach Contact
   noContact = true;
@@ -179,11 +183,11 @@ AssemblyStrategy::AssemblyStrategy()
   divPoint 				= (0);
 
   // File Paths: save global path's to internal variables
-  strcpy(strState, 			STATE_FILE);			// File designed to save the time at which new states occur
-  strcpy(strForces,			FORCES_FILE);			// File designed to save the value of forces and moments registered in the task
-  strcpy(strTrajState1,  	MOTION_FILE);			// File that contains the desired position trajectory to be followed
-  strcpy(strAngles,  		ANGLES_FILE);			// File designed to save the joint angles during the task
-  strcpy(strCartPos, 		CARTPOS_FILE);			// File designed to save the cartesian positions during the task
+  strcpy(strState, 			"");			// File designed to save the time at which new states occur
+  strcpy(strForces,			"");			// File designed to save the value of forces and moments registered in the task
+  strcpy(strTrajState1,  	"");			// File that contains the desired position trajectory to be followed
+  strcpy(strAngles,  		"");			// File designed to save the joint angles during the task
+  strcpy(strCartPos, 		"");			// File designed to save the cartesian positions during the task
 
   // Imported Values
   cur_time				= 0.0;						// used in transitions
@@ -196,29 +200,19 @@ AssemblyStrategy::AssemblyStrategy()
 #endif
 
 }
-
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Overloaded Constructor
+// Called from the hiroArm class.
 // Constructor called from HIRO Simulation and passes variables like position, rotation, jacobian, curr_time, curr_force for a given arm. just working with one arm so far.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matrix33 base2endEffectorRot, vector3 ePh, double momentGainFac)
 {
-	// Control
-	if(USE_MOTION_DAT)
-	{
-		CONTROL_PARADIGM = motionData;
-	}
-	else // Control Basis Approach
-		CONTROL_PARADIGM = controlBasis;
+	// Default Control Methodology
+	controlType = controlBasis;
 
-	// Strategy Selection
-	if(STRAIGHT_LINE_APPROACH)
-	{
-		approachFlag = true;
-		approachType = StraightLineApproach;
-	}
-	else
-	{
-		approachFlag = false;
-		approachType = PivotApproach;
-	}
+	// Strategy Default
+	approachType = SideApproach;
+	approachFlag = false;
 
 	// Pivot Approach Contact
 	noContact = true;
@@ -297,7 +291,7 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 		std::cerr << "AssemblyStrategy(): Converting rot2rpy and position transformation." << std::endl;
 	#endif
 
-	// Motion: true end-effector pos and rot
+	// Motion: true end-effector position and rotation
 	EndEff_r_org 			= rpyFromRot(base2endEffectorRot);
 	wrist_r = EndEff_r_org;
 
@@ -307,13 +301,12 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	/** Failure Case Characterization Vector **/
 	// Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
 
-	// Keep at zero
-
+	// Keep the z-axis and the pitch at zero
 	divPoint(2)=0; divPoint(4)=0;
 
 	// Axis to Modify
-	// These modification will be added to the waypoints entered in the pivotApproachState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/. Unite are in metres.
-	divPoint(0) = 0.00;	// x-axis
+	// These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
+	divPoint(0) = 0.00; // x-axis
 	divPoint(1) = 0.00;	// y-axis
 	divPoint(3) = 0.00;	// ROLL
 	divPoint(5) = 0.00;	// YALL
@@ -323,11 +316,11 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	#endif
 
 	// File Paths: save global path's to internal variables
-	strcpy(strState, 		STATE_FILE);				// File designed to save the time at which new states occur
-	strcpy(strForces,		FORCES_FILE);				// File designed to save the value of forces and moments registered in the task
-	strcpy(strTrajState1,  	MOTION_FILE);				// File that contains the desired position trajectory to be followed
-	strcpy(strAngles,  		ANGLES_FILE);				// File design to save the value of joint angles registered in the task
-	strcpy(strCartPos, 		CARTPOS_FILE);				// File designed to save the Cartesian positions registered in the task
+	strcpy(strState, 		"");				// File designed to save the time at which new states occur
+	strcpy(strForces,		"");				// File designed to save the value of forces and moments registered in the task
+	strcpy(strTrajState1,  	"");				// File that contains the desired position trajectory to be followed
+	strcpy(strAngles,  		"");				// File design to save the value of joint angles registered in the task
+	strcpy(strCartPos, 		"");				// File designed to save the Cartesian positions registered in the task
 
 	// Imported Values
 	cur_time				= 0.0;					// used in transitions
@@ -341,6 +334,9 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	#endif
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Destructor
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 AssemblyStrategy::~AssemblyStrategy()
 {
   // Set controller pointers to null.
@@ -356,22 +352,27 @@ AssemblyStrategy::~AssemblyStrategy()
   CloseFiles();
 }
 
-/*******************************************************************************************************/
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 // Initialize
-// 1) Allows user to set specific path files for the MOTION_FILE, STATE_FILE, and FORCE_FILE.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// 1) Allows user to set specific path files for the MOTION_FILE, ANGLES_FILE, CART_POS_FILE, STATE_FILE, and FORCE_FILE.
 // 2) Extracts information from waypoints found in the trajectory file to be used in moveRobot().
 // 3) Saves the homing position and rotation matrix of the wrist
-// 4) Allocate the filter class
-/*******************************************************************************************************/
-int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char AnglesDir[STR_LEN], char CartPosDir[STR_LEN], char StateDir[STR_LEN], char ForcesDir[STR_LEN], vector3 pos, matrix33 rot, double CurAngles[15])
+// 4) Assigns the kind of control method and strategy motion that we will use. Currently (4) options: Straight Line Approach (PA10), Pivot Approach (PA10), Side Approach (HIRO), Failure Characterization (HIRO).
+// 5) Allocates the filter class
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char AnglesDir[STR_LEN], char CartPosDir[STR_LEN], char StateDir[STR_LEN], char ForcesDir[STR_LEN],
+									 vector3 pos, matrix33 rot, double CurAngles[15],
+									 int strategyType, int controlMethodType)
 {
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;	
   std::cerr << "\n These are the file names: \n" << TrajState1 << "\n" << TrajState2 << "\n" << AnglesDir << "\n" << CartPosDir << "\n" << StateDir << "\n" << ForcesDir << "\n" << std::endl;
 #endif
-  // 1) Read user specified files. If null strings, go with default values.
 
-  // Trajectory File for State1. If not null, then read. Otherwise we used pre-saved values that were written during the constructor.
+  //--------------------------------------------------------------------------------------------------------------------------------
+  // 1) Read user specified files. If null strings, go with default values. Trajectory File for State1. If not null, then read. Otherwise we used pre-saved values that were written during the constructor.
+  //--------------------------------------------------------------------------------------------------------------------------------
   if(abs(strcmp(TrajState1,"")))
     strcpy(strTrajState1,TrajState1);
 
@@ -395,7 +396,9 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   if(abs(strcmp(ForcesDir,"")))
     strcpy(strForces,ForcesDir);
 
+  //--------------------------------------------------------------------------------------------------------------------------------
   // 2) Open files for reading and writing data.
+  //--------------------------------------------------------------------------------------------------------------------------------
   OpenFiles();
 
   // Here we read the desired trajectory file for state 1 and save the data in local variables for position and orientation
@@ -403,7 +406,9 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   std::cerr << "\nAssemblyStrategy::Initialize - extract information from waypoint file: " << strTrajState1 << std::endl;	
 #endif	
 		
-  // Reassign original end effector position and rotation
+  //--------------------------------------------------------------------------------------------------------------------------------
+  // 3) Reassign original end effector position and rotation
+  //--------------------------------------------------------------------------------------------------------------------------------
   EndEff_r_org 			= rpyFromRot(rot);
   wrist_r = EndEff_r_org;
 
@@ -438,11 +443,46 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   // AssemblyStrategy::moveRobot() will convert it back to wrist coordinates which is then used by fwd/inv kinematics.
   wrist2EndEffTrans(EndEff_p_org,EndEff_r_org);
 
+  //--------------------------------------------------------------------------------------------------------------------------------
+  // 4) Assign control method and motion strategy
+  //--------------------------------------------------------------------------------------------------------------------------------
+
+  // (A) Control Method Selection
+  if(controlMethodType==motionData)
+  {
+	  controlType = motionData;
+  }
+  else if(controlMethodType==controlBasis)// Control Basis Approach
+	  controlType = controlBasis;
+
+  // (B) Strategy Selection
+  if(approachType==StraightLineApproach)
+  {
+	  approachFlag = true;
+	  approachType = StraightLineApproach;
+  }
+  else if(approachType==PivotApproach)
+  {
+	  approachFlag = false;
+	  approachType = PivotApproach;
+  }
+  else if(approachType==SideApproach)
+  {
+	  approachFlag = false;
+	  approachType = PivotApproach;
+  }
+
+  else if(approachType==FailureCharacerization)
+  {
+	  approachFlag = false;
+	  approachType = FailureCharacerization;
+  }
   // For the first iteration they are both the same.
   wrist_p = EndEff_p_org;
   wrist_r = EndEff_r_org;
-
-  /*** Filter Class Allocation***/
+  //--------------------------------------------------------------------------------------------------------------------------------
+  // 5) Filter Class Allocation
+  //--------------------------------------------------------------------------------------------------------------------------------
   ft = new FilterTools();
 
 #ifdef DEBUG_PLUGIN3
@@ -656,7 +696,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		case paMating: // Maintain Position
 		{
 			// Change the paradigm to call directcompliancecontrol directly
-			//CONTROL_PARADIGM=motionData;
+			//controlType=motionData;
 
 			// Save current wrist position to wrist_r, wrist_p, that's where we will direct the wrist.
 			//wrist_p=pos;
@@ -931,12 +971,14 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			duration += (double)(endTime.tv_usec - startTime.tv_usec) / 1000.0; 	// From usec to msec
 
 			// Print out the duration of the function
-			std::cerr << "Duration of AssemblyStrategy::StateMachine() is: " << duration << "ms." << std::endl;
+			#ifdef DEBUG_PLUGIN3
+				std::cerr << "Duration of AssemblyStrategy::StateMachine() is: " << duration << "ms." << std::endl;
+			#endif
 		}
 
-#ifdef DEBUG_PLUGIN3
-		std::cerr << "Exiting AssemblyStrategy::StateMachine" << std::endl;
-#endif		
+		#ifdef DEBUG_PLUGIN3
+			std::cerr << "Exiting AssemblyStrategy::StateMachine" << std::endl;
+		#endif
 	}
 	return ret;
 }
@@ -1035,7 +1077,9 @@ int AssemblyStrategy::ControlCompositions(JointPathPtr 	m_path,								// Contai
 	if(!ret)
 	  {
 	    // Print result and Do nothing
-	    std::cerr << "\nAssemblyStraegy::The inverse kinematics calculation failed!!\n";
+		#ifdef DEBUG_PLUGIN3
+			std::cerr << "\nAssemblyStraegy::The inverse kinematics calculation failed!!\n";
+		#endif
 	    return -1;
 	  }
 
@@ -1116,7 +1160,7 @@ int AssemblyStrategy::ControlCompositions(JointPathPtr 	m_path,								// Contai
 
 			if(!ret)
 		{
-			// Print result and Do nothing
+			// Print exception results and Do nothing
 			cerr << "\n!!The inverse kinematics calculation failed!!\n";
 			cerr << "Cur_time at IL failure: " << cur_time << std::endl;
 			cerr << "Wrist: " << wrist_p(0) << " " << wrist_p(1) << " " << wrist_p(2) << " " << wrist_r(0) << " " << wrist_r(1) << " " << wrist_r(2) << std::endl;
@@ -1228,22 +1272,26 @@ int AssemblyStrategy::ControlCompositions(JointPathPtr 	m_path,								// Contai
 
 	DesWristForce  = attitude*DesData2;											// Force
 	CurWristForce  = attitude*CurForce;
-#if WRITELOG
-	for(int i=0;i<3;i++){
-	  ostr_des << DesWristForce(i) << "\t";
-	  ostr_cur << CurWristForce(i) << "\t";
-	}
-	for(int i=0;i<3;i++){
-	  ostr_des << DesWristMoment(i) << "\t";
-	  ostr_cur << CurWristMoment(i) << "\t";
-	}
 	
-	ostr_des << std::endl;
-	ostr_cur << std::endl;
-#endif
-#ifdef DEBUG_PLUGIN3
-	std::cerr << "\nThe desired force in local coords:\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2)  << "\t" << DesWristMoment(0) << "\t" << DesWristMoment(1) << "\t" << DesWristMoment(2);
-#endif
+	#if WRITELOG
+		for(int i=0;i<3;i++)
+		{
+			ostr_des << DesWristForce(i) << "\t";
+			ostr_cur << CurWristForce(i) << "\t";
+		}
+		for(int i=0;i<3;i++)
+		{
+			ostr_des << DesWristMoment(i) << "\t";
+			ostr_cur << CurWristMoment(i) << "\t";
+		}
+
+		ostr_des << std::endl;
+		ostr_cur << std::endl;
+	#endif
+
+	#ifdef DEBUG_PLUGIN3
+		std::cerr << "\nThe desired force in local coords:\t" << DesWristForce(0) << "\t" << DesWristForce(1) << "\t" << DesWristForce(2)  << "\t" << DesWristMoment(0) << "\t" << DesWristMoment(1) << "\t" << DesWristMoment(2);
+	#endif
 	// 5) Copy values to class objects
 	for(int i=3; i<6; i++)												// Moment
 	  {
@@ -1258,9 +1306,9 @@ int AssemblyStrategy::ControlCompositions(JointPathPtr 	m_path,								// Contai
 
 	// 6) Call compound controller where c1 is the dominant controller and c2 is the subordinate controller
 	c1->ComputeCompoundController(JointAngleUpdate,CurrAngles, NumCtlrs,
-				      c1->MomentCtrl, c1->DesData, c1->CurData,
-				      c2->ForceCtrl,c2->DesData, c2->CurData,
-				      Jac, ErrorNorm2, ErrorNorm1);
+				      	  	  	  c1->MomentCtrl, c1->DesData, c1->CurData,
+				      	  	  	  c2->ForceCtrl,c2->DesData, c2->CurData,
+				      	  	  	  Jac, ErrorNorm2, ErrorNorm1);
 	// 7) Copy error flagstate
 	ErrorFlag = c1->ErrorFlag;
 
@@ -2136,36 +2184,36 @@ void AssemblyStrategy::OpenFiles()
   /*************************************** Robot Joint Angles ***************************************/
   ostr_angles.open(strAngles);			// "Angles.dat");
   if (!ostr_angles.is_open())
-    std::cerr << ANGLES_FILE << " was not opened." << std::endl;
+    std::cerr << strAngles << " was not opened." << std::endl;
 
-  /*************************************** EndEffector Cart Positions (World Coords) ***************************************/
+  /*************************************** EndEffector Cart Positions (World Coordinates) ***************************************/
   ostr_cartPos.open(strCartPos); 		// "CartPos.dat");
   //	#endif
   if (!ostr_cartPos.is_open())
-    std::cerr << CARTPOS_FILE << " was not  opened." << std::endl;
+    std::cerr << strCartPos << " was not  opened." << std::endl;
 
   /*************************************** State Time Data ***************************************/
   ostr_state.open(strState);			// "State.dat"); //
   if (!ostr_state.is_open())
-    std::cerr << STATE_FILE << " was not opened." << std::endl;
+    std::cerr << strState << " was not opened." << std::endl;
 
   // Insert a value of 0 as the starting time of the state vector
   ostr_state << "0.0" << endl;;
 
-  /*************************************** Joint Torque Data in World Coords ***************************************/
+  /*************************************** Joint Torque Data in World Coordinates ***************************************/
   ostr_Forces.open(strForces);			// "Torques.dat");
   if (!ostr_Forces.is_open())
-    std::cerr << FORCES_FILE << " was not opened." << std::endl;
+    std::cerr << strForces << " was not opened." << std::endl;
 
-  /*************************************** Desired Joint Torque Data in Local Coords ***************************************/
-  ostr_des.open("Des.dat");
+  /*************************************** Desired Joint Torque Data in Local Coordinates ***************************************/
+  ostr_des.open("TorquesLocal.dat");
   if(!ostr_des.is_open())
-    std::cerr << "des.dat was not opened." << std::endl;
+    std::cerr << "TorquesLocal.dat was not opened." << std::endl;
 
-  /*************************************** Actual Joint Torque Data in World Coords ***************************************/
-  ostr_cur.open("Cur.dat");
+  /*************************************** Actual Joint Torque Data in World Coordinates ***************************************/
+  ostr_cur.open("AnglesLocal.dat");
   if(!ostr_cur.is_open())
-    std::cerr << "cur.dat was not opened." << std::endl;
+    std::cerr << "AnglesLocal.dat was not opened." << std::endl;
   
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::OpenFiles - Exiting" << std::endl;	

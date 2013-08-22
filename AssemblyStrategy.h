@@ -100,8 +100,8 @@ class AssemblyStrategy {
   // Control Paradigm
   enum ControlParadigm
   {
-    motionData,
-    controlBasis
+    motionData,				// Uses kinematics and way-points
+    controlBasis			// Uses FT controllers.
   };
 
   // Controller Type Enumeration: What type of basis control are you working with?
@@ -119,7 +119,8 @@ class AssemblyStrategy {
     ManipulationTest,
     StraightLineApproach,
     PivotApproach,
-    SideApproach
+    SideApproach,
+    FailureCharacerization
   };
 
   enum TestAxis
@@ -213,9 +214,10 @@ class AssemblyStrategy {
   };
 
   /*--------------------------------------------------- Strategy --------------------------------------------------------*/
-  int		approachType;				// Save the kind of approach.
+  int		approachType;				// What kind of assembly strategy will we use?
+  int 		controlType;				// What kind of control method will we use?
   bool 		approachFlag;				// Used to switch values
-  bool 		ctrlInitFlag;				// Ussed to determine if its our first time in a state
+  bool 		ctrlInitFlag;				// Used to determine if its our first time in a state
 
   // Pivot Approach
   bool 		noContact;					// Flag become true when after a contact, the private member m_ContactPt return to the zero value.
@@ -246,9 +248,6 @@ class AssemblyStrategy {
   ControlBasis* c3;
 
   double momentGainFactor;
-
-  // Control Paradigm
-  int CONTROL_PARADIGM;
 
   // Controller
   int 	NumCtlrs;						// How many primitive controllers are being compounded in the CtrlBasis framework?
@@ -360,7 +359,10 @@ class AssemblyStrategy {
 					   dmatrix 			PseudoJacobian);
 
   // Other
-  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN], vector3 pos, matrix33 rot, double CurAngles[15]);
+  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN],
+		  	  	  	vector3 pos, matrix33 rot, double CurAngles[15],
+		            int strategyType, int controlMethodType);
+
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);
   void FreeResources(ctrlComp type);

@@ -23,6 +23,55 @@ using std::ceil;
 #define TEST    0		// This variable is a switch to turn on the PivotApproach/ControlBasis test mode. The test mode works in conjunction with file ~/sample/forceSensorPlugin/data/PivotApproach/maniuplationAxisTest to indicate which axis should move
 #define DB_TIME 0		// Used to print timing duration of functions
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+// Motion Files used for the AssemblyStrategy.h,cpp. Assigned during PA->Initialize()
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Directories
+#define READ_DIR				"./data/PivotApproach"
+#define WRITE_DIR 				"./data/Results"
+// To Read DATA
+#define SL_APPROACH_FILE 		"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
+#define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in SideApproach for the HIRO Robot
+#define SIDE_APPROACH_FILE 		"/HIRO/sideApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
+#define FAILURE_CHARAC_FILE 	"/FC/failureCaseState1.dat"				// Waypoints for State1 in SideApproach for the HIRO Robot
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// To Write Data (used in AssemblyStrategy::OpenFiles)
+#define ANGLES_FILE				"/Angles.dat"							// Save joint angles of robot
+#define CARTPOS_FILE			"/CartPos.dat"							// Save CartPos of End-Effector in world coordinates
+#define STATE_FILE				"/State.dat"							// Save State Transition times for SideApproach
+#define FORCES_FILE				"/Torques.dat"							// Save Joint Torques for robot
+#define MANIP_TEST_FILE			"/manipulationTestAxis.dat"				// Used to test force and moment controllers behavior
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define USE_MOTION_DAT 			0			// Should be zero if used with control basis approach or reading a trajectory from file
+#define CONTROL_BASIS			1			// If using the control basis approach
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define STRAIGHT_LINE_APPROACH 0 			// If using the straight line approach for the assembly strategy. If true, then pivot approach should be 0
+#define PIVOT_APPROACH 			0			// Pivot approach. If true, straight line approach should be 0.
+#define SIDE_APPROACH			1			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
+#define FAILURE_CHARAC 			0			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Assigning Strategy File depending on Strategy.
+#if(USE_MOTION_DAT==0) //I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
+
+	// (A) Define the Control Strategy
+	#define CONTROL_TYPE CONTROL_BASIS
+
+	// (B) Define the Assembly Strategy
+	#if(STRAIGHT_LINE_APPROACH)
+		#define MOTION_FILE 	SL_APPROACH_FILE
+		#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+	#elif(PIVOT_APPROACH)
+		#define MOTION_FILE 	PIVOT_APPROACH_FILE
+		#define APPROACH_TYPE 	PIVOT_APPROACH
+	#elif(SIDE_APPROACH)
+		#define MOTION_FILE 	SIDE_APPROACH_FILE
+		#define APPROACH_TYPE 	SIDE_APPROACH
+	#elif(FAILURE_CHARAC)
+		#define MOTION_FILE 	FAILURE_CHARAC_FILE
+		#define APPROACH_TYPE 	FAILURE_CHARAC
+	#endif
+#else
+	#define CONTROL_TYPE USE_MOTION_DAT
+#endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Constructor Definition : Variable Initialisation List
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -110,7 +159,7 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
   ikTrans[3] 	= 1e-10;
 
   // Program Design Parameters
-  p_param.method 		= CONSTANT_VELOCITY;				// Interpolation Method: Velocity
+  p_param.method 	= CONSTANT_VELOCITY;				// Interpolation Method: Velocity
   p_param.max_jvel 	= MAX_JVEL;							// With MAX_JVEL as maximum joint velocity limit = 0.5
   controlmode 		= NOCONTROL;						// One of six control modes. No control.
 
@@ -182,7 +231,7 @@ void hiroArm::init()
 }
 
 /*************************************************************************************************************/
-// init()
+// init(vector3 pos, matrix33 rot, double CurAngles[15])
 // Initialization Routine for a selected arm. Compute the position vector and rotation matrix from base to end effector
 // Different behavior according to user.
 // Kensuke: Open position and force data for left and right arms.
@@ -209,29 +258,33 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
 
   // Path trunk
   // Folder where robot joint angles, cart. position, and forces will be saved and desired trajectory read from.
-  const char readDirectory[]  = "./data/PivotApproach";
-  const char writeDirectory[] = "./data/Results";
 
   // Assign path trunk to each of the FIVE char variables
-  strcpy(TrajState1,	readDirectory);
-  strcpy(TrajState2,	readDirectory);
-  strcpy(manipTest,  	readDirectory);
-  strcpy(Angles,	    writeDirectory);
-  strcpy(CartPos,		writeDirectory);
-  strcpy(State,	    	writeDirectory);
-  strcpy(Forces,	    writeDirectory);
+  strcpy(TrajState1,	READ_DIR);
+  strcpy(TrajState2,	READ_DIR);
+  strcpy(manipTest,  	READ_DIR);
+  strcpy(Angles,	    WRITE_DIR);
+  strcpy(CartPos,		WRITE_DIR);
+  strcpy(State,	    	WRITE_DIR);
+  strcpy(Forces,	    WRITE_DIR);
 
   // Concatenate with appropriate endings
-  strcat(TrajState1,	"/pivotApproachState1.dat");	// Desired Trajectory
-  strcat(TrajState2,	"/pivotApproachState2.dat");	// Desired Trajectory
-  strcat(manipTest,		"/manipulationTestAxis.dat");	// What test axis do you want to try
-  strcat(Angles,		"/Angles.dat");					// Robot Joint Angles
-  strcat(CartPos,		"/CartPos.dat");				// Cartesian Positions
-  strcat(State,			"/State.dat");					// New States Time Occurrence
-  strcat(Forces,		"/Torques.dat");				// Robot Forces/Moments
+  strcat(TrajState1,	MOTION_FILE);							// Desired Trajectory
+  strcat(TrajState2,	"/PA10/PA10_pivotApproachState2.dat");	// Desired Trajectory
+  strcat(manipTest,		MANIP_TEST_FILE);						// What test axis do you want to try
+  strcat(Angles,		ANGLES_FILE);							// Robot Joint Angles
+  strcat(CartPos,		CARTPOS_FILE);							// Cartesian Positions
+  strcat(State,			STATE_FILE);							// New States Time Occurrence
+  strcat(Forces,		FORCES_FILE);							// Robot Forces/Moments
 
-  // Initialize PA with these directories
-  ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, pos, rot, CurAngles);	// Initialize: Records waypoints from desired trajectory file
+  // Initialize AssemblyStrategy Class:
+  // 1) Open files associated with the directories to read/write data
+  // 2) Assign homing Cartesian Position, Joint Angles, and Rotation matrix position.
+  // 3) Assign Motion and Control Strategies
+  // 4) Declare and Allocate Filtering Object (consider using a static object instead for faster real-time performance).
+  ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, 			// Data Directories
+		  	  	  	 pos, rot, CurAngles,											// Homing Data
+		  	  	  	 APPROACH_TYPE, CONTROL_TYPE);									// Assembly Strategy and Control Method Used
 
 #endif
 
