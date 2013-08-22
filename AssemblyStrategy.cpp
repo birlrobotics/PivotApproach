@@ -5,6 +5,48 @@
   --------------------------------*/
 #include <sys/types.h>
 #include <sys/stat.h>
+///----------------------------------------------------------------------------------------------------------------------------------------------------
+/************************************************************* DESIGN PARAMETERS AND FLAGS ************************************************/
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define PA10					0
+#define HIRO					1
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// PA10 & OpenHRP-3.1.* version
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define DCC			   			0			// Direct Compliance control w/ gravitational compensation. Should be zero if traditional PD torque control used.
+											// With control basis DCC = 0 seems most appropriate.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// FILTERING
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define   FILT_FLAG				1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
+//-----------------------------------------------------------------------------------------------------------------------------------------
+// DEBUGGING
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define DEBUG_AS				0			// Flag used to test functions with hard-coded data
+#define DB_PRINT				0 			// Used to write angles, cart positions, forces, and states to std::cerr
+#define DB_WRITE				1	   		// Used to write angles, cart position, forces, and states to FILE.
+#define DB_TIME 				0		 	// Used to print timing duration of functions
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// WORLD COORDINATES
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Vertical Axes in WORLD coordinates using a right handed coordinate system: +Z:Up, +Y:Right, +X:Out
+#if(PA10==1)
+	#define UP_AXIS  		2   		// Defines the local wrist axis for a robot. Used to set desired forces.
+#else // HIRO
+	#define UP_AXIS  		0			// x becomes up/down after transform
+	#define FWD_AXIS		2			// z becomes backward/forward after transform
+	#define SIDE_AXIS 		1
+#endif
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// ASSEMBLY_STRATEGY_AUTOMATA STATES
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define PA_FINISH 10 // value returned when the assembly is finished
+// FAILURE CHARACTERIZATION VARIABLES
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define PATH_DEVIATION_MAGNITUDE 0.01
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#include "AssemblyStrategy.h"
+
 /* The following definitions are here for Reference. They are used in hiroArm.cpp
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Files: PivotApproach. In fact, the directory path is provided through the Initialization function, which is called from hiroArm. But these are here for reference or manual use.
@@ -52,38 +94,11 @@
 	#endif
 #else
 	#define CONTROL_TYPE USE_MOTION_DAT
-#endif*/
-///----------------------------------------------------------------------------------------------------------------------------------------------------
-// Design Parameters and Flags
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PA10					0
-#define HIRO					1
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// PA10 & OpenHRP-3.1.* version
-#define DCC			   			0			// Direct Compliance control w/ gravitational compensation. Should be zero if traditional PD torque control used.
-											// With control basis DCC = 0 seems most appropriate.
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// Filtering
-#define   FILT_FLAG				1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
-//------------------------------------------------------------- DEBUGGING ----------------------------------------------------------------------------
-#define DEBUG_AS				0			// Flag used to test functions with hard-coded data
-#define DB_PRINT				0 			// Used to write angles, cart positions, forces, and states to std::cerr
-#define DB_WRITE				1	   		// Used to write angles, cart position, forces, and states to FILE.
-#define DB_TIME 				0		 	// Used to print timing duration of functions
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// Vertical Axes in WORLD coordinates using a right handed coordinate system: +Z:Up, +Y:Right, +X:Out
-#if(PA10==1)
-	#define UP_AXIS  		2   		// Defines the local wrist axis for a robot. Used to set desired forces.
-#else // HIRO
-	#define UP_AXIS  		0			// x becomes up/down after transform
-	#define FWD_AXIS		2			// z becomes backward/forward after transform
-	#define SIDE_AXIS 		1
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// Assembly Strategy States
-#define PA_FINISH 10 // value returned when the assembly is finished
-#include "AssemblyStrategy.h"
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Default Constructor
@@ -298,18 +313,7 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	EndEff_p_org			= base2endEffectorPos;
 	wrist_p = EndEff_p_org;
 
-	/** Failure Case Characterization Vector **/
-	// Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
-
-	// Keep the z-axis and the pitch at zero
-	divPoint(2)=0; divPoint(4)=0;
-
-	// Axis to Modify
-	// These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
-	divPoint(0) = 0.00; // x-axis
-	divPoint(1) = 0.00;	// y-axis
-	divPoint(3) = 0.00;	// ROLL
-	divPoint(5) = 0.00;	// YALL
+	divPoint(0) = 0;
 
 	#ifdef DEBUG_PLUGIN3
 		std::cerr << "The EndEffector position during the constructor is: " << wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2) << std::endl;
@@ -476,7 +480,22 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   {
 	  approachFlag = false;
 	  approachType = FailureCharacerization;
+
+	  // Assign appropriate values to the divPoint array which will modify waypoint values.
+	  /** Failure Case Characterization Vector **/
+	  // Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
+
+	  // Keep the z-axis and the pitch at zero
+	  divPoint(2)=0; divPoint(4)=0;
+
+	  // Axis to Modify
+	  // These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
+	  divPoint(0) = PATH_DEVIATION_MAGNITUDE; 	// x-axis
+	  divPoint(1) = 0.00;						// y-axis
+	  divPoint(3) = 0.00;						// ROLL
+	  divPoint(5) = 0.00;						// YALL
   }
+
   // For the first iteration they are both the same.
   wrist_p = EndEff_p_org;
   wrist_r = EndEff_r_org;
