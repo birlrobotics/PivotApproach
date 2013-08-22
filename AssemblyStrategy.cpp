@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE 0.59
+#define PATH_DEVIATION_MAGNITUDE 0.01
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -470,7 +470,7 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   else if(strategyType==SideApproach)
   {
 	  approachFlag = false;
-	  approachType = PivotApproach;
+	  approachType = SideApproach;
   }
 
   else if(strategyType==FailureCharacerization)
@@ -731,7 +731,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	}
 
 	/*---------------------------------------------------------------------- SIDE APPROACH ------------------------------------------------------------------------*/
-	else if(approach==SideApproach)
+	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
 		switch (State)
 		{
@@ -925,7 +925,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 	if(DB_WRITE)
 	{
-		if(approach==SideApproach)
+		if(approach==SideApproach || approach==FailureCharacerization)
 		{
 			vector3 handRPY;
 			vector3 handPos;
@@ -1549,7 +1549,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 		}
 	}
 
-	else if(approach==SideApproach)
+	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
 		#ifdef DEBUG_PLUGIN3
 		  std::cerr << "State:::" << State  << std::endl;
