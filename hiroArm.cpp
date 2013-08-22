@@ -18,17 +18,24 @@ using std::sqrt;
 using std::exp;
 using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// DEFS
+// DEFINITIONS
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// TEST MODE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define TEST    0		// This variable is a switch to turn on the PivotApproach/ControlBasis test mode. The test mode works in conjunction with file ~/sample/forceSensorPlugin/data/PivotApproach/maniuplationAxisTest to indicate which axis should move
-#define DB_TIME 0		// Used to print timing duration of functions
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+// DEBUGGING
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define DB_TIME 0		// Used to print timing duration of functions
 // Motion Files used for the AssemblyStrategy.h,cpp. Assigned during PA->Initialize()
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Directories
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Main Directories
 #define READ_DIR				"./data/PivotApproach"
 #define WRITE_DIR 				"./data/Results"
-// To Read DATA
+
+// To Read Data
 #define SL_APPROACH_FILE 		"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
 #define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in SideApproach for the HIRO Robot
 #define SIDE_APPROACH_FILE 		"/HIRO/sideApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
@@ -41,31 +48,41 @@ using std::ceil;
 #define FORCES_FILE				"/Torques.dat"							// Save Joint Torques for robot
 #define MANIP_TEST_FILE			"/manipulationTestAxis.dat"				// Used to test force and moment controllers behavior
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+// CONTROL METHODS
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 #define USE_MOTION_DAT 			0			// Should be zero if used with control basis approach or reading a trajectory from file
 #define CONTROL_BASIS			1			// If using the control basis approach
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define STRAIGHT_LINE_APPROACH 0 			// If using the straight line approach for the assembly strategy. If true, then pivot approach should be 0
-#define PIVOT_APPROACH 			0			// Pivot approach. If true, straight line approach should be 0.
-#define SIDE_APPROACH			1			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
-#define FAILURE_CHARAC 			0			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
+// ASSEMBLY STRATEGY TYPES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// Assigning Strategy File depending on Strategy.
+#define STRAIGHT_LINE_FLAG 		0 			// Masking Flags to determine which trajectory to choose
+#define PIVOT_APPROACH_FLAG		0			// Pivot approach. If true, straight line approach should be 0.
+#define SIDE_APPROACH_FLAG		0			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
+#define FAILURE_CHARAC_FLAG		1			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define STRAIGHT_LINE_APPROACH 1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
+#define PIVOT_APPROACH 			2
+#define SIDE_APPROACH			3
+#define FAILURE_CHARAC 			4
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// ASSIGN VARIABLES TO BE USED WITH PA->INITIALIZE(...)
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 #if(USE_MOTION_DAT==0) //I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
 
 	// (A) Define the Control Strategy
 	#define CONTROL_TYPE CONTROL_BASIS
 
 	// (B) Define the Assembly Strategy
-	#if(STRAIGHT_LINE_APPROACH)
+	#if(STRAIGHT_LINE_FLAG)
 		#define MOTION_FILE 	SL_APPROACH_FILE
 		#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
-	#elif(PIVOT_APPROACH)
+	#elif(PIVOT_APPROACH_FLAG)
 		#define MOTION_FILE 	PIVOT_APPROACH_FILE
 		#define APPROACH_TYPE 	PIVOT_APPROACH
-	#elif(SIDE_APPROACH)
+	#elif(SIDE_APPROACH_FLAG)
 		#define MOTION_FILE 	SIDE_APPROACH_FILE
 		#define APPROACH_TYPE 	SIDE_APPROACH
-	#elif(FAILURE_CHARAC)
+	#elif(FAILURE_CHARAC_FLAG)
 		#define MOTION_FILE 	FAILURE_CHARAC_FILE
 		#define APPROACH_TYPE 	FAILURE_CHARAC
 	#endif
@@ -76,10 +93,10 @@ using std::ceil;
 // Constructor Definition : Variable Initialisation List
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
-  :f_moving(false), 	f_reached(false),
-   f_gc(false),     	f_gc_init(false),   	step_gc(0),
-   mass(0.0),       	GACC(9.8),          	wait_step(200),
-   /*fs(0),*/           step_fs(0),        	 	max_step_fs(500),
+  :f_moving(false), 	f_reached(false),		initFlag(false),	m_time(0),
+   f_gc(false),     	f_gc_init(false),   	step_gc(0),			fp1(NULL),
+   mass(0.0),       	GACC(9.8),          	wait_step(200),		fp2(NULL),
+   /*fs(0),*/           step_fs(0),        	 	max_step_fs(500),	fp3(NULL),
    MAX_JVEL(0.5),   	TIME_LIMIT(100.0), 		MIN_PERIOD(1.0e-9), TOLERANCE(1.0e-6)
 {
 #ifdef DEBUG_PLUGIN2

@@ -11,10 +11,13 @@
 #define PA10					0
 #define HIRO					1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// PA10 & OpenHRP-3.1.* version
+// ASSEMBLY_STRATEGY_AUTOMATA STATES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define DCC			   			0			// Direct Compliance control w/ gravitational compensation. Should be zero if traditional PD torque control used.
-											// With control basis DCC = 0 seems most appropriate.
+#define PA_FINISH 				10 			// value returned when the assembly is finished
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// FAILURE CHARACTERIZATION VARIABLES
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define PATH_DEVIATION_MAGNITUDE 0.59
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -31,20 +34,14 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Vertical Axes in WORLD coordinates using a right handed coordinate system: +Z:Up, +Y:Right, +X:Out
 #if(PA10==1)
-	#define UP_AXIS  		2   		// Defines the local wrist axis for a robot. Used to set desired forces.
+	#define UP_AXIS  			2   		// Defines the local wrist axis for a robot. Used to set desired forces.
 #else // HIRO
-	#define UP_AXIS  		0			// x becomes up/down after transform
-	#define FWD_AXIS		2			// z becomes backward/forward after transform
-	#define SIDE_AXIS 		1
+	#define UP_AXIS  			0			// x becomes up/down after transform
+	#define FWD_AXIS			2			// z becomes backward/forward after transform
+	#define SIDE_AXIS 			1
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// ASSEMBLY_STRATEGY_AUTOMATA STATES
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PA_FINISH 10 // value returned when the assembly is finished
-// FAILURE CHARACTERIZATION VARIABLES
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE 0.01
-//----------------------------------------------------------------------------------------------------------------------------------------------------
+
 #include "AssemblyStrategy.h"
 
 /* The following definitions are here for Reference. They are used in hiroArm.cpp
@@ -460,23 +457,23 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	  controlType = controlBasis;
 
   // (B) Strategy Selection
-  if(approachType==StraightLineApproach)
+  if(strategyType==StraightLineApproach)
   {
 	  approachFlag = true;
 	  approachType = StraightLineApproach;
   }
-  else if(approachType==PivotApproach)
+  else if(strategyType==PivotApproach)
   {
 	  approachFlag = false;
 	  approachType = PivotApproach;
   }
-  else if(approachType==SideApproach)
+  else if(strategyType==SideApproach)
   {
 	  approachFlag = false;
 	  approachType = PivotApproach;
   }
 
-  else if(approachType==FailureCharacerization)
+  else if(strategyType==FailureCharacerization)
   {
 	  approachFlag = false;
 	  approachType = FailureCharacerization;

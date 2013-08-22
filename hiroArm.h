@@ -213,7 +213,7 @@ class hiroArm
   //static const int ARM_DOF = 6;
   cmode controlmode;						// Control Mode Flag
 
-  std::string name;						// String name for right or left arm
+  std::string name;							// String name for right or left arm
   FILE *fp1,*fp2, *fp3;						// File streams
 
   BodyPtr      body;						// Body (link objects) pointer
@@ -221,20 +221,20 @@ class hiroArm
   //	OpenHRP::JointPath* path;
 
   // Angles
-  dvector6 	 q;						// Joint angles(radians)
+  dvector6 	 q;								// Joint angles(radians)
   float 		 ang_limits[ARM_DOF][5];		               	// Angle limits
   unsigned int NUM_q0;						// Number of start joint of arm
 
   // Force
   //nittaFS 	*fs;						// Force Sensor Pointer
-  int 		NO_fs;						// number of force sensor (0 or 1)
-  double 	DEL_T;						// sampling period
+  int 		NO_fs;							// number of force sensor (0 or 1)
+  double 	DEL_T;							// sampling period
   double 	ikGains[4], ikRot[4], ikTrans[4];		// Gains
 
   // Forces
-  vector3 fsF_raw, fsM_raw;				        // Raw force and moment values of FS
-  vector3 rFfs_gc, rMfs_gc;				        // gravity compensated force-moment value of FS in robot coord for the arm
-  vector3 rFh_gc, rMh_gc;						// gravity compensated force-moment value of FS in robot coord for the hand
+  vector3 fsF_raw, fsM_raw;				    // Raw force and moment values of FS
+  vector3 rFfs_gc, rMfs_gc;				    // gravity compensated force-moment value of FS in robot coord for the arm
+  vector3 rFh_gc, rMh_gc;					// gravity compensated force-moment value of FS in robot coord for the hand
   //vector3 fsF_offset, fsM_offset;		                // Initial force-monment offset of FS
   //vector3 fsF, fsM;						// Initialized force-moment value.
 
