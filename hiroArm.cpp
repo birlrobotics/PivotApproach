@@ -20,15 +20,6 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// TEST MODE
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define TEST    0		// This variable is a switch to turn on the PivotApproach/ControlBasis test mode. The test mode works in conjunction with file ~/sample/forceSensorPlugin/data/PivotApproach/maniuplationAxisTest to indicate which axis should move
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// DEBUGGING
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define DB_TIME 0		// Used to print timing duration of functions
-// Motion Files used for the AssemblyStrategy.h,cpp. Assigned during PA->Initialize()
-//----------------------------------------------------------------------------------------------------------------------------------------------------
 // Directories
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Main Directories
@@ -37,9 +28,9 @@ using std::ceil;
 
 // To Read Data
 #define SL_APPROACH_FILE 		"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
-#define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in SideApproach for the HIRO Robot
+#define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in PivotApproach for the PA10 Robot
 #define SIDE_APPROACH_FILE 		"/HIRO/sideApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
-#define FAILURE_CHARAC_FILE 	"/FC/failureCaseState1.dat"				// Waypoints for State1 in SideApproach for the HIRO Robot
+#define FAILURE_CHARAC_FILE 	"/FC/failureCaseXRoll.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseXRoll.dat
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
 #define ANGLES_FILE				"/Angles.dat"							// Save joint angles of robot
@@ -47,6 +38,14 @@ using std::ceil;
 #define STATE_FILE				"/State.dat"							// Save State Transition times for SideApproach
 #define FORCES_FILE				"/Torques.dat"							// Save Joint Torques for robot
 #define MANIP_TEST_FILE			"/manipulationTestAxis.dat"				// Used to test force and moment controllers behavior
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// DEBUGGING
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define DB_TIME 				0			// Used to print timing duration of functions
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// TEST MODE
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define TEST    				0			// If true, a test is activated to see the response of the force/moment controllers. Reads an int from file to known which axis to activate.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // CONTROL METHODS
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -56,9 +55,10 @@ using std::ceil;
 // ASSEMBLY STRATEGY TYPES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_FLAG 		0 			// Masking Flags to determine which trajectory to choose
-#define PIVOT_APPROACH_FLAG		0			// Pivot approach. If true, straight line approach should be 0.
-#define SIDE_APPROACH_FLAG		0			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
-#define FAILURE_CHARAC_FLAG		1			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
+#define PIVOT_APPROACH_FLAG		0			// Pivot approach. 								If true, STRAIGHT_LINE_FLAG=0,SIDE_APPROACH_FLAG=0, FAILURE_CHARAC_FLAG=0.
+#define SIDE_APPROACH_FLAG		1			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
+#define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
+											// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_APPROACH 1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
 #define PIVOT_APPROACH 			2
@@ -67,7 +67,7 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSIGN VARIABLES TO BE USED WITH PA->INITIALIZE(...)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#if(USE_MOTION_DAT==0) //I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
+#if(USE_MOTION_DAT==0) 						//I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
 
 	// (A) Define the Control Strategy
 	#define CONTROL_TYPE CONTROL_BASIS
@@ -118,7 +118,6 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
   ePh 	= ePh_in;											// Wrist 2 End Effector Left: <0.0715, 0.0, 0.0>, Right: <-0.12,0.0,0.0>
   eRh 	= eRh_in;											// Equivalent Rotation matrix. Set to the identity matrix.
   hPfs 	= hPfs_in;											//
-
 
 #ifdef DEBUG_PLUGIN2
   std::cerr << "hiroArm(): Setting body links." << std::endl;
@@ -1014,90 +1013,91 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
     }
 #endif	
 
-  // Run test or actual pivot approach strategy
-  if(TEST)
-    {
-      // Run tests individually. Proceed to the next state when the completionFlag is true.
+	// Run test or actual pivot approach strategy
+	if(TEST)
+	{
+		// Run tests individually. Proceed to the next state when the completionFlag is true.
 
-      // Open the file stream for testing
-      ifstream mT; int axis = 0;
-      mT.open(manipTest);
-      if (!mT.is_open())
-	std::cerr << "\nThe manipulation test file!!\n" << std::endl;
+		// Open the file stream for testing
+		ifstream mT; int axis = 0;
+		mT.open(manipTest);
+		if (!mT.is_open())
+			std::cerr << "\nThe manipulation test file!!\n" << std::endl;
 
-      // Read index from file to indicate with of the 12 force/moment directions you would like to test
-      mT >> axis;
-      // Close the file
-      mT.close();
+		// Read index from file to indicate with of the 12 force/moment directions you would like to test
+		mT >> axis;
+		// Close the file
+		mT.close();
 
-      // Axis selection
-      /*		if(axis==0)			testAxis = PA->posFx;
-			else if(axis==1)		testAxis = PA->negFx;
-			else if(axis==2)		testAxis = PA->posFy;
-			else if(axis==3)		testAxis = PA->negFy;
-			else if(axis==4)		testAxis = PA->posFz;
-			else if(axis==5)		testAxis = PA->negFz;
-			else if(axis==6)		testAxis = PA->posMx;
-			else if(axis==7)		testAxis = PA->negMx;
-			else if(axis==8)		testAxis = PA->posMy;
-			else if(axis==9)		testAxis = PA->negMy;
-			else if(axis==10)		testAxis = PA->posMz;
-			else if(axis==11)		testAxis = PA->negMz;
-			else // don't do anything
+		// Axis selection
+		if(axis==0)			testAxis = PA->posFx;
+		else if(axis==1)		testAxis = PA->negFx;
+		else if(axis==2)		testAxis = PA->posFy;
+		else if(axis==3)		testAxis = PA->negFy;
+		else if(axis==4)		testAxis = PA->posFz;
+		else if(axis==5)		testAxis = PA->negFz;
+		else if(axis==6)		testAxis = PA->posMx;
+		else if(axis==7)		testAxis = PA->negMx;
+		else if(axis==8)		testAxis = PA->posMy;
+		else if(axis==9)		testAxis = PA->negMy;
+		else if(axis==10)		testAxis = PA->posMz;
+		else if(axis==11)		testAxis = PA->negMz;
+		else // don't do anything
 			return 1;
-      */
-      // Call the state machine with a test ctrl strategy.
-      PA->StateMachine(testAxis,PA->ManipulationTest,m_path,body,cur_time,pos,rot,currForces,JointAngleUpdate,CurrAngles,Jac,PseudoJac);
-    }
-	
-  else
-    {
-      // Invoke the state machine to run the pivot approach using the control basis
-      ret = PA->StateMachine( PA->none,											// Use all axis to run test. Not applicable here since the flag test is off.
-    		  	  	  	  	  (AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,	// Type of approach. Can choose between the straight line approach and the pivot approach
-							  m_path,											// Pointer containing Arm Path (joints and links)
-							  body,												// Pointer containting whole body (joints and links)
-							  cur_time,											// Current internal clock time (not synced to GrxUI Simulation clock)
-							  pos,												// Current wrist position in Cartesian Coordinates
-							  rot,												// Rotation state of wrist
-							  currForces,										// Current Torques and Moments at the wrist
-							  JointAngleUpdate,									// Joint Angle Update produced by control basis
-							  CurrAngles,										// Current Arm Joint Angles
-							  Jac,												// Jacobian
-							  PseudoJac);										// JPseudo Jacobian
-    }
 
-  // Copy CurrAngles to qref if kinematics did not fail
-  if(ret!=-1)
-    for(int i=0;i<6;i++)
-      q_ref(i) = CurrAngles(i);
-  else
-    return ret;
+		// Call the state machine with a test ctrl strategy.
+		PA->StateMachine(testAxis,PA->ManipulationTest,m_path,body,cur_time,pos,rot,currForces,JointAngleUpdate,CurrAngles,Jac,PseudoJac);
+	}
 	
-#ifdef DEBUG_PLUGIN2
-  std::cerr << "Ending hiroArm::PivotApproach" << std::endl;
-#endif		
+	else
+	{
+		// Invoke the state machine to run the pivot approach using the control basis
+		ret = PA->StateMachine( PA->none,										// Use all axis to run test. Not applicable here since the flag test is off.
+								(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,	// Type of approach. Can choose between the straight line approach and the pivot approach
+								m_path,											// Pointer containing Arm Path (joints and links)
+								body,											// Pointer containting whole body (joints and links)
+								cur_time,										// Current internal clock time (not synced to GrxUI Simulation clock)
+								pos,											// Current wrist position in Cartesian Coordinates
+								rot,											// Rotation state of wrist
+								currForces,										// Current Torques and Moments at the wrist
+								JointAngleUpdate,								// Joint Angle Update produced by control basis
+								CurrAngles,										// Current Arm Joint Angles
+								Jac,											// Jacobian
+								PseudoJac);										// JPseudo Jacobian
+	}
+
+	// Copy CurrAngles to qref if kinematics did not fail
+	if(ret!=-1)
+		for(int i=0;i<6;i++)
+			q_ref(i) = CurrAngles(i);
+	else
+		return ret;
+	
+	#ifdef DEBUG_PLUGIN2
+		std::cerr << "Ending hiroArm::PivotApproach" << std::endl;
+	#endif
 		
 #if 0
-  if(DB_TIME)
-    {
-      // Timing
-      // Get end time
-      //gettimeofday(&endTime,NULL);
-		
-      // Compute duration
-      //duration  = (double)(endTime.tv_sec - startTime.tv_sec)   * 1000.0; 	// Get from sec to msec
-      //duration += (double)(endTime.tv_usec - startTime.tv_usec) / 1000.0; 	// From usec to msec
-		
-		
-      endTick = get_tick();
-      duration = ((double)(endTick-sJ)/(freq))*1000.0; //ms		
-		
-      // Print out the duration of the function
-      std::cerr << "Duration of hiroArm::PivotApproach() is: " << duration << "ms." << std::endl;		
-    }
+		if(DB_TIME)
+		{
+			// Timing
+			// Get end time
+			//gettimeofday(&endTime,NULL);
+
+			// Compute duration
+			//duration  = (double)(endTime.tv_sec - startTime.tv_sec)   * 1000.0; 	// Get from sec to msec
+			//duration += (double)(endTime.tv_usec - startTime.tv_usec) / 1000.0; 	// From usec to msec
+
+
+			endTick = get_tick();
+			duration = ((double)(endTick-sJ)/(freq))*1000.0; //ms
+
+			// Print out the duration of the function
+			std::cerr << "Duration of hiroArm::PivotApproach() is: " << duration << "ms." << std::endl;
+		}
 #endif
-  return ret;
+
+	return ret;
 }
 
 // Copy the latest position and rpy data into the original EndEff position and rpy

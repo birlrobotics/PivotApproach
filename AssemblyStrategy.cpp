@@ -5,8 +5,10 @@
   --------------------------------*/
 #include <sys/types.h>
 #include <sys/stat.h>
-///----------------------------------------------------------------------------------------------------------------------------------------------------
-/************************************************************* DESIGN PARAMETERS AND FLAGS ************************************************/
+#include "AssemblyStrategy.h"
+///---------------------------------------------------------------------------------------------------------------------------------------------------//
+/************************************************************* DESIGN PARAMETERS AND FLAGS ************************************************************/
+// ----------------------------------------------------- PLEASE SEE MORE DESIGN PARAMETERS IN hiroArm ------------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
 #define HIRO					1
@@ -17,7 +19,10 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE 0.0075
+#define PATH_DEVIATION_MAGNITUDE  0.0085
+#define ANGLE_DEVIATION_MAGNITDUE -1*0.174532925
+											// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
+											// +/- yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -41,60 +46,7 @@
 	#define SIDE_AXIS 			1
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-
-#include "AssemblyStrategy.h"
-
-/* The following definitions are here for Reference. They are used in hiroArm.cpp
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// Files: PivotApproach. In fact, the directory path is provided through the Initialization function, which is called from hiroArm. But these are here for reference or manual use.
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// To Read DATA
-#define SL_APPROACH_FILE 		"./data/PivotApproach/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
-#define PIVOT_APPROACH_FILE 	"./data/PivotApproach/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in SideApproach for the HIRO Robot
-#define SIDE_APPROACH_FILE 		"./data/PivotApproach/HIRO/sideApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
-#define FAILURE_CHARAC_FILE 	"./data/PivotApproach/FC/failureCaseState1.dat"				// Waypoints for State1 in SideApproach for the HIRO Robot
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// To Write Data (used in AssemblyStrategy::OpenFiles)
-#define ANGLES_FILE				"./data/Results/Angles.dat"									// Save joint angles of robot
-#define CARTPOS_FILE			"./data/Results/CartPos.dat"								// Save CartPos of End-Effector in world coordinates
-#define STATE_FILE				"./data/Results/State.dat"									// Save State Transition times for SideApproach
-#define FORCES_FILE				"./data/Results/Torques.dat"								// Save Joint Torques for robot
-#define MANIP_TEST_FILE			"/manipulationTestAxis.dat"									// Used to test force and moment controllers behavior
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define USE_MOTION_DAT 			0			// Should be zero if used with control basis approach or reading a trajectory from file
-#define CONTROL_BASIS			1			// If using the control basis approach
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-#define STRAIGHT_LINE_APPROACH  0 			// If using the straight line approach for the assembly strategy. If true, then pivot approach should be 0
-#define PIVOT_APPROACH 			0			// Pivot approach. If true, straight line approach should be 0.
-#define SIDE_APPROACH			1			// Similar to pivot approach but when there are 4 snaps, this approach pivots on the SIDE of two cantilever snaps instead of on the edge that is bisects the symmetry axis of the snaps.
-#define FAILURE_CHARAC 			0			// Used with the SideApproach. If this is true, SIDE_APPROACH should be false.
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-// Assigning Strategy File depending on Strategy.
-#if(USE_MOTION_DAT==0) //I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
-
-	// (A) Define the Control Strategy
-	#define CONTROL_TYPE CONTROL_BASIS
-
-	// (B) Define the Assembly Strategy
-	#if(STRAIGHT_LINE_APPROACH)
-		#define MOTION_FILE 	SL_APPROACH_FILE
-		#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
-	#elif(PIVOT_APPROACH)
-		#define MOTION_FILE 	PIVOT_APPROACH_FILE
-		#define APPROACH_TYPE 	PIVOT_APPROACH
-	#elif(SIDE_APPROACH)
-		#define MOTION_FILE 	SIDE_APPROACH_FILE
-		#define APPROACH_TYPE 	SIDE_APPROACH
-	#elif(FAILURE_CHARAC)
-		#define MOTION_FILE 	FAILURE_CHARAC_FILE
-		#define APPROACH_TYPE 	FAILURE_CHARAC
-	#endif
-#else
-	#define CONTROL_TYPE USE_MOTION_DAT
-#endif
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------------------------------
-*/
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -487,10 +439,11 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
 	  // Axis to Modify
 	  // These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
-	  divPoint(0) = PATH_DEVIATION_MAGNITUDE; 	// x-axis
-	  divPoint(1) = 0.00;						// y-axis
-	  divPoint(3) = 0.00;						// ROLL
-	  divPoint(5) = 0.00;						// YALL
+	  divPoint(0) =  PATH_DEVIATION_MAGNITUDE;	// x-axis
+	  divPoint(1) =  PATH_DEVIATION_MAGNITUDE; // y-axis
+	  divPoint(2) =  0.00;						// z-axis
+	  divPoint(3) =  0.00;						// ROLL
+	  divPoint(5) =  ANGLE_DEVIATION_MAGNITDUE;	// YALL
   }
 
   // For the first iteration they are both the same.
@@ -1580,7 +1533,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  /*------------------------------------------------------------ Rotation2Insertion Transition ------------------------------------------------------------------------------------------------------------------------*/
 			  case hsaRotation2Insertion:
 			  {
-				  // At the end of the rotation, the clearest impacts is discerned by My. Threshold 5 N-m.
+				  // At the end of the rotation, check either wrist joint angle or My moment with threshold ~5 N-m.
 				  float endApproachTime=ex_time[1];
 				  #ifdef SIMULATION
 					  if( cur_time > endApproachTime ) 					// Time-based Condition: Must be at least greater than the end of ApproachTime. Should be near rotation.
@@ -1833,17 +1786,15 @@ int ::AssemblyStrategy::manipulationTest(TestAxis		axis,
       avgSig(i+3)  =0;
     }
 
-  type = IKinComposition; 
+  /*type = IKinComposition;
   ControlCompositions(m_path,bodyPtr,
 		      JointAngleUpdate,CurrAngles,
 		      PivotApproach,type,
 		      MomentData,ForceData,DesIkin,
 		      ErrorNorm1,ErrorNorm2,
 		      pos,rot,cur_time,
-		      Jacobian,PseudoJacobian);
+		      Jacobian,PseudoJacobian);*/
 
-
-#if 0
   /*********************************** Define what axis you want to test *******************************/
   /********************** +Fx ***************************/
   if(axis == ::AssemblyStrategy::posFx)
@@ -2101,7 +2052,7 @@ int ::AssemblyStrategy::manipulationTest(TestAxis		axis,
       else
 	DesForceSwitch++;			// Switch desired force element
     }
-#endif
+
   // Print joint angle information in degrees to cerr
   std::cerr <<  setprecision(3) << "\nThe update joint angles are: \t" << JointAngleUpdate(0)*RAD2DEG << "\t" << JointAngleUpdate(1)*RAD2DEG << "\t" << JointAngleUpdate(2)*RAD2DEG  << "\t" << JointAngleUpdate(3)*RAD2DEG  << "\t" << JointAngleUpdate(4)*RAD2DEG  << "\t" << JointAngleUpdate(5)*RAD2DEG;
   std::cerr <<  setprecision(3) << "\nThe current angles are: \t"      << CurrAngles(0)*RAD2DEG 		<< "\t" << CurrAngles(1)*RAD2DEG 	   << "\t" << CurrAngles(2)*RAD2DEG 		<< "\t" << CurrAngles(3)*RAD2DEG 		<< "\t" << CurrAngles(4)*RAD2DEG 		<< "\t" << CurrAngles(5)*RAD2DEG 		<< "\n";
