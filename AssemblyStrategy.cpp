@@ -19,10 +19,11 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE  0.0085
-#define ANGLE_DEVIATION_MAGNITDUE -1*0.174532925
+#define PATH_DEVIATION_MAGNITUDE   0.0
+#define ANGLE_DEVIATION_MAGNITDUE  0.0
 											// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
-											// +/- yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
+											// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
+											// RollDir 0.08725, 0.1745, 0.2618, 0.3490, 0.4363, 0.5235
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -435,15 +436,13 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	  // Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
 
 	  // Keep the z-axis and the pitch at zero
-	  divPoint(2)=0; divPoint(4)=0;
+	  divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
 
-	  // Axis to Modify
-	  // These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
-	  divPoint(0) =  PATH_DEVIATION_MAGNITUDE;	// x-axis
-	  divPoint(1) =  PATH_DEVIATION_MAGNITUDE; // y-axis
-	  divPoint(2) =  0.00;						// z-axis
-	  divPoint(3) =  0.00;						// ROLL
-	  divPoint(5) =  ANGLE_DEVIATION_MAGNITDUE;	// YALL
+	  divPoint(0) 						= 0.0000;			// x-axis
+	  divPoint(1) 						=-0.0000; 			// y-axis
+	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;			// z-axis
+	  else		  		   divPoint(2) 	= 0.000;			// If there is deviation in the x-axis, then we need to add a devaition in the z-axis with value of -0.005 such that there is contact after moving forward.
+	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
   }
 
   // For the first iteration they are both the same.

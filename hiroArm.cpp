@@ -30,7 +30,7 @@ using std::ceil;
 #define SL_APPROACH_FILE 		"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
 #define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in PivotApproach for the PA10 Robot
 #define SIDE_APPROACH_FILE 		"/HIRO/sideApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
-#define FAILURE_CHARAC_FILE 	"/FC/failureCaseXRoll.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseXRoll.dat
+#define FAILURE_CHARAC_FILE 	"/FC/failureCaseRollDir.dat"			// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseRollDir.dat
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
 #define ANGLES_FILE				"/Angles.dat"							// Save joint angles of robot
@@ -56,9 +56,9 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_FLAG 		0 			// Masking Flags to determine which trajectory to choose
 #define PIVOT_APPROACH_FLAG		0			// Pivot approach. 								If true, STRAIGHT_LINE_FLAG=0,SIDE_APPROACH_FLAG=0, FAILURE_CHARAC_FLAG=0.
-#define SIDE_APPROACH_FLAG		1			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
-#define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
-											// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
+#define SIDE_APPROACH_FLAG		0			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
+#define FAILURE_CHARAC_FLAG		1			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_APPROACH 1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
 #define PIVOT_APPROACH 			2
