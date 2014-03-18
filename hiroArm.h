@@ -347,6 +347,8 @@ class hiroArmMas : public hiroArm
   hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in);
   //~ void savedata();
 
+  int init(vector3 pos, matrix33 rot, double CurAngles[15]);
+
  protected:
   matrix33 calc_hRfs(dvector6 q_in);
 
@@ -361,6 +363,7 @@ class hiroArmSla : public hiroArm
   //~ void update_currforcedata();
   //~ bool get_forces(vector3 &rF_gc_out, vector3 &rM_gc_out);
   //~ void savedata();
+  int init(vector3 pos, matrix33 rot, double CurAngles[15]);
 
  protected:
   matrix33 hRfs;

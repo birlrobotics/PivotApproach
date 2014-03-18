@@ -129,10 +129,10 @@ class forceSensorPlugin_impl : public plugin,
 
   // Pivot Approach
   double cur_time;
-  vector3 CurXYZ;
-  matrix33 CurRot;
-  dvector6 CurrentForces;
-  dvector6 CurrentAngles, JointAngleUpdate;
+  vector3 CurXYZ, L_CurXYZ;
+  matrix33 CurRot, L_CurRot;
+  dvector6 CurrentForces, L_CurrentForces;
+  dvector6 CurrentAngles, JointAngleUpdate, L_CurrentAngles, L_JointAngleUpdate;
 
   // Flags
   bool initFlag;

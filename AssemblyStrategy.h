@@ -79,6 +79,10 @@ typedef tvmet::Vector<double, 6> vector6;
 // CONTACT Transitional Parameters
 #define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 #define HSA_Rot2Ins_My				0.8			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
+//  --- Diro -------------------
+#define TwoArm_SA_App2Rot_Fx				0.95//0.45//5.6//9.0		// TwoArm_SA: Transition condition between Approach and Rotation stages.
+#define TwoArm_SA_Rot2Ins_My				-0.0332226			// TwoArm_SA: Transition condition between Rotation and Insertion stages.
+#define TwoArm_SA_Ins2SubIns_My				-0.167044
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables
 #define PI 		      				3.1416
@@ -120,7 +124,9 @@ class AssemblyStrategy {
     StraightLineApproach,
     PivotApproach,
     SideApproach,
-    FailureCharacerization
+    FailureCharacerization,
+    // ==== Diro ======
+    TwoArm_HSA
   };
 
   enum TestAxis
@@ -186,6 +192,18 @@ class AssemblyStrategy {
 	  hsaFinish,
   };
 
+  //  ==== Diro ====
+  /*---------------------------------------- States: TWOARM Side Approach -------------------------------------------*/
+  enum TWOARM_HSA_States
+  {
+	  twoArm_hsaApproach= 1,
+	  twoArm_hsaRotation,
+	  twoArm_hsaInsertion,
+	  twoArm_hsaSubInsertion,
+	  twoArm_hsaMating,
+	  twoArm_hsaFinish,
+  };
+
   /*-------------------------------------------------- TRANSITIONS -----------------------------------------------------*/
   /*---------------------------------------- Transitions: PA10 Pivot Approach -------------------------------------------*/
   enum PA10_PA_Transitions
@@ -204,6 +222,15 @@ class AssemblyStrategy {
 	  hsaInsertion2InsPartB,
 	  hsaInsPartB2Mating,
 	  hsaMating2FinishTime,
+  };
+  /*---------------------------------------- Transitions: TWOARM Side Approach -------------------------------------------*/
+  enum TWOARM_SA_Transitions
+  {
+	  TWOARM_hsaApproach2Rotation = 1,
+	  TWOARM_hsaRotation2Insertion,
+	  TWOARM_hsaInsertion2InsPartB,
+	  TWOARM_hsaInsPartB2Mating,
+	  TWOARM_hsaMating2FinishTime,
   };
   /*---------------------------------------- Transitions: HIRO Side Approach Exceptions-------------------------------------------*/
   enum HIRO_SA_Trnasition_Exceptions

@@ -71,6 +71,9 @@ unsigned long long distate; // Digital state parameter. Holds bit values.
 double size;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
+//Left Arm Enable
+#define LEFT_ARM  0 	//Used to enable the left Arm
+
 /***************************** Allocate Plugin*********************************/
 
 //class forceSensorPlugin_impl: public plugin, 
@@ -129,10 +132,17 @@ forceSensorPlugin_impl::forceSensorPlugin_impl(istringstream &strm)
 		CurrentForces(i)	=0.0;
 		CurrentAngles(i)	=0.0;
 		JointAngleUpdate(i)	=0.0;
+#if LEFT_ARM
+		L_JointAngleUpdate(i) = 0.0;
+#endif
 	}
 	for(int i=0;i<3;i++)
-		for(int j=0;j<3;j++)
+		for(int j=0;j<3;j++){
 			CurRot(i,j) = 0.0;
+#if LEFT_ARM
+			L_CurRot(i,j) = 0.0;
+#endif
+		}
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin_impl(): finished initializing variables" << std::endl;
 #endif
@@ -229,7 +239,7 @@ void forceSensorPlugin_impl::init(void)
 
 	/*------------------------------------------------------------------------------- Setup LEFT and RIGHT arms angle limits -------------------------------------*/
 	float ang_limit_sub[ARM_DOF][5];
-#if 0
+#if LEFT_ARM
 	//---------------------- LEFT arm ----------------------------//
 
 #ifdef DEBUG_PLUGIN
@@ -257,7 +267,7 @@ void forceSensorPlugin_impl::init(void)
 
 	// Position and Rotation Variables
 	//ePh = -0.052, 0.0, 0.0;
-	ePh = 0.0715, 0.0, 0.0;										// Wrist to EndEffector translation
+	ePh = -0.0915, 0.00, -0.0255; // -0.051, 0.0020, -0.0225; //0.0715, 0.0, 0.0;										// Wrist to EndEffector translation
 	eRh = 1.0, 0.0, 0.0,
 			0.0, 1.0, 0.0,
 			0.0, 0.0, 1.0;									// Wrist to EndEffector rotation
@@ -268,8 +278,8 @@ void forceSensorPlugin_impl::init(void)
 	std::cerr << "forceSensorPlugin::Allocating LEFT hiroArm" << std::endl;
 #endif
 
-	lArm = new hiroArmMas("left", body, 9, DT, ang_limit_sub, ePh, eRh, hPfs);
-
+	int left_NUM_q0 = 9;
+	lArm = new hiroArmMas("left", body, left_NUM_q0, DT, ang_limit_sub, ePh, eRh, hPfs);
 
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin::Finished allocating LEFT hiroArm" << std::endl;
@@ -287,7 +297,7 @@ void forceSensorPlugin_impl::init(void)
 #ifdef PIVOTAPPROACH
 
 	// Position and Rotation Variables in local wrist coordinates. rot mat={0 0 -1 0 1 0 1 0 0}
-	ePh = -0.051, 0.0020, -0.0225; //0.025, 0.0, -0.063; // -0.063, 0.0, -0.025;	// -0.127, 0.025, 0.0;	//-0.127, -0.03, -0.005;	// Wrist to EndEffector (TCP) translation.
+	ePh = -0.0785, 0.0020, -0.0245;  //-0.051, 0.0020, -0.0225;//0.025, 0.0, -0.063; // -0.063, 0.0, -0.025;	// -0.127, 0.025, 0.0;	//-0.127, -0.03, -0.005;	// Wrist to EndEffector (TCP) translation.
 	// This accounts for the end-effector that holds the camera molds in the pivot approach.
 	// -0.127=height,0.025=frontal, 0.0=horizontal
 	eRh = 1.0, 0.0, 0.0,
@@ -450,6 +460,16 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	CurrentAngles[4]=rs->angle[NUM_q0+4];
 	CurrentAngles[5]=rs->angle[NUM_q0+5];
 
+#if LEFT_ARM
+	int left_NUM_q0 = 9;
+	L_CurrentAngles[0]=rs->angle[left_NUM_q0];
+	L_CurrentAngles[1]=rs->angle[left_NUM_q0+1];
+	L_CurrentAngles[2]=rs->angle[left_NUM_q0+2];
+	L_CurrentAngles[3]=rs->angle[left_NUM_q0+3];
+	L_CurrentAngles[4]=rs->angle[left_NUM_q0+4];
+	L_CurrentAngles[5]=rs->angle[left_NUM_q0+5];
+#endif
+
 #ifndef SIMULATION
 	mc->angle[8] += 0.531117;
 #endif
@@ -476,6 +496,27 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	std::cerr << "forceSensorPlugin::setup() - Arm Initialization" << std::endl;
 #endif
 
+#if LEFT_ARM
+	lArm->init(body->link(LARM_JOINT5)->p, body->link(LARM_JOINT5)->attitude(), CurAngles);
+	if(DEBUG)
+		{
+			// Number of joints
+			int n2=0;
+			n2 = lArm->m_path->numJoints();
+			cerr << "forceSensorPlugin::setup(). LEFT Num Joints: " << n2 << std::endl;
+
+			// Position
+			vector3 rpy2(0);
+			lArm->set_OrgPosRot(L_CurXYZ,rpy2);
+			cerr << "forceSensorPlugin::setup(). LEFT Current Position: " << L_CurXYZ << std::endl;
+			cerr << "forceSensorPlugin::setup(). LEFT Current Pose: " << rpy2 << std::endl;
+
+			// Angles
+			cerr << "forceSensorPlugin::setup(). LEFT Current Angles (radians):\t" << L_CurrentAngles << std::endl;
+		}
+#endif
+
+	//set up right hand
 	ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
 
 	// Update the latest data angles and position
@@ -484,16 +525,16 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 		// Number of joints
 		int n=0;
 		n = rArm->m_path->numJoints();
-		cerr << "forceSensorPlugin::setup(). Num Joints: " << n << std::endl;
+		cerr << "forceSensorPlugin::setup(). RIGHT Num Joints: " << n << std::endl;
 
 		// Position
 		vector3 rpy(0);
 		rArm->set_OrgPosRot(CurXYZ,rpy);
-		cerr << "forceSensorPlugin::setup(). Current Position: " << CurXYZ << std::endl;
-		cerr << "forceSensorPlugin::setup(). Current Pose: " << rpy << std::endl;
+		cerr << "forceSensorPlugin::setup(). RIGHT Current Position: " << CurXYZ << std::endl;
+		cerr << "forceSensorPlugin::setup(). RIGHT Current Pose: " << rpy << std::endl;
 
 		// Angles
-		cerr << "forceSensorPlugin::setup(). Current Angles (radians):\t" << CurrentAngles << std::endl;
+		cerr << "forceSensorPlugin::setup(). RIGHT Current Angles (radians):\t" << CurrentAngles << std::endl;
 	}
 
 	// Check result
@@ -579,9 +620,20 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 		{
 			// Initialize the iteration
 			rArm->m_time=0;
-
+#if LEFT_ARM
+			lArm->m_time=0;
+#endif
 			if(DEBUG)
 			{
+
+#if LEFT_ARM
+
+				vector3 rpy2(0);
+				lArm->set_OrgPosRot(L_CurXYZ,rpy2);
+				lArm->m_path->calcInverseKinematics(L_CurXYZ,L_CurRot);
+				for(int i=0;i<6;i++)
+					L_CurrentAngles(i) = lArm->m_path->joint(i)->q;
+#endif
 				// Update the latest data angles and position
 				vector3 rpy(0);
 				rArm->set_OrgPosRot(CurXYZ,rpy);
@@ -616,6 +668,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			bool f_control[2];
 			f_control[0] = false;
 			f_control[1] = true;
+#if LEFT_ARM
+			f_control[0] = true;
+#endif
 
 			// Set controlmode _r equal to _nr
 #if 0	
@@ -703,6 +758,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			// Update cartesian position of robot arms
 			//lArm->update_currposdata();	// Gets base2wrist translation/rotation, and base2endeffector translation/rotation
 			rArm->update_currposdata(); // And, current joint angles for the respective arm
+#if LEFT_ARM
+			lArm->update_currposdata();
+#endif
 
 			/*------------------------------------------------------------- Select Control Mode-----------------------------------------------------------------------*/
 
@@ -1254,6 +1312,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #ifdef SIMULATION
 				for(int i=0;i<6;i++)
 					CurrentForces(i) = rArm->raw_forces[i];
+#if LEFT_ARM
+				for(int i=0;i<6;i++)
+					L_CurrentForces(i) = 0.0;//lArm->raw_forces[i];
+#endif
+
 #else
 				rArm->update_currforcedata();
 
@@ -1294,7 +1357,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				// Get current hand (endeffector) position and rotation
 				rArm->get_curr_handpos(CurXYZ,CurRot);
-
+#if LEFT_ARM
+				lArm->get_curr_handpos(L_CurXYZ,L_CurRot);
+#endif
 
 #ifdef DEBUG_PLUGIN
 				cerr << "\n\n!!!!! forceSensorPlugin::control(). CurXYZ: " << CurXYZ(0) << " " << CurXYZ(1) << " " << CurXYZ(2) << std::endl;
@@ -1306,8 +1371,12 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #endif			
 
 				// Copy current angles
-				for(int i=0; i<ARM_DOF; i++)
+				for(int i=0; i<ARM_DOF; i++){
 					CurrentAngles(i) = body->joint(i+3)->q;		// Right arm start at i+3. i.e. chest,pan,tilt,rArm,lArm.
+#if LEFT_ARM
+					L_CurrentAngles(i) = body->joint(i+9)->q;
+#endif
+				}
 
 #ifdef DEBUG_PLUGIN
 				std::cerr << "Current Joint Angles are:\t" << CurrentAngles(0) << " " << CurrentAngles(1) << " " << CurrentAngles(2) << " "
@@ -1317,7 +1386,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// Controller time counter
 				cur_time=DT*double(rArm->get_Iteration());		// sampling time * iteration
 				rArm->set_Iteration();							// Increase iteration
-
+#if LEFT_ARM
+				lArm->set_Iteration();
+#endif
 #if 0
 				// Perofrm necessary procedures to run the inverse kinematic computations later
 				for(int j=0; j<4; j++)
@@ -1333,6 +1404,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				std::cerr << "\nforceSensorPlugin::control - Calling hiroArm::PivotApproach()" << std::endl;
 #endif			 
 				ret=rArm->PivotApproach(cur_time,CurXYZ,CurRot,CurrentForces,JointAngleUpdate,CurrentAngles);
+#if LEFT_ARM
+				lArm->PivotApproach(cur_time,L_CurXYZ,L_CurRot,L_CurrentForces,L_JointAngleUpdate,L_CurrentAngles);
+#endif
 				if(ret==-1)
 				{
 					cerr << "InverseKinematics failed.\nCurrent time:\t" << cur_time <<

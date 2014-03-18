@@ -11,7 +11,9 @@
 // ----------------------------------------------------- PLEASE SEE MORE DESIGN PARAMETERS IN hiroArm ------------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
-#define HIRO					1
+#define HIRO					0
+// ==== Diro:: new the Flag  ======
+#define TWOARM_HIRO				1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSEMBLY_STRATEGY_AUTOMATA STATES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -19,10 +21,11 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE  0.0085
-#define ANGLE_DEVIATION_MAGNITDUE -1*0.174532925
+#define PATH_DEVIATION_MAGNITUDE  0.0104
+#define ANGLE_DEVIATION_MAGNITDUE 0.1826
 											// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
-											// +/- yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
+											// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
+											// xRoll 0.1745, 0.3490, 0.5235
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -40,10 +43,14 @@
 // Vertical Axes in WORLD coordinates using a right handed coordinate system: +Z:Up, +Y:Right, +X:Out
 #if(PA10==1)
 	#define UP_AXIS  			2   		// Defines the local wrist axis for a robot. Used to set desired forces.
-#else // HIRO
+#elif(HIRO==1) // HIRO
 	#define UP_AXIS  			0			// x becomes up/down after transform
 	#define FWD_AXIS			2			// z becomes backward/forward after transform
 	#define SIDE_AXIS 			1
+#else //TWO_ARM HIRO
+	#define UP_AXIS				1		//+ down after transform
+	#define FWD_AXIS			2		//+ forward after transform
+	#define SIDE_AXIS			0		//+ left after transform
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -106,6 +113,15 @@ AssemblyStrategy::AssemblyStrategy()
       DesIKin(5) = -3.1415;
     }
   else if(HIRO)
+    {
+      DesIKin(0) =  0.0000;
+      DesIKin(1) = -0.7330;
+      DesIKin(2) =  0.0075;
+      DesIKin(3) =  3.1415;
+      DesIKin(4) =  0.0000;
+      DesIKin(5) = -3.1415;
+    }
+  else if(TWOARM_HIRO)
     {
       DesIKin(0) =  0.0000;
       DesIKin(1) = -0.7330;
@@ -226,6 +242,15 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 		DesIKin(4) =  0.0000;
 		DesIKin(5) = -3.1415;
 	}
+	else if(TWOARM_HIRO)
+		{
+			DesIKin(0) =  0.0000;
+			DesIKin(1) = -0.7330;
+			DesIKin(2) =  0.0075;
+			DesIKin(3) =  3.1415;
+			DesIKin(4) =  0.0000;
+			DesIKin(5) = -3.1415;
+		}
 	else
 		for(int i=0; i<6; i++) DesIKin(i)=0.0;
 
@@ -425,6 +450,13 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	  approachType = SideApproach;
   }
 
+  // ==== Diro ======
+  else if(strategyType==TwoArm_HSA)
+  {
+	  approachFlag = false;
+	  approachType = TwoArm_HSA;
+  }
+
   else if(strategyType==FailureCharacerization)
   {
 	  approachFlag = false;
@@ -439,11 +471,24 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
 	  // Axis to Modify
 	  // These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
-	  divPoint(0) =  PATH_DEVIATION_MAGNITUDE;	// x-axis
-	  divPoint(1) =  PATH_DEVIATION_MAGNITUDE; // y-axis
-	  divPoint(2) =  0.00;						// z-axis
-	  divPoint(3) =  0.00;						// ROLL
-	  divPoint(5) =  ANGLE_DEVIATION_MAGNITDUE;	// YALL
+	  // Test xDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xDir3 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir3 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xRollDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xRollDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test x-yDir  divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test x-xRoll divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir-xRoll divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test x-y-xRoll  divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+
+	  divPoint(0) =     0.00;	// x-axis
+	  divPoint(1) =     0.0083; 						// y-axis
+	  divPoint(2) =     0.00;						// z-axis
+	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;	// ROLL PATH_DEVIATION_MAGNITUDE
+	  divPoint(5) =    0.00;						// YALL
   }
 
   // For the first iteration they are both the same.
@@ -870,6 +915,153 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		// case hsaFinsih
 		}
 	}
+
+	// ==== Diro ======
+	else if(approach==TwoArm_HSA)
+	{
+		switch(State)
+		{
+
+		// ------------------------ Approach --------------------------
+		case twoArm_hsaApproach:
+		{
+			//Initialize
+			if(ctrlInitFlag)
+			{
+				// ensure that the original end-effector position and orientation are set correctly.
+				EndEff_r_org = rpyFromRot(rot);
+				wrist_r	=	EndEff_r_org;
+
+				EndEff_p_org = pos;
+				wrist_p = EndEff_p_org;
+
+				nextState = false;
+				ctrlInitFlag = false;
+
+				std::cerr << "Diro :: on the Approach state, now: " << cur_time << std::endl;
+			}
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+		// ------------------- Rotation ---------------------------
+		case twoArm_hsaRotation:
+		{
+			if(ctrlInitFlag)
+			{
+				nextState = false;
+				ctrlInitFlag = false;
+
+				// set up a new trajectory file with current information
+				ProcessTrajFile(strTrajState2, State, pos, CurRPY, cur_time);
+				EndEff_p_org = pos;
+				EndEff_r_org = CurRPY;
+
+				std::cerr << "Diro :: on the Rotation state, now: " << cur_time << std::endl;
+			}
+
+#ifdef SIMULATION
+			/*------------------------ WORLD COORDINATES -------------------------------*/
+			// +X: Downwards
+			// +Y: Moves right
+			// +Z: Moves forward (and a bit left)
+//			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;  //10
+			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
+//			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE; //4
+//			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+			DesForce(FWD_AXIS) 	=	-13.85;//-32.000*TRANSVERSE_FORCE;
+			DesForce(UP_AXIS)	=	-7.18;//-0.5*VERTICAL_FORCE;
+			DesForce(SIDE_AXIS)	=	6.5;//1.0*HORIZONTAL_FORCE;
+
+			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+#else
+			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
+			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+			DesForce(FWD_AXIS) 	= -20*TRANSVERSE_FORCE;
+			DesMoment(1) 		= 2.100*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach,
+//					MomentForceComposition,  DesMoment,DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+
+		// ----------------------- Insertion Controller ------------------
+		case twoArm_hsaInsertion:
+		{
+			// Initialize
+			if(ctrlInitFlag)
+			{
+				nextState 		= false;
+				ctrlInitFlag 	= false;
+
+				std::cerr << "Diro :: on the Insertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+
+//			DesForce(UP_AXIS)		=	1.300*VERTICAL_FORCE;		//13.0
+//			DesForce(SIDE_AXIS)		=	2.000*HORIZONTAL_FORCE;		//0.60
+//			DesForce(FWD_AXIS)		= -13.000*TRANSVERSE_FORCE;		//-3.25
+
+			DesForce(FWD_AXIS) 	=	-13.85;
+			DesForce(UP_AXIS)	=	-7.00;
+			DesForce(SIDE_AXIS)	=	6.5;
+
+			DesMoment(1)			=	3.750*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+
+		case twoArm_hsaSubInsertion:
+		{
+			if(ctrlInitFlag)
+			{
+				nextState	=	false;
+				ctrlInitFlag	=	false;
+
+				std::cerr << "Diro :: on the SubInsertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+//			DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
+//			DesForce(UP_AXIS)	=	-6.00;
+			DesForce(SIDE_AXIS) =	6.80;
+//			DesForce(FWD_AXIS) 	=	-13.85;
+//			DesMoment(1)			=	3.00*ROTATIONAL_FORCE;
+#endif
+
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+
+			ret = StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+
+		case twoArm_hsaMating:
+		{
+
+			std::cerr << "Diro :: on the Mating state, now: " << cur_time << std::endl;
+			avgSig = avgSig * exp(-cur_time/2.5);
+		}
+		break;
+
+		case twoArm_hsaFinish:
+		{
+			std::cout << "twoArm_hsaFinish" << endl;
+		}
+		break;
+		}
+	}
 	else
 		return -1;
 
@@ -878,7 +1070,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 	if(DB_WRITE)
 	{
-		if(approach==SideApproach || approach==FailureCharacerization)
+		//============ Diro ============================
+		if(approach==SideApproach || approach==FailureCharacerization ||approach==TwoArm_HSA )
 		{
 			vector3 handRPY;
 			vector3 handPos;
@@ -1501,6 +1694,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				break;
 		}
 	}
+
 	/*--------------------------------------------------------------------------------- SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
 	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
@@ -1603,7 +1797,80 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  break;
 
 		  } // End Switch
-    }		// End if==PivotApproach
+	} // End if == SideApproach
+	/*---------------------------------------------------------------------------------TWO ARM SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
+	else if(approach==TwoArm_HSA)
+	{
+		Vector3 position(0), attitude(0);
+		position = pos;
+		attitude = rpyFromRot(rot);
+
+		switch (State) {
+			case TWOARM_hsaApproach2Rotation:
+			{
+				float endApproachTime = ex_time[1];
+				if(cur_time > (endApproachTime*0.80))
+				{
+//					std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << std::endl;
+					if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx)
+					{
+						NextStateActions(cur_time,hsaHIROTransitionExepction);
+						std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << " :change to Rotation state" << std::endl;
+					}
+				}
+			}
+				break;
+
+			case TWOARM_hsaRotation2Insertion:
+			{
+				float endApproachTime = ex_time[1];
+//				std::cerr << "Diro :: start Rotation State" << std::endl;
+#ifdef SIMULATION
+//				std::cerr << "Diro :: CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
+				if(cur_time > endApproachTime )
+				{
+//					std::cerr << "Diro :: CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
+					if(CurJointAngles(4) < TwoArm_SA_Rot2Ins_My)
+					{
+						NextStateActions(cur_time, hsaHIROTransitionExepction);
+						std::cerr << "Diro :: change to Insertion state" << std::endl;
+					}
+				}
+#endif
+			}
+				break;
+
+			case TWOARM_hsaInsertion2InsPartB:
+			{
+#ifdef SIMULATION
+				if(CurJointAngles(My) < TwoArm_SA_Ins2SubIns_My)
+				{
+					hsaHIROTransitionExepction = Ins2InsSubPart;
+					NextStateActions(cur_time, hsaHIROTransitionExepction);
+					hsaHIROTransitionExepction = normal;
+
+				}
+#endif
+			}
+				break;
+
+			case TWOARM_hsaInsPartB2Mating:
+			{
+				if((attitude(1) < -1.5330 && currForces(4) > 0.9) || (CurJointAngles(My) < 0.3870 && currForces(4) > 0.9))
+				{
+//					NextStateActions(cur_time, hsaHIROTransitionExepction);
+					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
+//					NextStateActions(cur_time+mating2EndTime, hsaHIROTransitionExepction);
+					hsaHIROTransitionExepction = normal;
+//					return PA_FINISH;
+				}
+			}
+				break;
+			default:
+				break;
+		}
+
+	}// End if== TwoArm_HSA
 
   return 0;
 }
@@ -1640,12 +1907,12 @@ void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionEx
 //**********************************************************************************************************************
 // moveRobot()
 // This function uses the motion.dat file to create sub-waypoints for the motion trajectory. Output points are saved
-// into the classes private member variables wrist_p and wrist_r. These in turns are used when calling AssemblyStrategy::
+// into the class' private member variables wrist_p and wrist_r. These in turn are used when calling AssemblyStrategy::
 // ControlCompositions.IkinCompositions.
 //
 // An Inverse Kinematics Function is called (OpenRAVE or OpenHRP's IK lib) with wrist_p and wrist_r as desired quantities.
 // There can be multiple way-points in the motion.dat file.
-// i is used an index to indicated if we are still in the trajectory from:
+// i is used an index to indicate if we are still in the trajectory from:
 // 		a) Origin to waypoint 1 (i=0),
 // 		b) waypoint 1 to 2 (i<T), and
 //		c) waypoint 2 to 3, etc.
