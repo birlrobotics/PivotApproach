@@ -1034,10 +1034,10 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			}
 #ifdef SIMULATION
 //			DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
-//			DesForce(UP_AXIS)	=	-6.00;
-			DesForce(SIDE_AXIS) =	6.80;
-//			DesForce(FWD_AXIS) 	=	-13.85;
-//			DesMoment(1)			=	3.00*ROTATIONAL_FORCE;
+			DesForce(UP_AXIS)	=	-5.90;
+			DesForce(SIDE_AXIS) =	11.50;
+			DesForce(FWD_AXIS) 	=	-12.10;
+			DesMoment(1)			=	4.00*ROTATIONAL_FORCE;
 #endif
 
 //			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
@@ -1057,7 +1057,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 		case twoArm_hsaFinish:
 		{
-			std::cout << "twoArm_hsaFinish" << endl;
+//			std::cout << "twoArm_hsaFinish" << endl;
 		}
 		break;
 		}
@@ -1856,13 +1856,14 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 
 			case TWOARM_hsaInsPartB2Mating:
 			{
-				if((attitude(1) < -1.5330 && currForces(4) > 0.9) || (CurJointAngles(My) < 0.3870 && currForces(4) > 0.9))
+				if(CurJointAngles(My) < -0.275851)
 				{
-//					NextStateActions(cur_time, hsaHIROTransitionExepction);
-					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
-//					NextStateActions(cur_time+mating2EndTime, hsaHIROTransitionExepction);
+					std::cerr << "Diro :: change to Mating state" << std::endl;
+					NextStateActions(cur_time, hsaHIROTransitionExepction);
+//					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
+					NextStateActions(cur_time+mating2EndTime, hsaHIROTransitionExepction);
 					hsaHIROTransitionExepction = normal;
-//					return PA_FINISH;
+					return PA_FINISH;
 				}
 			}
 				break;
