@@ -1,0 +1,4 @@
+hlb for CT
+- the poseterior for this automata state is not necessarily zero, even when there are no CT llb beliefs in the two axes.
+
+- look into this phenomenom. 
