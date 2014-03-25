@@ -32,7 +32,7 @@ using std::ceil;
 #define SIDE_APPROACH_FILE 		"/HIRO/R_sideApproachState.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
 #define FAILURE_CHARAC_FILE 	"/FC/failureCaseYDir.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseXRoll.dat
 
-//====Diro======
+//====the two arm data file by Diro======
 #define TWOARM_HSA_FILE			"/HIRO/R_sideApproachState.dat"
 
 
@@ -85,6 +85,7 @@ using std::ceil;
 #define FAILURE_CHARAC 			4
 // ==== Diro ======
 #define TWOARM_HSA				5
+#define LEFT_ARM_HOLD			6
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSIGN VARIABLES TO BE USED WITH PA->INITIALIZE(...)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2268,6 +2269,9 @@ hiroArmMas::hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0
 
 int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 {
+#if(TWOARM_HSA_FLAG)
+	#define APPROACH_TYPE	LEFT_ARM_HOLD
+#endif
 	int ret = 0;
 
   // Assign path trunk to each of the FIVE char variables

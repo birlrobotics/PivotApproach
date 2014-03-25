@@ -1062,6 +1062,10 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		break;
 		}
 	}
+	else if(approach == Left_Arm_Hold)
+	{
+		std::cerr<<"LEFT ARM HOLD"<<std::endl;
+	}
 	else
 		return -1;
 
@@ -1071,7 +1075,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	if(DB_WRITE)
 	{
 		//============ Diro ============================
-		if(approach==SideApproach || approach==FailureCharacerization ||approach==TwoArm_HSA )
+		if(approach==SideApproach || approach==FailureCharacerization ||approach==TwoArm_HSA || approach==Left_Arm_Hold)
 		{
 			vector3 handRPY;
 			vector3 handPos;

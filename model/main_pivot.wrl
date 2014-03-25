@@ -1134,13 +1134,17 @@ momentsOfInertia [0.00052016 0.00000169 0.00000790 0.00000169 0.00050569 -0.0000
 #							  #Inline { url "axis.wrl" }
 #							  Inline { url "WR.wrl" } 
 #							  #Inline { url "larm-clawL.wrl" } 
-#							  #Inline { url "larm-clawR.wrl" }							
-							# DEF lfsensor ForceSensor {		
-							# 	translation 0 0 0.0
-							# 	rotation 1 0 0 0
-							# 	sensorId 1
-							# }
-							#LARM_ENDEFFEETER
+#							  #Inline { url "larm-clawR.wrl" }
+
+							# Left Arm ForceSensor
+							DEF lfsensor2 ForceSensor {		
+								translation 0 0 0.0
+								rotation 1 0 0 0
+								sensorId 1
+							}
+
+
+							# LARM_ENDEFFEETER
 							Transform {
 								translation 0.009 0.0 0.0
 								children Shape {

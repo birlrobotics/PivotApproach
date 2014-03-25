@@ -127,6 +127,7 @@ class AssemblyStrategy {
     FailureCharacerization,
     // ==== Diro ======
     TwoArm_HSA
+    ,Left_Arm_Hold
   };
 
   enum TestAxis

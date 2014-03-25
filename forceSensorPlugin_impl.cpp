@@ -1,4 +1,3 @@
-// FOR THE PIVOT APPROACH TO WORK::init YOU MUST INCLUDE A -DPIVOTAPPROACH FLAG IN THE MAKEFILE AT ~/forceSensorPlugin_Pivot/server/Makefile.
 /***************************************************************************************************************************************************/
 // This code is called when the HIRO Simulation is called.
 //  Three main functions are called:
@@ -69,10 +68,12 @@ extern "C" {
 // GLOBALS
 unsigned long long distate; // Digital state parameter. Holds bit values.
 double size;
-//----------------------------------------------------------------------------------------------------------------------------------------------------
 
 //Left Arm Enable
 #define LEFT_ARM  0 	//Used to enable the left Arm
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 
 /***************************** Allocate Plugin*********************************/
 
@@ -425,7 +426,12 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	/*------------------------------------------------------------- Simulation ---------------------------------------------------*/
 #ifdef SIMULATION
 	for(int i=0; i<6; i++)
+	{
 		rArm->raw_forces[i] = rs->force[0][i];
+#if LEFT_ARM
+		lArm->raw_forces[i] = rs->force[1][i];
+#endif
+	}
 #endif
 
 #ifdef DEBUG_PLUGIN
@@ -679,7 +685,12 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #endif
 			/*----------------------------------------------------------- Simulation Force Values ----------------------------------------*/
 #ifdef SIMULATION
-			for(int i=0; i<6; i++) rArm->raw_forces[i] = rs->force[0][i];
+			for(int i=0; i<6; i++) {
+				rArm->raw_forces[i] = rs->force[0][i];
+#if LEFT_ARM
+				lArm->raw_forces[i] = rs->force[1][i];
+#endif
+			}
 #else
 
 #if 0
@@ -1314,7 +1325,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					CurrentForces(i) = rArm->raw_forces[i];
 #if LEFT_ARM
 				for(int i=0;i<6;i++)
-					L_CurrentForces(i) = 0.0;//lArm->raw_forces[i];
+					L_CurrentForces(i) = lArm->raw_forces[i];
 #endif
 
 #else
