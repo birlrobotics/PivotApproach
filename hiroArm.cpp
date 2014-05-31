@@ -30,7 +30,7 @@ using std::ceil;
 #define SL_APPROACH_FILE 		"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
 #define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in PivotApproach for the PA10 Robot
 #define SIDE_APPROACH_FILE 		"/HIRO/sideApproachState1.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
-#define FAILURE_CHARAC_FILE 	"/FC/failureCaseRollDir.dat"			// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseRollDir.dat
+#define FAILURE_CHARAC_FILE 	"/FC/failureCaseXDir.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseRollDir.dat
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
 #define ANGLES_FILE				"/Angles.dat"							// Save joint angles of robot
@@ -725,8 +725,8 @@ bool hiroArm::impedance_control()
     }
 
   // 1a) Set desired inertia and damping factor(for POSITION)
-  const double  Dlh[2]= {100,250};        						// Threshold of damping coef.[low, high]
-  const double  vlh[2]= {0.005,0.1};      						// Threshold of velocity.    [low, high]
+  const double  Dlh[2]= {100,250};        							// Threshold of damping coef.[low, high]
+  const double  vlh[2]= {0.005,0.1};      							// Threshold of velocity.    [low, high]
   double Dxth[3];													// Damping coefficients
   double Mxth[3];            										// Inertia coefficients With values 5,15,20
 

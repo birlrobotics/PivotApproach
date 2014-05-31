@@ -601,13 +601,10 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 		// Simulation test is used to skip code that is enclosed the if function.
 		if(SIMULATION_TEST)
 		{
-
-
 			// Timing
 			timeval startTime, endTime;			// create variables
 			double duration = 0;
-			if(DB_TIME)
-			{
+			if(DB_TIME)	{
 				gettimeofday(&startTime,NULL); 						// Initialize startTime
 			}
 
@@ -624,7 +621,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #endif
 			/*----------------------------------------------------------- Simulation Force Values ----------------------------------------*/
 #ifdef SIMULATION
-			for(int i=0; i<6; i++) rArm->raw_forces[i] = rs->force[0][i];
+			for(int i=0; i<6; i++)
+				rArm->raw_forces[i] = rs->force[0][i];
 #else
 
 #if 0
@@ -645,7 +643,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			/*------------------------------------------------------------ INITIALIZATION STAGE ----------------------------------------------*/
 			if(initFlag==false)
 			{
-
 				/*---------------------- Angle Update --------------------------*/
 
 				// For the first iteration make sure that output angles are the same as input angles for all 15 DOF.

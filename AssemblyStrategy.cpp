@@ -19,11 +19,10 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE   0.0
-#define ANGLE_DEVIATION_MAGNITDUE  0.0
-											// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
-											// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
-											// RollDir 0.08725, 0.1745, 0.2618, 0.3490, 0.4363, 0.5235
+#define PATH_DEVIATION_MAGNITUDE_X   0.0105		// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
+#define PATH_DEVIATION_MAGNITUDE_Y   0.0		// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
+#define ANGLE_DEVIATION_MAGNITUDE  0.4363		// YawDir 0.08725, 0.1745, 0.2618, 0.3490, 0.4363, 0.5235
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -320,7 +319,7 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 									 int strategyType, int controlMethodType)
 {
 #ifdef DEBUG_PLUGIN3
-  std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;	
+  std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;
   std::cerr << "\n These are the file names: \n" << TrajState1 << "\n" << TrajState2 << "\n" << AnglesDir << "\n" << CartPosDir << "\n" << StateDir << "\n" << ForcesDir << "\n" << std::endl;
 #endif
 
@@ -357,9 +356,9 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
   // Here we read the desired trajectory file for state 1 and save the data in local variables for position and orientation
 #ifdef DEBUG_PLUGIN3
-  std::cerr << "\nAssemblyStrategy::Initialize - extract information from waypoint file: " << strTrajState1 << std::endl;	
-#endif	
-		
+  std::cerr << "\nAssemblyStrategy::Initialize - extract information from waypoint file: " << strTrajState1 << std::endl;
+#endif
+
   //--------------------------------------------------------------------------------------------------------------------------------
   // 3) Reassign original end effector position and rotation
   //--------------------------------------------------------------------------------------------------------------------------------
@@ -367,21 +366,21 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   wrist_r = EndEff_r_org;
 
   EndEff_p_org			= pos;
-  wrist_p = EndEff_p_org;		
+  wrist_p = EndEff_p_org;
 
-#ifdef DEBUG_PLUGIN3		
+#ifdef DEBUG_PLUGIN3
   // Cartesian Position
   std::cerr 	<< "/--------------------------------------------------------------------------------------------------------------------------------------------------------------------/\n"
-    "AssemblyStrategy::Initialize(): \nThe EndEffector position during initialization is: " 
-		<< wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2)  
+    "AssemblyStrategy::Initialize(): \nThe EndEffector position during initialization is: "
+		<< wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2)
     // Joint Angles
-		<< "\n\nThe 15 body joint angles in radians are: " 
+		<< "\n\nThe 15 body joint angles in radians are: "
 		<< CurAngles[0] << "\t" << CurAngles[1] << "\t" << CurAngles[2] << "\t" << CurAngles[3] << "\t" << CurAngles[4] << "\t" << CurAngles[5] << "\t"
-		<< CurAngles[6] << "\t" << CurAngles[7] << "\t" << CurAngles[8] << "\t" << CurAngles[9] << "\t" << CurAngles[10] << "\t" << CurAngles[11]  
-		<< CurAngles[12] << "\t" << CurAngles[13] << "\t" << CurAngles[14] << "\t"     
+		<< CurAngles[6] << "\t" << CurAngles[7] << "\t" << CurAngles[8] << "\t" << CurAngles[9] << "\t" << CurAngles[10] << "\t" << CurAngles[11]
+		<< CurAngles[12] << "\t" << CurAngles[13] << "\t" << CurAngles[14] << "\t"
 		<< "\n/--------------------------------------------------------------------------------------------------------------------------------------------------------------------/" << std::endl;
 #endif
-		
+
   vector3 rpy=rpyFromRot(rot);
 
   // Extract information from the way point file for state 1
@@ -433,16 +432,16 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
 	  // Assign appropriate values to the divPoint array which will modify waypoint values.
 	  /** Failure Case Characterization Vector **/
-	  // Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
+	  // Will only write values into x,y,roll,and yaw since these will not greatly affect the motion of the robot.
 
-	  // Keep the z-axis and the pitch at zero
+	  // Keep the z-axis, the pitch, and yaw at zero
 	  divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
 
-	  divPoint(0) 						= 0.0000;			// x-axis
-	  divPoint(1) 						=-0.0000; 			// y-axis
-	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;			// z-axis
-	  else		  		   divPoint(2) 	= 0.000;			// If there is deviation in the x-axis, then we need to add a devaition in the z-axis with value of -0.005 such that there is contact after moving forward.
-	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
+	  divPoint(0) 						= PATH_DEVIATION_MAGNITUDE_X;			// x-axis
+	  divPoint(1) 						= PATH_DEVIATION_MAGNITUDE_Y; 			// y-axis
+	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;								// Change z-axis
+	  else		  		   divPoint(2) 	= 0.000;								// If there is deviation in the x-axis, then we need to add a deviation in the z-axis with value of -0.005 such that there is contact after moving forward.
+	  divPoint(3) 						= ANGLE_DEVIATION_MAGNITUDE;			// Yaw ANGLE_DEVIATION_MAGNITUDE
   }
 
   // For the first iteration they are both the same.
