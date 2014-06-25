@@ -79,6 +79,10 @@ typedef tvmet::Vector<double, 6> vector6;
 // CONTACT Transitional Parameters
 #define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 #define HSA_Rot2Ins_My				0.8			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
+//  --- Diro -------------------
+#define TwoArm_SA_App2Rot_Fx				0.95//0.45//5.6//9.0		// TwoArm_SA: Transition condition between Approach and Rotation stages.
+#define TwoArm_SA_Rot2Ins_My				-0.0332226			// TwoArm_SA: Transition condition between Rotation and Insertion stages.
+#define TwoArm_SA_Ins2SubIns_My				-0.167044
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables
 #define PI 		      				3.1416
@@ -100,8 +104,8 @@ class AssemblyStrategy {
   // Control Paradigm
   enum ControlParadigm
   {
-    motionData,
-    controlBasis
+    motionData,				// Uses kinematics and way-points
+    controlBasis			// Uses FT controllers.
   };
 
   // Controller Type Enumeration: What type of basis control are you working with?
@@ -119,7 +123,11 @@ class AssemblyStrategy {
     ManipulationTest,
     StraightLineApproach,
     PivotApproach,
-    SideApproach
+    SideApproach,
+    FailureCharacerization,
+    // ==== Diro ======
+    TwoArm_HSA
+    ,Left_Arm_Hold
   };
 
   enum TestAxis
@@ -185,6 +193,18 @@ class AssemblyStrategy {
 	  hsaFinish,
   };
 
+  //  ==== Diro ====
+  /*---------------------------------------- States: TWOARM Side Approach -------------------------------------------*/
+  enum TWOARM_HSA_States
+  {
+	  twoArm_hsaApproach= 1,
+	  twoArm_hsaRotation,
+	  twoArm_hsaInsertion,
+	  twoArm_hsaSubInsertion,
+	  twoArm_hsaMating,
+	  twoArm_hsaFinish,
+  };
+
   /*-------------------------------------------------- TRANSITIONS -----------------------------------------------------*/
   /*---------------------------------------- Transitions: PA10 Pivot Approach -------------------------------------------*/
   enum PA10_PA_Transitions
@@ -204,6 +224,15 @@ class AssemblyStrategy {
 	  hsaInsPartB2Mating,
 	  hsaMating2FinishTime,
   };
+  /*---------------------------------------- Transitions: TWOARM Side Approach -------------------------------------------*/
+  enum TWOARM_SA_Transitions
+  {
+	  TWOARM_hsaApproach2Rotation = 1,
+	  TWOARM_hsaRotation2Insertion,
+	  TWOARM_hsaInsertion2InsPartB,
+	  TWOARM_hsaInsPartB2Mating,
+	  TWOARM_hsaMating2FinishTime,
+  };
   /*---------------------------------------- Transitions: HIRO Side Approach Exceptions-------------------------------------------*/
   enum HIRO_SA_Trnasition_Exceptions
   {
@@ -213,19 +242,20 @@ class AssemblyStrategy {
   };
 
   /*--------------------------------------------------- Strategy --------------------------------------------------------*/
-  int		approachType;				// Save the kind of approach.
+  int		approachType;				// What kind of assembly strategy will we use?
+  int 		controlType;				// What kind of control method will we use?
   bool 		approachFlag;				// Used to switch values
-  bool 		ctrlInitFlag;				// Ussed to determine if its our first time in a state
+  bool 		ctrlInitFlag;				// Used to determine if its our first time in a state
 
   // Pivot Approach
   bool 		noContact;					// Flag become true when after a contact, the private member m_ContactPt return to the zero value.
 
   // Manipulation Test
-  int testCounter;
-  int compositionTypeTest;
-  int DesForceSwitch;
-  bool initialFlag;
-  bool completionFlag;
+  int 		testCounter;
+  int 		compositionTypeTest;
+  int 		DesForceSwitch;
+  bool 		initialFlag;
+  bool 		completionFlag;
 
   // Transition
   double  	signChanger;				// Changes the sign of data after a certain amount of time.
@@ -246,9 +276,6 @@ class AssemblyStrategy {
   ControlBasis* c3;
 
   double momentGainFactor;
-
-  // Control Paradigm
-  int CONTROL_PARADIGM;
 
   // Controller
   int 	NumCtlrs;						// How many primitive controllers are being compounded in the CtrlBasis framework?
@@ -278,6 +305,9 @@ class AssemblyStrategy {
   vector<double> 	ex_time, x_pos, y_pos, z_pos;				// Save robot position in vectors
   vector<double>	roll_angle, pitch_angle, yaw_angle;			// Endeffector orientation in terms of roll picth angle
   double angle_o[7]; 											// rhand_org, lhand_org, hando[2],
+
+  // Failure Case Characterization
+  dvector6 divPoint;											// This vector will hold x,y, and roll, yall values that will be added to the way-points in order to control which directions we want to modify to test failure case scenarios
 
   // Files
   ifstream ifstr_pivApproachState1;																			// Input Streams
@@ -335,8 +365,12 @@ class AssemblyStrategy {
 							  dmatrix 		Jacobian,
 							  dmatrix 		PseudoJacobian);
 
-  // Motion
+  // Motion Methods
+  // moveRobot: take waypoints, convert them from end-effector coords to wrist coordinates and write the values to the private member vars. Later used by Inverse Kinematics functions to convert the wrist position into joint angle variables.
   bool moveRobot(double cur_time);
+
+  // manipulationTest:
+  // User can assign axis of motion in which one would like to test either the force controllers or the moment controllers
   int manipulationTest(TestAxis 		axis,
 					   bool&			completionFlag,
 					   JointPathPtr 	m_path,
@@ -353,7 +387,10 @@ class AssemblyStrategy {
 					   dmatrix 			PseudoJacobian);
 
   // Other
-  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN], vector3 pos, matrix33 rot, double CurAngles[15]);
+  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN],
+		  	  	  	vector3 pos, matrix33 rot, double CurAngles[15],
+		            int strategyType, int controlMethodType);
+
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);
   void FreeResources(ctrlComp type);
