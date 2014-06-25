@@ -1,0 +1,32 @@
+/.*
+!Makefile 
+!*.cpp
+!*.h
+!data/PivotApproach/pivotApproachState1.dat
+*.o
+*~
+*.common
+*.mak
+*.robot
+*.ai
+Documentation/Choreonoid/
+Documentation/Elicpse/
+Documentation/Figures/
+Documentation/Linux
+Documentation/Matlab Compilation
+Documentation/OpenHRP/AssemblyStrategy/
+Documentation/OpenHRP/Eclipse/
+Documentation/OpenHRP/Java/
+Documentation/Research Direction/
+Documentation/pRCBHT
+data/PivotApproach/PA10
+data/PivotApproach/pivot.lower.bak.dat
+data/PivotApproach/pivotApproachState1.Juan
+data/PivotApproach/pivotApproachState1.fixedcase.dat
+data/PivotApproach/pivotApproachState1.fortest.dat
+data/PivotApproach/pivotApproachState1.lowerhandgrasp.dat
+data/PivotApproach/pivotApproachState2.dat
+data/PivotApproach/pivotbak/
+ifstrTest
+ArmParam
+GainParam
