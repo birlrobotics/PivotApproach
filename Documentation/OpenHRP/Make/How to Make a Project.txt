@@ -1,0 +1,4 @@
+﻿Making the Code
+
+To make the file, go to the forceSensorPlugin_Juan/server directory and type: 
+“make ROBOT=HRP2STEP1. “
