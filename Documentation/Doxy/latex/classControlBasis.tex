@@ -1,0 +1,143 @@
+\hypertarget{classControlBasis}{\section{Control\-Basis Class Reference}
+\label{classControlBasis}\index{Control\-Basis@{Control\-Basis}}
+}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries Controller\-Type} \{ \\*
+{\bfseries Null}, 
+{\bfseries Position\-Ctrl}, 
+{\bfseries Pose\-Ctrl}, 
+{\bfseries Force\-Ctrl}, 
+\\*
+{\bfseries Moment\-Ctrl}
+ \}
+\item 
+enum {\bfseries Num\-Controller} \{ {\bfseries T\-W\-O} =2, 
+{\bfseries T\-H\-R\-E\-E\-\_\-\-A}, 
+{\bfseries T\-H\-R\-E\-E\-\_\-\-B}
+ \}
+\item 
+enum {\bfseries Ctrl\-Strategy} \{ {\bfseries Straight\-Line\-Approach}, 
+{\bfseries Pivot\-Approach}
+ \}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classControlBasis_a1a5b119b00276a2612b3d5c142d7cc03}{{\bfseries Control\-Basis} (double factor)}\label{classControlBasis_a1a5b119b00276a2612b3d5c142d7cc03}
+
+\item 
+\hypertarget{classControlBasis_af29f2072a39583fb9abf85f7c53e538d}{int {\bfseries Compute\-Compound\-Controller} (dvector7 \&Joint\-Angle\-Update, dvector7 \&Cur\-Joint\-Angles, int Num\-Ctlrs, Controller\-Type type1, dvector6 \&Des\-Data1, dvector6 \&Cur\-Data1, Controller\-Type type2, dvector6 \&Des\-Data2, dvector6 \&Cur\-Data2, dmatrix \&Jacobian, double \&Error\-Norm1, double \&Error\-Norm2)}\label{classControlBasis_af29f2072a39583fb9abf85f7c53e538d}
+
+\item 
+\hypertarget{classControlBasis_a2eed9f14815a6ca7e231d1ff47f0334e}{int {\bfseries Compute\-Compound\-Controller} (dvector6 \&Joint\-Angle\-Update, dvector6 \&Cur\-Joint\-Angles, int Num\-Ctlrs, Controller\-Type type1, dvector6 \&Des\-Data1, dvector6 \&Cur\-Data1, Controller\-Type type2, dvector6 \&Des\-Data2, dvector6 \&Cur\-Data2, dmatrix \&Jacobian, double \&Error\-Norm1, double \&Error\-Norm2)}\label{classControlBasis_a2eed9f14815a6ca7e231d1ff47f0334e}
+
+\item 
+\hypertarget{classControlBasis_a4b180caace3e55cef4c8b9ac666f049d}{int {\bfseries Compute\-Primitive\-Controller} (dvector7 \&Joint\-Angle\-Update, int Num\-Ctlrs, Controller\-Type type, dvector6 \&Des\-Data, dvector6 \&Cur\-Data, dvector7 \&Cur\-Joint\-Angles, dmatrix \&Jacobian, int Error\-Flag, double \&Error\-Norm)}\label{classControlBasis_a4b180caace3e55cef4c8b9ac666f049d}
+
+\item 
+\hypertarget{classControlBasis_aa38fe4df0f25492acf406008f5ee89d3}{int {\bfseries Compute\-Primitive\-Controller} (dvector6 \&Joint\-Angle\-Update, int Num\-Ctlrs, Controller\-Type type, dvector6 \&Des\-Data, dvector6 \&Cur\-Data, dvector6 \&Cur\-Joint\-Angles, dmatrix \&Jacobian, int Error\-Flag, double \&Error\-Norm)}\label{classControlBasis_aa38fe4df0f25492acf406008f5ee89d3}
+
+\item 
+\hypertarget{classControlBasis_a8f183df573701d25fe0a4c1d46cfe688}{int {\bfseries Compute\-Error} (dvector6 \&Des\-Data, dvector6 \&Cur\-Data, dvector6 \&Error\-Output, double \&Error\-Norm, int flag)}\label{classControlBasis_a8f183df573701d25fe0a4c1d46cfe688}
+
+\item 
+\hypertarget{classControlBasis_ab647e5b7f4cab559eaa37b015a1c2b2a}{int {\bfseries Jacobian\-Product} (dmatrix \&Jacobian, Controller\-Type type, dvector6 \&Error\-Output, dvector7 \&Angle\-Update)}\label{classControlBasis_ab647e5b7f4cab559eaa37b015a1c2b2a}
+
+\item 
+\hypertarget{classControlBasis_a8661d56b93c41a68cc155072fc6f0892}{int {\bfseries Jacobian\-Product} (dmatrix \&Jacobian, Controller\-Type type, dvector6 \&Error\-Output, dvector6 \&Angle\-Update)}\label{classControlBasis_a8661d56b93c41a68cc155072fc6f0892}
+
+\item 
+\hypertarget{classControlBasis_aa4e1cba9552ccff6f79c01557a35571a}{int {\bfseries Null\-Space\-Projection} (dvector7 \&Joint\-Angle\-Update, const dvector7 \&Angle\-Update1, const dvector7 \&Angle\-Update2)}\label{classControlBasis_aa4e1cba9552ccff6f79c01557a35571a}
+
+\item 
+\hypertarget{classControlBasis_a602c1e75cf70b1cc4b4e25d1e8e5be8d}{int {\bfseries Null\-Space\-Projection} (dvector6 \&Joint\-Angle\-Update, const dvector6 \&Angle\-Update1, const dvector6 \&Angle\-Update2)}\label{classControlBasis_a602c1e75cf70b1cc4b4e25d1e8e5be8d}
+
+\item 
+\hypertarget{classControlBasis_a4912e3e55d5ac8dec069e03e70fe823c}{int {\bfseries Update\-Joint\-Angles} (dvector7 \&Cur\-Joint\-Angles, dvector7 \&Joint\-Angle\-Update)}\label{classControlBasis_a4912e3e55d5ac8dec069e03e70fe823c}
+
+\item 
+\hypertarget{classControlBasis_aa98c652a767dabfe3d069364697e82ff}{int {\bfseries Update\-Joint\-Angles} (dvector6 \&Cur\-Joint\-Angles, dvector6 \&Joint\-Angle\-Update)}\label{classControlBasis_aa98c652a767dabfe3d069364697e82ff}
+
+\item 
+\hypertarget{classControlBasis_a66958286ecb12f089cbd61da990d3cde}{void {\bfseries Set\-Gains} (double factor)}\label{classControlBasis_a66958286ecb12f089cbd61da990d3cde}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classControlBasis_a5b78f10a528906f1d0d04066b8886a37}{int {\bfseries flag}}\label{classControlBasis_a5b78f10a528906f1d0d04066b8886a37}
+
+\item 
+\hypertarget{classControlBasis_a16ab387df0268590a4d729092203f226}{dvector6 {\bfseries Des\-Data}}\label{classControlBasis_a16ab387df0268590a4d729092203f226}
+
+\item 
+\hypertarget{classControlBasis_a9f31758d7508a5a286bca7d207ebc0db}{dvector6 {\bfseries Cur\-Data}}\label{classControlBasis_a9f31758d7508a5a286bca7d207ebc0db}
+
+\item 
+\hypertarget{classControlBasis_accfee83f95d74dd79a49875a515101db}{dvector7 {\bfseries Cur\-Joint\-Angles}}\label{classControlBasis_accfee83f95d74dd79a49875a515101db}
+
+\item 
+\hypertarget{classControlBasis_a599fc6e4174fe7ba53c6e33006061fe8}{dvector7 {\bfseries Prev\-Joint\-Angles}}\label{classControlBasis_a599fc6e4174fe7ba53c6e33006061fe8}
+
+\item 
+\hypertarget{classControlBasis_a470ee716bfa1b7d27636a6fc1f5c2622}{dvector7 {\bfseries Joint\-Angle\-Update}}\label{classControlBasis_a470ee716bfa1b7d27636a6fc1f5c2622}
+
+\item 
+\hypertarget{classControlBasis_a301dddd72cd4f686b7d2b22d870bf47d}{dvector6 {\bfseries Cur\-Joint\-Angles6}}\label{classControlBasis_a301dddd72cd4f686b7d2b22d870bf47d}
+
+\item 
+\hypertarget{classControlBasis_a574b0f2911e62c4a083228144baf7404}{dvector6 {\bfseries Prev\-Joint\-Angles6}}\label{classControlBasis_a574b0f2911e62c4a083228144baf7404}
+
+\item 
+\hypertarget{classControlBasis_a99e080c96615ef4c2fa3a2ec3cdfdbc7}{dvector6 {\bfseries Joint\-Angle\-Update6}}\label{classControlBasis_a99e080c96615ef4c2fa3a2ec3cdfdbc7}
+
+\item 
+\hypertarget{classControlBasis_a84deb5c73ae4a80f32b837ab84293e85}{dvector6 {\bfseries Error\-Output}}\label{classControlBasis_a84deb5c73ae4a80f32b837ab84293e85}
+
+\item 
+\hypertarget{classControlBasis_ad441a8e9af6bacd22b114aa8a7750cc2}{double {\bfseries Error\-Norm}}\label{classControlBasis_ad441a8e9af6bacd22b114aa8a7750cc2}
+
+\item 
+\hypertarget{classControlBasis_aa86ca210409b371e963ed733614b20c2}{bool {\bfseries Error\-Flag}}\label{classControlBasis_aa86ca210409b371e963ed733614b20c2}
+
+\item 
+\hypertarget{classControlBasis_a7069be504f105f92a36ab86bd68dd4fe}{dvector6 {\bfseries Position\-Gain}}\label{classControlBasis_a7069be504f105f92a36ab86bd68dd4fe}
+
+\item 
+\hypertarget{classControlBasis_a102d1d4caa813447cd5eaac72cd60818}{dvector6 {\bfseries Pose\-Gain}}\label{classControlBasis_a102d1d4caa813447cd5eaac72cd60818}
+
+\item 
+\hypertarget{classControlBasis_a471a072305d781ca81f5990877337a7f}{dvector6 {\bfseries Force\-Gain}}\label{classControlBasis_a471a072305d781ca81f5990877337a7f}
+
+\item 
+\hypertarget{classControlBasis_a74e1f06ab2834706dbc5bd66b94fc87d}{dvector6 {\bfseries Moment\-Gain}}\label{classControlBasis_a74e1f06ab2834706dbc5bd66b94fc87d}
+
+\item 
+\hypertarget{classControlBasis_a4239330ae9d14bfb86ffdf89274f064a}{float {\bfseries weight}}\label{classControlBasis_a4239330ae9d14bfb86ffdf89274f064a}
+
+\item 
+\hypertarget{classControlBasis_a0b245638ffd46f24b8d34693cfc24fac}{bool {\bfseries update\-Flag}}\label{classControlBasis_a0b245638ffd46f24b8d34693cfc24fac}
+
+\item 
+\hypertarget{classControlBasis_a3dd7f5ae4c05d80dd3a1a47f7afdc750}{bool {\bfseries data\-Hist\-Flag}}\label{classControlBasis_a3dd7f5ae4c05d80dd3a1a47f7afdc750}
+
+\item 
+\hypertarget{classControlBasis_a7fa31b86b3d8da78ceebb7619990daef}{bool {\bfseries ctrl\-Init\-Flag}}\label{classControlBasis_a7fa31b86b3d8da78ceebb7619990daef}
+
+\item 
+\hypertarget{classControlBasis_a447040ff1d28aefa669efee3c4a41858}{boost\-::numeric\-::ublas\-::bounded\-\_\-matrix\\*
+$<$ double, \\*
+8, 3, boost\-::numeric\-::ublas\-::column\-\_\-major $>$ {\bfseries data\-Hist}}\label{classControlBasis_a447040ff1d28aefa669efee3c4a41858}
+
+\item 
+\hypertarget{classControlBasis_a4c93468e8059c42f860a507f041abc15}{Vector3 {\bfseries state\-Var}}\label{classControlBasis_a4c93468e8059c42f860a507f041abc15}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+Control\-Basis.\-h\item 
+Control\-Basis.\-cpp\end{DoxyCompactItemize}

@@ -1,0 +1,437 @@
+\hypertarget{classhiroArm}{\section{hiro\-Arm Class Reference}
+\label{classhiroArm}\index{hiro\-Arm@{hiro\-Arm}}
+}
+Inheritance diagram for hiro\-Arm\-:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classhiroArm}
+\end{center}
+\end{figure}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structhiroArm_1_1path__params}{path\-\_\-params}
+\end{DoxyCompactItemize}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries interpolation} \{ {\bfseries C\-O\-N\-S\-T\-A\-N\-T\-\_\-\-V\-E\-L\-O\-C\-I\-T\-Y}, 
+{\bfseries Q\-U\-I\-N\-T\-I\-C\-\_\-\-F\-U\-N\-C\-T\-I\-O\-N}, 
+{\bfseries E\-N\-D\-\_\-\-O\-F\-\_\-\-I\-N\-T\-E\-R\-P\-O\-L\-A\-T\-I\-O\-N}
+ \}
+\item 
+enum {\bfseries cmode} \{ {\bfseries N\-O\-C\-O\-N\-T\-R\-O\-L}, 
+{\bfseries V\-E\-L\-\_\-\-C\-O\-N\-T\-R\-O\-L}, 
+{\bfseries I\-M\-P\-\_\-\-C\-O\-N\-T\-R\-O\-L}
+ \}
+\item 
+enum \{ {\bfseries X}, 
+{\bfseries Y}, 
+{\bfseries Z}
+ \}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classhiroArm_a8e4aa1fa1e81ce07ee78c00b63c1bd54}{{\bfseries hiro\-Arm} (std\-::string name\-\_\-in, Body\-Ptr body\-\_\-in, unsigned int num\-\_\-q0\-\_\-in, double period\-\_\-in, float ang\-\_\-limits\-\_\-in\mbox{[}6\mbox{]}\mbox{[}5\mbox{]}, vector3 e\-Ph\-\_\-in, matrix33 e\-Rh\-\_\-in, vector3 h\-Pfs\-\_\-in)}\label{classhiroArm_a8e4aa1fa1e81ce07ee78c00b63c1bd54}
+
+\item 
+\hypertarget{classhiroArm_a2022d79b77c7e9d7c6c6b5418c450f66}{void {\bfseries init} ()}\label{classhiroArm_a2022d79b77c7e9d7c6c6b5418c450f66}
+
+\item 
+\hypertarget{classhiroArm_ab4818ca8441e606c3de5a1042c1a7452}{int {\bfseries init} (vector3 pos, matrix33 rot, double Cur\-Angles\mbox{[}15\mbox{]})}\label{classhiroArm_ab4818ca8441e606c3de5a1042c1a7452}
+
+\item 
+\hypertarget{classhiroArm_afa4bdab3188a17b39a9b943f22906eda}{virtual void {\bfseries savedata} ()}\label{classhiroArm_afa4bdab3188a17b39a9b943f22906eda}
+
+\item 
+\hypertarget{classhiroArm_a872988ae2b0ae8691c22c9eb8f7edb71}{std\-::string {\bfseries get\-\_\-name} ()}\label{classhiroArm_a872988ae2b0ae8691c22c9eb8f7edb71}
+
+\item 
+\hypertarget{classhiroArm_a9c17f63feaa2e08fd3ee0c8a7c1f8695}{void {\bfseries update\-\_\-currposdata} ()}\label{classhiroArm_a9c17f63feaa2e08fd3ee0c8a7c1f8695}
+
+\item 
+\hypertarget{classhiroArm_a2a6fff95ed7880b00f6fde6f587e1567}{void {\bfseries wrist2\-End\-Eff\-Xform} (vector3 r\-Pe, matrix33 r\-Re, vector3 \&r\-Ph, matrix33 \&r\-Rh)}\label{classhiroArm_a2a6fff95ed7880b00f6fde6f587e1567}
+
+\item 
+\hypertarget{classhiroArm_af30f07bdc11e6ead92e16ecc05fa01ae}{void {\bfseries End\-Eff2wrist\-Xform} (vector3 r\-Ph, matrix33 r\-Rh, vector3 \&r\-Pe)}\label{classhiroArm_af30f07bdc11e6ead92e16ecc05fa01ae}
+
+\item 
+\hypertarget{classhiroArm_a380c4809951756d76465a27925b81fb6}{dvector6 {\bfseries get\-\_\-qref} ()}\label{classhiroArm_a380c4809951756d76465a27925b81fb6}
+
+\item 
+\hypertarget{classhiroArm_a2b8e0d26de85f1b49bc178459f876f61}{dvector6 {\bfseries get\-\_\-qcur} ()}\label{classhiroArm_a2b8e0d26de85f1b49bc178459f876f61}
+
+\item 
+\hypertarget{classhiroArm_af33d770dbf20d3e9407db14381ca934b}{virtual void {\bfseries update\-\_\-currforcedata} ()}\label{classhiroArm_af33d770dbf20d3e9407db14381ca934b}
+
+\item 
+\hypertarget{classhiroArm_a82892b999ba5b188a77b7366fce27b0b}{virtual bool {\bfseries get\-\_\-forces} (vector3 \&r\-Fh\-\_\-gc\-\_\-out, vector3 \&r\-Mh\-\_\-gc\-\_\-out)}\label{classhiroArm_a82892b999ba5b188a77b7366fce27b0b}
+
+\item 
+\hypertarget{classhiroArm_afc2257c0efdfe06b05a5966e9953d919}{void {\bfseries get\-\_\-curr\-\_\-handpos} (vector3 \&r\-Ph\-\_\-out, matrix33 \&r\-Rh\-\_\-out)}\label{classhiroArm_afc2257c0efdfe06b05a5966e9953d919}
+
+\item 
+\hypertarget{classhiroArm_a925d818b5dca38fc993dd4935ffaade7}{void {\bfseries get\-\_\-ref\-\_\-handpos} (vector3 \&r\-Ph\-\_\-ref\-\_\-out, matrix33 \&r\-Rh\-\_\-ref\-\_\-out)}\label{classhiroArm_a925d818b5dca38fc993dd4935ffaade7}
+
+\item 
+\hypertarget{classhiroArm_a644d8a1a404c23fc512ebc6bf17a2f6c}{void {\bfseries set\-\_\-ref\-\_\-handpos} (vector3 r\-Ph\-\_\-ref\-\_\-in, matrix33 r\-Rh\-\_\-ref\-\_\-in)}\label{classhiroArm_a644d8a1a404c23fc512ebc6bf17a2f6c}
+
+\item 
+\hypertarget{classhiroArm_aeb0b11fd5c46fea119bf325b92daf5ca}{unsigned long {\bfseries get\-\_\-\-Iteration} ()}\label{classhiroArm_aeb0b11fd5c46fea119bf325b92daf5ca}
+
+\item 
+\hypertarget{classhiroArm_a7868ece4df8731426eaf7d46993c4145}{void {\bfseries set\-\_\-\-Iteration} ()}\label{classhiroArm_a7868ece4df8731426eaf7d46993c4145}
+
+\item 
+\hypertarget{classhiroArm_a4981564d8047b98beae3e25f0f67572e}{bool {\bfseries velocity\-\_\-control} (vector3 rd\-P, vector3 r\-W, bool f\-\_\-new)}\label{classhiroArm_a4981564d8047b98beae3e25f0f67572e}
+
+\item 
+\hypertarget{classhiroArm_ad68b57442891450fb9029e8c5d14520b}{bool {\bfseries impedance\-\_\-control} ()}\label{classhiroArm_ad68b57442891450fb9029e8c5d14520b}
+
+\item 
+\hypertarget{classhiroArm_aea4777c186d2f7de31439eeadcc2f34d}{void {\bfseries reset\-\_\-gravity\-\_\-comp} ()}\label{classhiroArm_aea4777c186d2f7de31439eeadcc2f34d}
+
+\item 
+\hypertarget{classhiroArm_a6a90d46b343f50a5e23a697606f3885d}{int {\bfseries gravity\-\_\-comp} ()}\label{classhiroArm_a6a90d46b343f50a5e23a697606f3885d}
+
+\item 
+\hypertarget{classhiroArm_af199c4ebb0f45666641f5ed5fb2cc833}{int {\bfseries moveto\-\_\-q\-\_\-goal} (dvector6 q\-\_\-goal\-\_\-in)}\label{classhiroArm_af199c4ebb0f45666641f5ed5fb2cc833}
+
+\item 
+\hypertarget{classhiroArm_af8abb5abd3a346325051b810d81ba4a8}{int {\bfseries Pivot\-Approach} (double cur\-\_\-time, vector3 pos, matrix33 rot, dvector6 curr\-Forces, dvector6 \&Joint\-Angle\-Update, dvector6 \&Curr\-Angles)}\label{classhiroArm_af8abb5abd3a346325051b810d81ba4a8}
+
+\item 
+\hypertarget{classhiroArm_a672283bbf662fc98c7034de8e01799d7}{void {\bfseries set\-\_\-\-Org\-Pos\-Rot} (vector3 \&pos, vector3 \&R\-P\-Y)}\label{classhiroArm_a672283bbf662fc98c7034de8e01799d7}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classhiroArm_a6a1070bcf7e873067785588c1fd31acc}{char {\bfseries Traj\-State1} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_a6a1070bcf7e873067785588c1fd31acc}
+
+\item 
+\hypertarget{classhiroArm_a7dd8e40171e845af93566d2b054e07d8}{char {\bfseries Traj\-State2} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_a7dd8e40171e845af93566d2b054e07d8}
+
+\item 
+\hypertarget{classhiroArm_a83700806446c3d2bc8e507aab3f49ff4}{char {\bfseries Angles} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_a83700806446c3d2bc8e507aab3f49ff4}
+
+\item 
+\hypertarget{classhiroArm_a16f1798c82069ba29e316e69f5058134}{char {\bfseries Cart\-Pos} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_a16f1798c82069ba29e316e69f5058134}
+
+\item 
+\hypertarget{classhiroArm_ad0877c20e534f3575cd18461e053fa4b}{char {\bfseries Forces} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_ad0877c20e534f3575cd18461e053fa4b}
+
+\item 
+\hypertarget{classhiroArm_a9a1cb754cb1e4ab7f528a6d783a0fc81}{char {\bfseries State} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_a9a1cb754cb1e4ab7f528a6d783a0fc81}
+
+\item 
+\hypertarget{classhiroArm_ab35146d2363f9be3b5a5268580b66cf2}{char {\bfseries manip\-Test} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classhiroArm_ab35146d2363f9be3b5a5268580b66cf2}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classhiroArm_aba39f63dd2153875add31e519c4f0bec}{bool {\bfseries is\-\_\-moving} ()}\label{classhiroArm_aba39f63dd2153875add31e519c4f0bec}
+
+\item 
+\hypertarget{classhiroArm_acbab538d5731a0ca75ce8ea0a1655e2a}{bool {\bfseries is\-\_\-reached} ()}\label{classhiroArm_acbab538d5731a0ca75ce8ea0a1655e2a}
+
+\item 
+\hypertarget{classhiroArm_a1b8d50022eda626bd07d3a054955aef0}{bool {\bfseries is\-\_\-activated} ()}\label{classhiroArm_a1b8d50022eda626bd07d3a054955aef0}
+
+\item 
+\hypertarget{classhiroArm_ab36d0bde0961fbcecd52f4c7fff7451d}{bool {\bfseries init\-\_\-path\-\_\-params} (dvector6 q\-\_\-start\-\_\-in, dvector6 q\-\_\-goal\-\_\-in)}\label{classhiroArm_ab36d0bde0961fbcecd52f4c7fff7451d}
+
+\item 
+\hypertarget{classhiroArm_a49540d781f6413b08a1d8dfd712a92c4}{bool {\bfseries set\-\_\-path\-\_\-params} (\hyperlink{structhiroArm_1_1path__params}{path\-\_\-params} param\-\_\-in)}\label{classhiroArm_a49540d781f6413b08a1d8dfd712a92c4}
+
+\item 
+\hypertarget{classhiroArm_ab06838ff1aba7110ab0db0a7097e2a9a}{bool {\bfseries set\-\_\-path\-\_\-method} (interpolation method\-\_\-in)}\label{classhiroArm_ab06838ff1aba7110ab0db0a7097e2a9a}
+
+\item 
+\hypertarget{classhiroArm_a941f7eeda27141a3efdaee615fe59fb8}{bool {\bfseries set\-\_\-path\-\_\-max\-\_\-jvel} (double max\-\_\-jvel\-\_\-in)}\label{classhiroArm_a941f7eeda27141a3efdaee615fe59fb8}
+
+\item 
+\hypertarget{classhiroArm_a49ac0e06be2efc2028f29140795f7805}{bool {\bfseries calc\-\_\-duration\-\_\-jvel} (dvector6 distance\-\_\-in, double max\-\_\-jvel\-\_\-in)}\label{classhiroArm_a49ac0e06be2efc2028f29140795f7805}
+
+\item 
+\hypertarget{classhiroArm_aec2145c201642786832db74c7f2017b7}{bool {\bfseries calc\-\_\-qref} (vector3 r\-Ph\-\_\-ref\-\_\-in, matrix33 r\-Rh\-\_\-ref\-\_\-in, dvector6 \&q\-\_\-out)}\label{classhiroArm_aec2145c201642786832db74c7f2017b7}
+
+\item 
+\hypertarget{classhiroArm_a622b43c617ed85535a64554da180656a}{bool {\bfseries moveto} (dvector6 q\-\_\-start, dvector6 q\-\_\-goal)}\label{classhiroArm_a622b43c617ed85535a64554da180656a}
+
+\item 
+\hypertarget{classhiroArm_a1c2bbb832e890edf23688c71ed8c82e5}{bool {\bfseries calc\-\_\-gravity\-\_\-param} ()}\label{classhiroArm_a1c2bbb832e890edf23688c71ed8c82e5}
+
+\item 
+\hypertarget{classhiroArm_af221fa96d8de9e91509968d662187b30}{bool {\bfseries calc\-\_\-gravity\-\_\-param\-\_\-shimizu} ()}\label{classhiroArm_af221fa96d8de9e91509968d662187b30}
+
+\item 
+\hypertarget{classhiroArm_aa035fbbcf375297b8f6b9b8aab3b3449}{bool {\bfseries get\-\_\-raw\-\_\-forces} (double f\-\_\-out\mbox{[}6\mbox{]})}\label{classhiroArm_aa035fbbcf375297b8f6b9b8aab3b3449}
+
+\item 
+\hypertarget{classhiroArm_a2a162f14cb921ab87dec1fcf232c940f}{bool {\bfseries calc\-\_\-gc\-\_\-forces} (vector3 \&r\-Ffs\-\_\-gc\-\_\-out, vector3 \&r\-Mfs\-\_\-gc\-\_\-out)}\label{classhiroArm_a2a162f14cb921ab87dec1fcf232c940f}
+
+\item 
+\hypertarget{classhiroArm_a8ac00b1425ab54695392faa680041afb}{void {\bfseries calc\-\_\-gc\-\_\-forces\-\_\-at\-\_\-hand} (vector3 \&r\-Fh\-\_\-out, vector3 \&r\-Mh\-\_\-out)}\label{classhiroArm_a8ac00b1425ab54695392faa680041afb}
+
+\item 
+\hypertarget{classhiroArm_a6cd28378febc58968e53df0eed7deb35}{virtual matrix33 {\bfseries calc\-\_\-h\-Rfs} (dvector6 q\-\_\-in)}\label{classhiroArm_a6cd28378febc58968e53df0eed7deb35}
+
+\item 
+\hypertarget{classhiroArm_a5347280b572117eb0cd107e75df719e6}{void {\bfseries Skew\-To\-Vector} (matrix33 skew, vector3 \&vec)}\label{classhiroArm_a5347280b572117eb0cd107e75df719e6}
+
+\item 
+\hypertarget{classhiroArm_a67ebada1070014e309c3adc5953598f5}{matrix33 {\bfseries get\-\_\-rot33} (int dir, double rad)}\label{classhiroArm_a67ebada1070014e309c3adc5953598f5}
+
+\item 
+\hypertarget{classhiroArm_a234918c695614fa407e93597f6c6f4ee}{void {\bfseries calc\-\_\-r\-Pe\-\_\-r\-Re} (vector3 r\-Ph\-\_\-in, matrix33 r\-Rh\-\_\-in, vector3 \&r\-Pe\-\_\-out, matrix33 \&r\-Re\-\_\-out)}\label{classhiroArm_a234918c695614fa407e93597f6c6f4ee}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classhiroArm_addf692c1741fb65d44a5147b072080ad}{\hyperlink{classAssemblyStrategy}{Assembly\-Strategy} $\ast$ {\bfseries P\-A}}\label{classhiroArm_addf692c1741fb65d44a5147b072080ad}
+
+\item 
+\hypertarget{classhiroArm_a7a1dcb206f544506a6a7682db98c8aff}{cmode {\bfseries controlmode}}\label{classhiroArm_a7a1dcb206f544506a6a7682db98c8aff}
+
+\item 
+\hypertarget{classhiroArm_a0bc88a2b6dc047e02f699ee83e13c970}{std\-::string {\bfseries name}}\label{classhiroArm_a0bc88a2b6dc047e02f699ee83e13c970}
+
+\item 
+\hypertarget{classhiroArm_a7686852c3087e04ffaacef6d9debd7df}{F\-I\-L\-E $\ast$ {\bfseries fp1}}\label{classhiroArm_a7686852c3087e04ffaacef6d9debd7df}
+
+\item 
+\hypertarget{classhiroArm_aa76ae3687822d66ac1c15767554378b1}{F\-I\-L\-E $\ast$ {\bfseries fp2}}\label{classhiroArm_aa76ae3687822d66ac1c15767554378b1}
+
+\item 
+\hypertarget{classhiroArm_a667d57ad53e218575ea5bf46c47835f1}{F\-I\-L\-E $\ast$ {\bfseries fp3}}\label{classhiroArm_a667d57ad53e218575ea5bf46c47835f1}
+
+\item 
+\hypertarget{classhiroArm_a9be626fdf0d7f8ad5ccfe1e58bf71cd8}{Body\-Ptr {\bfseries body}}\label{classhiroArm_a9be626fdf0d7f8ad5ccfe1e58bf71cd8}
+
+\item 
+\hypertarget{classhiroArm_a1c0a635880d06a60e71013a18ea73393}{Joint\-Path\-Ptr {\bfseries m\-\_\-path}}\label{classhiroArm_a1c0a635880d06a60e71013a18ea73393}
+
+\item 
+\hypertarget{classhiroArm_add995501c585c84318f106f8e75a93ef}{dvector6 {\bfseries q}}\label{classhiroArm_add995501c585c84318f106f8e75a93ef}
+
+\item 
+\hypertarget{classhiroArm_a52c93832cabb8ee2ff3fc04bc2281c39}{float {\bfseries ang\-\_\-limits} \mbox{[}A\-R\-M\-\_\-\-D\-O\-F\mbox{]}\mbox{[}5\mbox{]}}\label{classhiroArm_a52c93832cabb8ee2ff3fc04bc2281c39}
+
+\item 
+\hypertarget{classhiroArm_ad32280871291b28820114e9b72a0ac15}{unsigned int {\bfseries N\-U\-M\-\_\-q0}}\label{classhiroArm_ad32280871291b28820114e9b72a0ac15}
+
+\item 
+\hypertarget{classhiroArm_ac1a3c195009f1a607943def35d4e237e}{int {\bfseries N\-O\-\_\-fs}}\label{classhiroArm_ac1a3c195009f1a607943def35d4e237e}
+
+\item 
+\hypertarget{classhiroArm_af9f5f50294484a7cf3729df6fd027352}{double {\bfseries D\-E\-L\-\_\-\-T}}\label{classhiroArm_af9f5f50294484a7cf3729df6fd027352}
+
+\item 
+\hypertarget{classhiroArm_aee90413cc1a27e2382d421a08a574773}{double {\bfseries ik\-Gains} \mbox{[}4\mbox{]}}\label{classhiroArm_aee90413cc1a27e2382d421a08a574773}
+
+\item 
+\hypertarget{classhiroArm_acb7c4bbbf9df67951546e0d862020c2b}{double {\bfseries ik\-Rot} \mbox{[}4\mbox{]}}\label{classhiroArm_acb7c4bbbf9df67951546e0d862020c2b}
+
+\item 
+\hypertarget{classhiroArm_a06862814081b7d949d3a5a2d3efe69f2}{double {\bfseries ik\-Trans} \mbox{[}4\mbox{]}}\label{classhiroArm_a06862814081b7d949d3a5a2d3efe69f2}
+
+\item 
+\hypertarget{classhiroArm_acfb74760ea80e0afea9bf3615eef52cd}{vector3 {\bfseries fs\-F\-\_\-raw}}\label{classhiroArm_acfb74760ea80e0afea9bf3615eef52cd}
+
+\item 
+\hypertarget{classhiroArm_a3b2c289f887ee0cbd710af63be6a2dda}{vector3 {\bfseries fs\-M\-\_\-raw}}\label{classhiroArm_a3b2c289f887ee0cbd710af63be6a2dda}
+
+\item 
+\hypertarget{classhiroArm_ad76581c307801d517c8f08ea802cafdc}{vector3 {\bfseries r\-Ffs\-\_\-gc}}\label{classhiroArm_ad76581c307801d517c8f08ea802cafdc}
+
+\item 
+\hypertarget{classhiroArm_afd70fbf8efc37f3524103e9c739ffa9f}{vector3 {\bfseries r\-Mfs\-\_\-gc}}\label{classhiroArm_afd70fbf8efc37f3524103e9c739ffa9f}
+
+\item 
+\hypertarget{classhiroArm_ae717c02433d2a19e16117cc866ad5137}{vector3 {\bfseries r\-Fh\-\_\-gc}}\label{classhiroArm_ae717c02433d2a19e16117cc866ad5137}
+
+\item 
+\hypertarget{classhiroArm_a9b4e8c012c678ffd325071768ba512c3}{vector3 {\bfseries r\-Mh\-\_\-gc}}\label{classhiroArm_a9b4e8c012c678ffd325071768ba512c3}
+
+\item 
+\hypertarget{classhiroArm_a7205a4296f819801c1dc409852340915}{vector3 {\bfseries e\-Ph}}\label{classhiroArm_a7205a4296f819801c1dc409852340915}
+
+\item 
+\hypertarget{classhiroArm_ac93214e9d9e05d2a1fbee6044f2cf397}{matrix33 {\bfseries e\-Rh}}\label{classhiroArm_ac93214e9d9e05d2a1fbee6044f2cf397}
+
+\item 
+\hypertarget{classhiroArm_a5c419d02397e7e900c7f11e7b80725e0}{vector3 {\bfseries h\-Pfs}}\label{classhiroArm_a5c419d02397e7e900c7f11e7b80725e0}
+
+\item 
+\hypertarget{classhiroArm_aacec4ffa271326850a8cfd8838862af5}{vector3 {\bfseries r\-Ph}}\label{classhiroArm_aacec4ffa271326850a8cfd8838862af5}
+
+\item 
+\hypertarget{classhiroArm_aac5f7430a9d58bcad151c3823ccba13a}{matrix33 {\bfseries r\-Rh}}\label{classhiroArm_aac5f7430a9d58bcad151c3823ccba13a}
+
+\item 
+\hypertarget{classhiroArm_ae0c0b0806516ea795ecb482e58d7e0cc}{vector3 {\bfseries r\-Pe}}\label{classhiroArm_ae0c0b0806516ea795ecb482e58d7e0cc}
+
+\item 
+\hypertarget{classhiroArm_a53de271b4f521b6421ffbafca6cc20b2}{matrix33 {\bfseries r\-Re}}\label{classhiroArm_a53de271b4f521b6421ffbafca6cc20b2}
+
+\item 
+\hypertarget{classhiroArm_aee1e2a7ecc0ebcb21a2703464550f933}{vector3 {\bfseries r\-Ph\-\_\-ref}}\label{classhiroArm_aee1e2a7ecc0ebcb21a2703464550f933}
+
+\item 
+\hypertarget{classhiroArm_a800c540a6850d2065728625a6856c0b9}{matrix33 {\bfseries r\-Rh\-\_\-ref}}\label{classhiroArm_a800c540a6850d2065728625a6856c0b9}
+
+\item 
+\hypertarget{classhiroArm_abe8d6d75828d51e31923ceeb00d0b72b}{vector3 {\bfseries r\-Pe\-\_\-ref}}\label{classhiroArm_abe8d6d75828d51e31923ceeb00d0b72b}
+
+\item 
+\hypertarget{classhiroArm_abb69b5e9965ee0cb5d4705e271aa51af}{matrix33 {\bfseries r\-Re\-\_\-ref}}\label{classhiroArm_abb69b5e9965ee0cb5d4705e271aa51af}
+
+\item 
+\hypertarget{classhiroArm_a637f456fea3e4a306994cb6bf4b65759}{dvector6 {\bfseries q\-\_\-ref}}\label{classhiroArm_a637f456fea3e4a306994cb6bf4b65759}
+
+\item 
+\hypertarget{classhiroArm_a9a7363e208e5eadb3ed2c6c94adbce32}{bool {\bfseries f\-\_\-moving}}\label{classhiroArm_a9a7363e208e5eadb3ed2c6c94adbce32}
+
+\item 
+\hypertarget{classhiroArm_a8ea0beb035a51209bfe801e0614b6c74}{bool {\bfseries f\-\_\-reached}}\label{classhiroArm_a8ea0beb035a51209bfe801e0614b6c74}
+
+\item 
+\hypertarget{classhiroArm_a46befb8e4bc9374a40bc0fa97013b986}{unsigned long {\bfseries m\-\_\-time}}\label{classhiroArm_a46befb8e4bc9374a40bc0fa97013b986}
+
+\item 
+\hypertarget{classhiroArm_af2a99c1e0c9b1d8f6e601f89796848d7}{\hyperlink{structhiroArm_1_1path__params}{path\-\_\-params} {\bfseries p\-\_\-param}}\label{classhiroArm_af2a99c1e0c9b1d8f6e601f89796848d7}
+
+\item 
+\hypertarget{classhiroArm_adcc05d7df10344ed286712ac09e3bf36}{const double {\bfseries M\-A\-X\-\_\-\-J\-V\-E\-L}}\label{classhiroArm_adcc05d7df10344ed286712ac09e3bf36}
+
+\item 
+\hypertarget{classhiroArm_a13b1550abc6060781cf241ca51f6e1b8}{const double {\bfseries T\-I\-M\-E\-\_\-\-L\-I\-M\-I\-T}}\label{classhiroArm_a13b1550abc6060781cf241ca51f6e1b8}
+
+\item 
+\hypertarget{classhiroArm_a8fc0203fb50b15ee16cb30a907de9c91}{const double {\bfseries M\-I\-N\-\_\-\-P\-E\-R\-I\-O\-D}}\label{classhiroArm_a8fc0203fb50b15ee16cb30a907de9c91}
+
+\item 
+\hypertarget{classhiroArm_ac8b27c7b29aedb40a9703c838b39da47}{const double {\bfseries T\-O\-L\-E\-R\-A\-N\-C\-E}}\label{classhiroArm_ac8b27c7b29aedb40a9703c838b39da47}
+
+\item 
+\hypertarget{classhiroArm_aa2b4d94604d1a4d1c08141c16a64cd17}{matrix33 {\bfseries Mt}}\label{classhiroArm_aa2b4d94604d1a4d1c08141c16a64cd17}
+
+\item 
+\hypertarget{classhiroArm_a08986ace6f5dc9238bd00c92802cab19}{matrix33 {\bfseries Mr}}\label{classhiroArm_a08986ace6f5dc9238bd00c92802cab19}
+
+\item 
+\hypertarget{classhiroArm_a4fa6232e809edc31ee4597f019ed3923}{matrix33 {\bfseries Dt}}\label{classhiroArm_a4fa6232e809edc31ee4597f019ed3923}
+
+\item 
+\hypertarget{classhiroArm_ac5dd65ebd3ab4e25c965578517afe079}{matrix33 {\bfseries Dr}}\label{classhiroArm_ac5dd65ebd3ab4e25c965578517afe079}
+
+\item 
+\hypertarget{classhiroArm_a6dca906ca642c0a6e4cd753b63941586}{vector3 {\bfseries r\-Xd}}\label{classhiroArm_a6dca906ca642c0a6e4cd753b63941586}
+
+\item 
+\hypertarget{classhiroArm_af80787386161e59756a858c904f60e93}{vector3 {\bfseries rd\-Xd}}\label{classhiroArm_af80787386161e59756a858c904f60e93}
+
+\item 
+\hypertarget{classhiroArm_a90620d89f728c298c1e9ce7f4f863acc}{vector3 {\bfseries rdd\-Xd}}\label{classhiroArm_a90620d89f728c298c1e9ce7f4f863acc}
+
+\item 
+\hypertarget{classhiroArm_a51e3d336896d807590df5b48d29c5532}{vector3 {\bfseries r\-Rd}}\label{classhiroArm_a51e3d336896d807590df5b48d29c5532}
+
+\item 
+\hypertarget{classhiroArm_a4235bbdf7465a884581d91e51862787d}{vector3 {\bfseries rd\-Rd}}\label{classhiroArm_a4235bbdf7465a884581d91e51862787d}
+
+\item 
+\hypertarget{classhiroArm_a64bd2ff702c6e38b4ea2986e6b796e28}{vector3 {\bfseries rdd\-Rd}}\label{classhiroArm_a64bd2ff702c6e38b4ea2986e6b796e28}
+
+\item 
+\hypertarget{classhiroArm_ab33ad5f1ceb707325583fe9e10261cc3}{bool {\bfseries f\-\_\-gc}}\label{classhiroArm_ab33ad5f1ceb707325583fe9e10261cc3}
+
+\item 
+\hypertarget{classhiroArm_a16ec70d24b26dcbbfda883ad96afa7b6}{bool {\bfseries f\-\_\-gc\-\_\-init}}\label{classhiroArm_a16ec70d24b26dcbbfda883ad96afa7b6}
+
+\item 
+\hypertarget{classhiroArm_a485b8d223930c7dd9fb3139cc89f24df}{int {\bfseries step\-\_\-gc}}\label{classhiroArm_a485b8d223930c7dd9fb3139cc89f24df}
+
+\item 
+\hypertarget{classhiroArm_a51548d7ac2193834a23abaf48bfe05fc}{int {\bfseries step\-\_\-fs}}\label{classhiroArm_a51548d7ac2193834a23abaf48bfe05fc}
+
+\item 
+\hypertarget{classhiroArm_a6a280e8faf8d065344373c264db0d65d}{double {\bfseries mass}}\label{classhiroArm_a6a280e8faf8d065344373c264db0d65d}
+
+\item 
+\hypertarget{classhiroArm_ab198cbb1cdaf345f27a225d314240e06}{const int {\bfseries max\-\_\-step\-\_\-fs}}\label{classhiroArm_ab198cbb1cdaf345f27a225d314240e06}
+
+\item 
+\hypertarget{classhiroArm_a77b52da322594e9d6ffbfd5203fa43bc}{const int {\bfseries wait\-\_\-step}}\label{classhiroArm_a77b52da322594e9d6ffbfd5203fa43bc}
+
+\item 
+\hypertarget{classhiroArm_a9d73a120be971c2bf9d75e7b2650c819}{const double {\bfseries G\-A\-C\-C}}\label{classhiroArm_a9d73a120be971c2bf9d75e7b2650c819}
+
+\item 
+\hypertarget{classhiroArm_a2832693d428ea1eb2ec38fc87094d063}{vector3 {\bfseries r\-G\-\_\-vec}}\label{classhiroArm_a2832693d428ea1eb2ec38fc87094d063}
+
+\item 
+\hypertarget{classhiroArm_ad013a710860c7e1808cd361b0e2cd0ab}{vector3 {\bfseries fs\-Pgc}}\label{classhiroArm_ad013a710860c7e1808cd361b0e2cd0ab}
+
+\item 
+\hypertarget{classhiroArm_aacb04f805240685c6f28728ac407010c}{vector3 {\bfseries fs\-F\-\_\-offset}}\label{classhiroArm_aacb04f805240685c6f28728ac407010c}
+
+\item 
+\hypertarget{classhiroArm_afdff32f72a25a22319d634e37ca66cca}{vector3 {\bfseries fs\-M\-\_\-offset}}\label{classhiroArm_afdff32f72a25a22319d634e37ca66cca}
+
+\item 
+\hypertarget{classhiroArm_aa92bec0148891075371a6dce46377f4d}{vector3 {\bfseries fs\-F\-\_\-tmp} \mbox{[}5\mbox{]}}\label{classhiroArm_aa92bec0148891075371a6dce46377f4d}
+
+\item 
+\hypertarget{classhiroArm_a71e59362250b53e7fdd6a8eb43e13fdf}{vector3 {\bfseries fs\-M\-\_\-tmp} \mbox{[}5\mbox{]}}\label{classhiroArm_a71e59362250b53e7fdd6a8eb43e13fdf}
+
+\item 
+\hypertarget{classhiroArm_ac84c9861e6761231639f5a9f5178cb93}{dvector6 {\bfseries q\-\_\-gc\-\_\-ref} \mbox{[}5\mbox{]}}\label{classhiroArm_ac84c9861e6761231639f5a9f5178cb93}
+
+\item 
+\hypertarget{classhiroArm_a0e69681e3882555cc18ae8bd6191e535}{matrix33 {\bfseries fs\-Rr\-\_\-gc} \mbox{[}5\mbox{]}}\label{classhiroArm_a0e69681e3882555cc18ae8bd6191e535}
+
+\item 
+\hypertarget{classhiroArm_aaf7d09fbdea5bfe0ba41eb31761b6aed}{vector3 {\bfseries r\-Ph\-\_\-initial}}\label{classhiroArm_aaf7d09fbdea5bfe0ba41eb31761b6aed}
+
+\item 
+\hypertarget{classhiroArm_ad8ebd1440896701a3a44dbd16b06e79d}{matrix33 {\bfseries r\-Rh\-\_\-initial}}\label{classhiroArm_ad8ebd1440896701a3a44dbd16b06e79d}
+
+\item 
+\hypertarget{classhiroArm_a1503923eddd3cc2bbb996b5d9ed306e5}{vector3 {\bfseries fs\-F\-\_\-initial}}\label{classhiroArm_a1503923eddd3cc2bbb996b5d9ed306e5}
+
+\item 
+\hypertarget{classhiroArm_a27db0eb1157726a75cc0c760dbb984c9}{vector3 {\bfseries fs\-M\-\_\-initial}}\label{classhiroArm_a27db0eb1157726a75cc0c760dbb984c9}
+
+\item 
+\hypertarget{classhiroArm_af1aded47966174202506f75d464dab51}{std\-::ifstream {\bfseries fin\-\_\-lpos}}\label{classhiroArm_af1aded47966174202506f75d464dab51}
+
+\item 
+\hypertarget{classhiroArm_a336342501e46c62ee5f2021c3f44835c}{std\-::ifstream {\bfseries fin\-\_\-rpos}}\label{classhiroArm_a336342501e46c62ee5f2021c3f44835c}
+
+\item 
+\hypertarget{classhiroArm_a4106db25c02c7ca50d66ea943ff7e9ab}{std\-::ifstream {\bfseries fin\-\_\-lfc}}\label{classhiroArm_a4106db25c02c7ca50d66ea943ff7e9ab}
+
+\item 
+\hypertarget{classhiroArm_a4cf03d39eb6faa765bcc58090ea5a604}{std\-::ifstream {\bfseries fin\-\_\-rfc}}\label{classhiroArm_a4cf03d39eb6faa765bcc58090ea5a604}
+
+\item 
+\hypertarget{classhiroArm_a38fffc28b35466feb50467dd49282f1a}{bool {\bfseries init\-Flag}}\label{classhiroArm_a38fffc28b35466feb50467dd49282f1a}
+
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classhiroArm_a05deaa370806bc767b12f2aef37c348a}{class {\bfseries force\-Sensor\-Plugin\-\_\-impl}}\label{classhiroArm_a05deaa370806bc767b12f2aef37c348a}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{hiroArm_8h}{hiro\-Arm.\-h}\item 
+\hyperlink{hiroArm_8cpp}{hiro\-Arm.\-cpp}\end{DoxyCompactItemize}

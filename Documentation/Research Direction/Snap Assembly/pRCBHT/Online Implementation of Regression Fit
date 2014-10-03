@@ -1,0 +1,10 @@
+2:14 is the window range that we are currently studying.
+
+Though we only have 2:12 data points.
+wStart should stay at 2
+windowIndex should stat at 12
+localRange should stay 2:14
+globalRange should go from 2:14 to 2:22
+
+Terminal Condition
+will need a terminal condition from loadingSimulatedData that says, this is really the last piece of data.

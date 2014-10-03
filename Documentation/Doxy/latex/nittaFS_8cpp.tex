@@ -1,0 +1,121 @@
+\hypertarget{nittaFS_8cpp}{\section{nitta\-F\-S.\-cpp File Reference}
+\label{nittaFS_8cpp}\index{nitta\-F\-S.\-cpp@{nitta\-F\-S.\-cpp}}
+}
+
+
+Nitta force moment sensor class.  
+
+
+{\ttfamily \#include \char`\"{}nitta\-F\-S.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+{\ttfamily \#include $<$unistd.\-h$>$}\\*
+{\ttfamily \#include $<$stdlib.\-h$>$}\\*
+{\ttfamily \#include $<$errno.\-h$>$}\\*
+{\ttfamily \#include $<$fcntl.\-h$>$}\\*
+{\ttfamily \#include $<$string.\-h$>$}\\*
+{\ttfamily \#include $<$sys/time.\-h$>$}\\*
+{\ttfamily \#include $<$sys/neutrino.\-h$>$}\\*
+{\ttfamily \#include $<$sys/iofunc.\-h$>$}\\*
+{\ttfamily \#include $<$sys/dispatch.\-h$>$}\\*
+{\ttfamily \#include $<$sys/mman.\-h$>$}\\*
+{\ttfamily \#include $<$hw/pci.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}jr3pci3.\-idm\char`\"{}}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{nittaFS_8cpp_a501b466107e08529b48a78a801bb72d5}{\#define {\bfseries V\-E\-N\-D\-O\-R\-I\-D}~0x1762  /$\ast$ Vendor I\-D of J\-R3 $\ast$/}\label{nittaFS_8cpp_a501b466107e08529b48a78a801bb72d5}
+
+\item 
+\hypertarget{nittaFS_8cpp_a10b1dbc3d072918dd1b504808a4ed8ed}{\#define {\bfseries D\-E\-V\-I\-C\-E\-I\-D}~0x3112  /$\ast$ for 2ch board $\ast$/}\label{nittaFS_8cpp_a10b1dbc3d072918dd1b504808a4ed8ed}
+
+\item 
+\hypertarget{nittaFS_8cpp_ad10f357a4d7ba17fa1fa1330b45d6afa}{\#define {\bfseries Jr3\-Reset\-Addr}~0x18000}\label{nittaFS_8cpp_ad10f357a4d7ba17fa1fa1330b45d6afa}
+
+\item 
+\hypertarget{nittaFS_8cpp_a0b9e4ed50d6011a79969ad4904e24b7c}{\#define {\bfseries Jr3\-No\-Addr\-Mask}~0x40000}\label{nittaFS_8cpp_a0b9e4ed50d6011a79969ad4904e24b7c}
+
+\item 
+\hypertarget{nittaFS_8cpp_a364d2302e8e893d3fcc6a393f0b97f65}{\#define {\bfseries Jr3\-Dm\-Addr\-Mask}~0x6000}\label{nittaFS_8cpp_a364d2302e8e893d3fcc6a393f0b97f65}
+
+\item 
+\hypertarget{nittaFS_8cpp_a7d467c1d283fdfa1f2081ba1e0d01b6e}{\#define {\bfseries P\-A\-G\-E\-\_\-\-S\-I\-Z\-E}~0x1000}\label{nittaFS_8cpp_a7d467c1d283fdfa1f2081ba1e0d01b6e}
+
+\item 
+\hypertarget{nittaFS_8cpp_a9df8108b1451645c77e5cad3af0bd5da}{\#define {\bfseries S\-E\-N\-S\-O\-R0}~0}\label{nittaFS_8cpp_a9df8108b1451645c77e5cad3af0bd5da}
+
+\item 
+\hypertarget{nittaFS_8cpp_a82e45e3e257773335108c48e071867aa}{\#define {\bfseries S\-E\-N\-S\-O\-R1}~0x80000}\label{nittaFS_8cpp_a82e45e3e257773335108c48e071867aa}
+
+\item 
+\hypertarget{nittaFS_8cpp_a8732d399798b580cdffc834d4bfe2d24}{\#define {\bfseries S\-E\-N\-S\-O\-R2}~0x100000}\label{nittaFS_8cpp_a8732d399798b580cdffc834d4bfe2d24}
+
+\item 
+\hypertarget{nittaFS_8cpp_ad27ddfd0981a303f87a5360712290b3b}{\#define {\bfseries S\-E\-N\-S\-O\-R3}~0x180000}\label{nittaFS_8cpp_ad27ddfd0981a303f87a5360712290b3b}
+
+\item 
+\hypertarget{nittaFS_8cpp_addc9fe4d71d56f9c1b27c16a082a8caf}{\#define {\bfseries To\-Jr3\-Pci\-Addr\-H}(addr)~(((int)(addr) $<$$<$ 2) + Jr3\-Base\-Address\-H)}\label{nittaFS_8cpp_addc9fe4d71d56f9c1b27c16a082a8caf}
+
+\item 
+\hypertarget{nittaFS_8cpp_a8cefa17fc6a69675d13f223058db5aa0}{\#define {\bfseries To\-Jr3\-Pci\-Addr\-L}(addr)~(((int)(addr) $<$$<$ 2) + Jr3\-Base\-Address\-L)}\label{nittaFS_8cpp_a8cefa17fc6a69675d13f223058db5aa0}
+
+\item 
+\#define {\bfseries Read\-Jr3\-Pm}(addr)
+\item 
+\#define {\bfseries Write\-Jr3\-Pm2}(addr, data, data2)
+\item 
+\hypertarget{nittaFS_8cpp_a9eca1a9e1c7ad77f76e092dd58e2a7a9}{\#define {\bfseries Write\-Jr3\-Pm}(addr, data)~Write\-Jr3\-Pm2((addr),(data) $>$$>$ 8, (data))}\label{nittaFS_8cpp_a9eca1a9e1c7ad77f76e092dd58e2a7a9}
+
+\item 
+\hypertarget{nittaFS_8cpp_a11be253950738f8324790b975d38a63c}{\#define {\bfseries Read\-Jr3\-Dm}(addr)~($\ast$(uint16\-\_\-t volatile $\ast$)(To\-Jr3\-Pci\-Addr\-H((addr))))}\label{nittaFS_8cpp_a11be253950738f8324790b975d38a63c}
+
+\item 
+\hypertarget{nittaFS_8cpp_aa5a2eb050a5fc4930ef14e2028ded71e}{\#define {\bfseries Write\-Jr3\-Dm}(addr, data)~$\ast$(int volatile $\ast$)(To\-Jr3\-Pci\-Addr\-H((addr))) = (int)(data)}\label{nittaFS_8cpp_aa5a2eb050a5fc4930ef14e2028ded71e}
+
+\item 
+\hypertarget{nittaFS_8cpp_a081df36d73a6f2e410f28f52585f228d}{\#define {\bfseries Read\-Jr3}(addr)~(Read\-Jr3\-Dm((addr) $|$ Jr3\-Dm\-Addr\-Mask))}\label{nittaFS_8cpp_a081df36d73a6f2e410f28f52585f228d}
+
+\item 
+\hypertarget{nittaFS_8cpp_aa81a11c48588fcbc22c8a45a4f1f7b2f}{\#define {\bfseries Write\-Jr3}(addr, data)~Write\-Jr3\-Dm((addr) $|$ Jr3\-Dm\-Addr\-Mask,data)}\label{nittaFS_8cpp_aa81a11c48588fcbc22c8a45a4f1f7b2f}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Nitta force moment sensor class. \begin{DoxyAuthor}{Author}
+
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+2011/02/16 
+\end{DoxyDate}
+\begin{DoxyNote}{Note}
+
+\end{DoxyNote}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{nittaFS_8cpp_ac422356aa5850d83f319cad5cd0dd56a}{\index{nitta\-F\-S.\-cpp@{nitta\-F\-S.\-cpp}!Read\-Jr3\-Pm@{Read\-Jr3\-Pm}}
+\index{Read\-Jr3\-Pm@{Read\-Jr3\-Pm}!nittaFS.cpp@{nitta\-F\-S.\-cpp}}
+\subsubsection[{Read\-Jr3\-Pm}]{\setlength{\rightskip}{0pt plus 5cm}\#define Read\-Jr3\-Pm(
+\begin{DoxyParamCaption}
+\item[{}]{addr}
+\end{DoxyParamCaption}
+)}}\label{nittaFS_8cpp_ac422356aa5850d83f319cad5cd0dd56a}
+{\bfseries Value\-:}
+\begin{DoxyCode}
+(*(uint16\_t \textcolor{keyword}{volatile} *)(ToJr3PciAddrH((addr))) << 8 |\(\backslash\)
+         *(uint8\_t  \textcolor{keyword}{volatile} *)(ToJr3PciAddrL((addr))))
+\end{DoxyCode}
+\hypertarget{nittaFS_8cpp_ae427cb61ee43524a131647298b78246f}{\index{nitta\-F\-S.\-cpp@{nitta\-F\-S.\-cpp}!Write\-Jr3\-Pm2@{Write\-Jr3\-Pm2}}
+\index{Write\-Jr3\-Pm2@{Write\-Jr3\-Pm2}!nittaFS.cpp@{nitta\-F\-S.\-cpp}}
+\subsubsection[{Write\-Jr3\-Pm2}]{\setlength{\rightskip}{0pt plus 5cm}\#define Write\-Jr3\-Pm2(
+\begin{DoxyParamCaption}
+\item[{}]{addr, }
+\item[{}]{data, }
+\item[{}]{data2}
+\end{DoxyParamCaption}
+)}}\label{nittaFS_8cpp_ae427cb61ee43524a131647298b78246f}
+{\bfseries Value\-:}
+\begin{DoxyCode}
+(*(\textcolor{keywordtype}{int} \textcolor{keyword}{volatile} *)ToJr3PciAddrH((addr)) = (\textcolor{keywordtype}{int})(data));\(\backslash\)
+                   (*(\textcolor{keywordtype}{int} \textcolor{keyword}{volatile} *)ToJr3PciAddrL((addr)) = (\textcolor{keywordtype}{int})(data2))
+\end{DoxyCode}

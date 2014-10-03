@@ -1,0 +1,268 @@
+\hypertarget{classOpenHRP_1_1CFSImpl}{\section{Open\-H\-R\-P\-:\-:C\-F\-S\-Impl Class Reference}
+\label{classOpenHRP_1_1CFSImpl}\index{Open\-H\-R\-P\-::\-C\-F\-S\-Impl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}}
+}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData}{Body\-Data}
+\item 
+struct \hyperlink{structOpenHRP_1_1CFSImpl_1_1ConstraintPoint}{Constraint\-Point}
+\item 
+struct \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkData}{Link\-Data}
+\item 
+struct \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair}
+\end{DoxyCompactItemize}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_afff7f75d434773026a8db8ada591193e}{typedef std\-::vector\\*
+$<$ \hyperlink{structOpenHRP_1_1CFSImpl_1_1ConstraintPoint}{Constraint\-Point} $>$ {\bfseries Constraint\-Point\-Array}}\label{classOpenHRP_1_1CFSImpl_afff7f75d434773026a8db8ada591193e}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_aafc6272b021a652ba846232b9681e23a}{typedef std\-::vector$<$ \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkData}{Link\-Data} $>$ {\bfseries Link\-Data\-Array}}\label{classOpenHRP_1_1CFSImpl_aafc6272b021a652ba846232b9681e23a}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a260b7d7a80133ce22715457cfd5ea935}{typedef std\-::vector$<$ \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} $>$ {\bfseries Link\-Pair\-Array}}\label{classOpenHRP_1_1CFSImpl_a260b7d7a80133ce22715457cfd5ea935}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_afeb05336eea3df6fe7266edf92898d3d}{typedef \\*
+boost\-::numeric\-::ublas\-::matrix\\*
+$<$ double, ublas\-::row\-\_\-major $>$ {\bfseries rmdmatrix}}\label{classOpenHRP_1_1CFSImpl_afeb05336eea3df6fe7266edf92898d3d}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ab15cb9dcbe5e7da7cb4403e6867ac2d6}{{\bfseries C\-F\-S\-Impl} (World\-Base \&world)}\label{classOpenHRP_1_1CFSImpl_ab15cb9dcbe5e7da7cb4403e6867ac2d6}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_aed4723e61cb05b92b09a1d6c9f2ae014}{bool {\bfseries add\-Collision\-Check\-Link\-Pair} (int body\-Index1, Link $\ast$link1, int body\-Index2, Link $\ast$link2, double mu\-Static, double mu\-Dynamic, double epsilon)}\label{classOpenHRP_1_1CFSImpl_aed4723e61cb05b92b09a1d6c9f2ae014}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a31de0cb7f0b137ad3231e9fc09d35b6a}{void {\bfseries initialize} (void)}\label{classOpenHRP_1_1CFSImpl_a31de0cb7f0b137ad3231e9fc09d35b6a}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a6143ef87d934c9b058ed7a0cc102d44a}{void {\bfseries solve} (Collision\-Sequence \&corba\-Collision\-Sequence)}\label{classOpenHRP_1_1CFSImpl_a6143ef87d934c9b058ed7a0cc102d44a}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a2da7a64bfc892105b41fe6ade70707b1}{void {\bfseries clear\-External\-Forces} ()}\label{classOpenHRP_1_1CFSImpl_a2da7a64bfc892105b41fe6ade70707b1}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a6d85970aa32d8b487ff1bd41c574d337}{void {\bfseries set\-Constraint\-Points} (Collision\-Sequence \&collisions)}\label{classOpenHRP_1_1CFSImpl_a6d85970aa32d8b487ff1bd41c574d337}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a34a30a89f9d9717c471c78dbec4a86c0}{void {\bfseries set\-Contact\-Constraint\-Points} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} \&link\-Pair, Collision\-Point\-Sequence \&collision\-Points)}\label{classOpenHRP_1_1CFSImpl_a34a30a89f9d9717c471c78dbec4a86c0}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a46e885522aad9b7792d0bb2e8e5f0f09}{void {\bfseries set\-Friction\-Vectors} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1ConstraintPoint}{Constraint\-Point} \&constraint\-Point)}\label{classOpenHRP_1_1CFSImpl_a46e885522aad9b7792d0bb2e8e5f0f09}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ab4cb4a004e5100050579b1185c1aa2c7}{bool {\bfseries set\-Connection\-Constraint\-Points} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} \&link\-Pair)}\label{classOpenHRP_1_1CFSImpl_ab4cb4a004e5100050579b1185c1aa2c7}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a3eb9ee041d20588f2048b53742288e16}{void {\bfseries put\-Contact\-Points} ()}\label{classOpenHRP_1_1CFSImpl_a3eb9ee041d20588f2048b53742288e16}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a04724f09372ba0a1009928a6bd8999a0}{void {\bfseries solve\-Impact\-Constraints} ()}\label{classOpenHRP_1_1CFSImpl_a04724f09372ba0a1009928a6bd8999a0}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a62ef21510d8017ca5017b6680bd2539f}{void {\bfseries init\-Matrices} ()}\label{classOpenHRP_1_1CFSImpl_a62ef21510d8017ca5017b6680bd2539f}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a01d717e13f4c2d9d42889ac71fc48904}{void {\bfseries set\-Accel\-Calc\-Skip\-Information} ()}\label{classOpenHRP_1_1CFSImpl_a01d717e13f4c2d9d42889ac71fc48904}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a55be14a72af6208678997dddc5fae98c}{void {\bfseries set\-Default\-Acceleration\-Vector} ()}\label{classOpenHRP_1_1CFSImpl_a55be14a72af6208678997dddc5fae98c}
+
+\item 
+void \hyperlink{classOpenHRP_1_1CFSImpl_aa85768ddd80a84f7ab6f038ef21e1869}{set\-Acceleration\-Matrix} ()
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a7fbbbdcf550aa41db3b879a547a8a784}{void {\bfseries init\-A\-B\-M\-Force\-Elements\-With\-No\-Ext\-Force} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData}{Body\-Data} \&body\-Data)}\label{classOpenHRP_1_1CFSImpl_a7fbbbdcf550aa41db3b879a547a8a784}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_abe259d7ced654a87e2e4a781a0df1bf7}{void {\bfseries calc\-A\-B\-M\-Force\-Elements\-With\-Test\-Force} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData}{Body\-Data} \&body\-Data, Link $\ast$link\-To\-Apply\-Force, const vector3 \&f, const vector3 \&tau)}\label{classOpenHRP_1_1CFSImpl_abe259d7ced654a87e2e4a781a0df1bf7}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a8e10cc8476416fe65963976b600e729a}{void {\bfseries calc\-Accels\-A\-B\-M} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData}{Body\-Data} \&body\-Data, int constraint\-Index)}\label{classOpenHRP_1_1CFSImpl_a8e10cc8476416fe65963976b600e729a}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a5da8525c17cb00e8b616fea35c4404ac}{void {\bfseries calc\-Accels\-M\-M} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData}{Body\-Data} \&body\-Data, int constraint\-Index)}\label{classOpenHRP_1_1CFSImpl_a5da8525c17cb00e8b616fea35c4404ac}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ac7b128a0adec7c1b56d5ee4fbb4617a3}{void {\bfseries extract\-Rel\-Accels\-Of\-Constraint\-Points} (matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxn, matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxt, int test\-Force\-Index, int constraint\-Index)}\label{classOpenHRP_1_1CFSImpl_ac7b128a0adec7c1b56d5ee4fbb4617a3}
+
+\item 
+void \hyperlink{classOpenHRP_1_1CFSImpl_a3032163447ca65ec81dc2a5c29cecf34}{extract\-Rel\-Accels\-From\-Link\-Pair\-Case1} (matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxn, matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxt, \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} \&link\-Pair, int test\-Force\-Index, int constraint\-Index)
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a5ebe62f5ba977f03210fe786b7f6678f}{void {\bfseries extract\-Rel\-Accels\-From\-Link\-Pair\-Case2} (matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxn, matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxt, \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} \&link\-Pair, int i\-Test\-Force, int i\-Default, int test\-Force\-Index, int constraint\-Index)}\label{classOpenHRP_1_1CFSImpl_a5ebe62f5ba977f03210fe786b7f6678f}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a21a0ea949e79d978d63392d4c7427dc5}{void {\bfseries extract\-Rel\-Accels\-From\-Link\-Pair\-Case3} (matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxn, matrix\-\_\-range$<$ rmdmatrix $>$ \&Kxt, \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} \&link\-Pair, int test\-Force\-Index, int constraint\-Index)}\label{classOpenHRP_1_1CFSImpl_a21a0ea949e79d978d63392d4c7427dc5}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ad005e54fb6c1d3fc42b4fc5bdc35bcb3}{void {\bfseries copy\-Symmetric\-Elements\-Of\-Acceleration\-Matrix} (matrix\-\_\-range$<$ rmdmatrix $>$ \&Knn, matrix\-\_\-range$<$ rmdmatrix $>$ \&Ktn, matrix\-\_\-range$<$ rmdmatrix $>$ \&Knt, matrix\-\_\-range$<$ rmdmatrix $>$ \&Ktt)}\label{classOpenHRP_1_1CFSImpl_ad005e54fb6c1d3fc42b4fc5bdc35bcb3}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ab7dda78cbc91b0a1de4179ea4e67e830}{void {\bfseries clear\-Singular\-Point\-Constraints\-Of\-Closed\-Loop\-Connections} ()}\label{classOpenHRP_1_1CFSImpl_ab7dda78cbc91b0a1de4179ea4e67e830}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_abf1ed971249dd317097ed66dcae9b31d}{void {\bfseries set\-Constant\-Vector\-And\-Mu\-Block} ()}\label{classOpenHRP_1_1CFSImpl_abf1ed971249dd317097ed66dcae9b31d}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_af2ed56c8f5f0227f1e8afc58ac5743a7}{void {\bfseries add\-Constraint\-Force\-To\-Links} ()}\label{classOpenHRP_1_1CFSImpl_af2ed56c8f5f0227f1e8afc58ac5743a7}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a6107cfc0cad5c21a806ca359ebae2b17}{void {\bfseries add\-Constraint\-Force\-To\-Link} (\hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} $\ast$link\-Pair, int ipair)}\label{classOpenHRP_1_1CFSImpl_a6107cfc0cad5c21a806ca359ebae2b17}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ac7c9f14d3defb03d423ecd23a0aa48a5}{void {\bfseries solve\-M\-C\-P\-By\-Projected\-Gauss\-Seidel} (const rmdmatrix \&M, const dvector \&b, dvector \&x)}\label{classOpenHRP_1_1CFSImpl_ac7c9f14d3defb03d423ecd23a0aa48a5}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_abc1fd4c183745df887bf22e093478bcf}{void {\bfseries solve\-M\-C\-P\-By\-Projected\-Gauss\-Seidel\-Initial} (const rmdmatrix \&M, const dvector \&b, dvector \&x, const int num\-Iteration)}\label{classOpenHRP_1_1CFSImpl_abc1fd4c183745df887bf22e093478bcf}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ac0c52b69db7e7404cad20acbeb56f722}{void {\bfseries solve\-M\-C\-P\-By\-Projected\-Gauss\-Seidel\-Main} (const rmdmatrix \&M, const dvector \&b, dvector \&x, const int num\-Iteration)}\label{classOpenHRP_1_1CFSImpl_ac0c52b69db7e7404cad20acbeb56f722}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_aea49607282c5a13dbed9ab49846d3d99}{double {\bfseries solve\-M\-C\-P\-By\-Projected\-Gauss\-Seidel\-Error\-Check} (const rmdmatrix \&M, const dvector \&b, dvector \&x)}\label{classOpenHRP_1_1CFSImpl_aea49607282c5a13dbed9ab49846d3d99}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a94ff2216e915e2694b59a248f73ef862}{void {\bfseries check\-L\-C\-P\-Result} (rmdmatrix \&M, dvector \&b, dvector \&x)}\label{classOpenHRP_1_1CFSImpl_a94ff2216e915e2694b59a248f73ef862}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ae034f9928a9ca9b4f8dee8d1b3c936ba}{void {\bfseries check\-M\-C\-P\-Result} (rmdmatrix \&M, dvector \&b, dvector \&x)}\label{classOpenHRP_1_1CFSImpl_ae034f9928a9ca9b4f8dee8d1b3c936ba}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a91f20f063783e81cd4a7714cd6337af9}{World\-Base \& {\bfseries world}}\label{classOpenHRP_1_1CFSImpl_a91f20f063783e81cd4a7714cd6337af9}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a38f66ef399ca34fa5d70ab5a720e658d}{std\-::vector$<$ \hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData}{Body\-Data} $>$ {\bfseries bodies\-Data}}\label{classOpenHRP_1_1CFSImpl_a38f66ef399ca34fa5d70ab5a720e658d}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ae99d2756d816221237cd1c0c9bb16017}{Link\-Pair\-Array {\bfseries collision\-Check\-Link\-Pairs}}\label{classOpenHRP_1_1CFSImpl_ae99d2756d816221237cd1c0c9bb16017}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a4be5bf5596f049fa2a1578569724f538}{Link\-Pair\-Array {\bfseries connected\-Link\-Pairs}}\label{classOpenHRP_1_1CFSImpl_a4be5bf5596f049fa2a1578569724f538}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a361e338d994b05b3df6e95330a0ed06c}{std\-::vector$<$ \hyperlink{structOpenHRP_1_1CFSImpl_1_1LinkPair}{Link\-Pair} $\ast$ $>$ {\bfseries constrained\-Link\-Pairs}}\label{classOpenHRP_1_1CFSImpl_a361e338d994b05b3df6e95330a0ed06c}
+
+\item 
+int \hyperlink{classOpenHRP_1_1CFSImpl_aa2ce261868d0109321fd9d823aa19680}{global\-Num\-Constraint\-Vectors}
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a8ca316ad7775c2102dc35fec3e9100c7}{int {\bfseries global\-Num\-Contact\-Normal\-Vectors}}\label{classOpenHRP_1_1CFSImpl_a8ca316ad7775c2102dc35fec3e9100c7}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a283aaa2e8110bc0c106ae8844e050ea3}{int {\bfseries global\-Num\-Connection\-Vectors}}\label{classOpenHRP_1_1CFSImpl_a283aaa2e8110bc0c106ae8844e050ea3}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a7fcd19679c434b861bf00c59c7dc9f94}{int {\bfseries global\-Num\-Friction\-Vectors}}\label{classOpenHRP_1_1CFSImpl_a7fcd19679c434b861bf00c59c7dc9f94}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_aa54707e00a8b22a1fd1a5350edfbedb9}{int {\bfseries prev\-Global\-Num\-Constraint\-Vectors}}\label{classOpenHRP_1_1CFSImpl_aa54707e00a8b22a1fd1a5350edfbedb9}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a2cd7b5ba2229e11fad23c6e410f6777c}{int {\bfseries prev\-Global\-Num\-Friction\-Vectors}}\label{classOpenHRP_1_1CFSImpl_a2cd7b5ba2229e11fad23c6e410f6777c}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a75a17c81017a228d10a54cf35a5018d0}{bool {\bfseries are\-There\-Impacts}}\label{classOpenHRP_1_1CFSImpl_a75a17c81017a228d10a54cf35a5018d0}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a67ee2aadab7c4f8c69b71e0edfd841ea}{int {\bfseries num\-Unconverged}}\label{classOpenHRP_1_1CFSImpl_a67ee2aadab7c4f8c69b71e0edfd841ea}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_afcc6138e7f51f1fcdc87d23e83d821b8}{rmdmatrix {\bfseries Mlcp}}\label{classOpenHRP_1_1CFSImpl_afcc6138e7f51f1fcdc87d23e83d821b8}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a31d3eaf4bbebe10c0af25d96b1d28f61}{dvector {\bfseries an0}}\label{classOpenHRP_1_1CFSImpl_a31d3eaf4bbebe10c0af25d96b1d28f61}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a4c98cce0993a0e2c3c46c629c966b741}{dvector {\bfseries at0}}\label{classOpenHRP_1_1CFSImpl_a4c98cce0993a0e2c3c46c629c966b741}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a4d086631c2c270951dbf930ae1c920db}{dvector {\bfseries b}}\label{classOpenHRP_1_1CFSImpl_a4d086631c2c270951dbf930ae1c920db}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a0043031b5bec32ed4d56803fb2ff2376}{dvector {\bfseries solution}}\label{classOpenHRP_1_1CFSImpl_a0043031b5bec32ed4d56803fb2ff2376}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_ac1845e9659c50ad4580ffcd25b9c6a03}{variate\-\_\-generator$<$ mt19937, \\*
+uniform\-\_\-real$<$$>$ $>$ {\bfseries random\-Angle}}\label{classOpenHRP_1_1CFSImpl_ac1845e9659c50ad4580ffcd25b9c6a03}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_afd4c77d9f419545118d398b7ef874275}{std\-::vector$<$ int $>$ {\bfseries friction\-Index\-To\-Contact\-Index}}\label{classOpenHRP_1_1CFSImpl_afd4c77d9f419545118d398b7ef874275}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a55390b62f1e10667f987e6a58945e775}{dvector {\bfseries contact\-Index\-To\-Mu}}\label{classOpenHRP_1_1CFSImpl_a55390b62f1e10667f987e6a58945e775}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a54896587ce9de55280754ff30bdb4a4b}{dvector {\bfseries mcp\-Hi}}\label{classOpenHRP_1_1CFSImpl_a54896587ce9de55280754ff30bdb4a4b}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a7965c95511c330db7894c7979ab07adc}{int {\bfseries max\-Num\-Gauss\-Seidel\-Iteration}}\label{classOpenHRP_1_1CFSImpl_a7965c95511c330db7894c7979ab07adc}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a2a3956126bf45fc6d7499dc9adaed6bd}{int {\bfseries num\-Gauss\-Seidel\-Initial\-Iteration}}\label{classOpenHRP_1_1CFSImpl_a2a3956126bf45fc6d7499dc9adaed6bd}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a8e5d1b515218ba51893facd51cca5bc1}{double {\bfseries gauss\-Seidel\-Max\-Rel\-Error}}\label{classOpenHRP_1_1CFSImpl_a8e5d1b515218ba51893facd51cca5bc1}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a92264e3054983d264fc9cb0b9ff020e4}{int {\bfseries num\-Gauss\-Seidel\-Total\-Loops}}\label{classOpenHRP_1_1CFSImpl_a92264e3054983d264fc9cb0b9ff020e4}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_aeef2a683ffe8c23d0c7ca469a1496754}{int {\bfseries num\-Gauss\-Seidel\-Total\-Calls}}\label{classOpenHRP_1_1CFSImpl_aeef2a683ffe8c23d0c7ca469a1496754}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a4aa5ef2ad866c44b2eff3263f82833ef}{static const double {\bfseries P\-I} = 3.\-14159265358979323846}\label{classOpenHRP_1_1CFSImpl_a4aa5ef2ad866c44b2eff3263f82833ef}
+
+\item 
+\hypertarget{classOpenHRP_1_1CFSImpl_a09a3aeb6752728391b128507e8dfe73e}{static const double {\bfseries P\-I\-\_\-2} = 1.\-57079632679489661923}\label{classOpenHRP_1_1CFSImpl_a09a3aeb6752728391b128507e8dfe73e}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classOpenHRP_1_1CFSImpl_a3032163447ca65ec81dc2a5c29cecf34}{\index{Open\-H\-R\-P\-::\-C\-F\-S\-Impl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}!extract\-Rel\-Accels\-From\-Link\-Pair\-Case1@{extract\-Rel\-Accels\-From\-Link\-Pair\-Case1}}
+\index{extract\-Rel\-Accels\-From\-Link\-Pair\-Case1@{extract\-Rel\-Accels\-From\-Link\-Pair\-Case1}!OpenHRP::CFSImpl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}}
+\subsubsection[{extract\-Rel\-Accels\-From\-Link\-Pair\-Case1}]{\setlength{\rightskip}{0pt plus 5cm}void C\-F\-S\-Impl\-::extract\-Rel\-Accels\-From\-Link\-Pair\-Case1 (
+\begin{DoxyParamCaption}
+\item[{matrix\-\_\-range$<$ rmdmatrix $>$ \&}]{Kxn, }
+\item[{matrix\-\_\-range$<$ rmdmatrix $>$ \&}]{Kxt, }
+\item[{{\bf Link\-Pair} \&}]{link\-Pair, }
+\item[{int}]{test\-Force\-Index, }
+\item[{int}]{constraint\-Index}
+\end{DoxyParamCaption}
+)}}\label{classOpenHRP_1_1CFSImpl_a3032163447ca65ec81dc2a5c29cecf34}
+\begin{DoxyRefDesc}{Todo}
+\item[\hyperlink{todo__todo000003}{Todo}]Can the follwoing equations be simplified ? \end{DoxyRefDesc}
+\hypertarget{classOpenHRP_1_1CFSImpl_aa85768ddd80a84f7ab6f038ef21e1869}{\index{Open\-H\-R\-P\-::\-C\-F\-S\-Impl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}!set\-Acceleration\-Matrix@{set\-Acceleration\-Matrix}}
+\index{set\-Acceleration\-Matrix@{set\-Acceleration\-Matrix}!OpenHRP::CFSImpl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}}
+\subsubsection[{set\-Acceleration\-Matrix}]{\setlength{\rightskip}{0pt plus 5cm}void C\-F\-S\-Impl\-::set\-Acceleration\-Matrix (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classOpenHRP_1_1CFSImpl_aa85768ddd80a84f7ab6f038ef21e1869}
+\begin{DoxyRefDesc}{Todo}
+\item[\hyperlink{todo__todo000001}{Todo}]This code does not work correctly when the links are in the same body. Fix it. \end{DoxyRefDesc}
+
+
+\begin{DoxyRefDesc}{Todo}
+\item[\hyperlink{todo__todo000002}{Todo}]This code does not work correctly when the links are in the same body. Fix it. \end{DoxyRefDesc}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{classOpenHRP_1_1CFSImpl_aa2ce261868d0109321fd9d823aa19680}{\index{Open\-H\-R\-P\-::\-C\-F\-S\-Impl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}!global\-Num\-Constraint\-Vectors@{global\-Num\-Constraint\-Vectors}}
+\index{global\-Num\-Constraint\-Vectors@{global\-Num\-Constraint\-Vectors}!OpenHRP::CFSImpl@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl}}
+\subsubsection[{global\-Num\-Constraint\-Vectors}]{\setlength{\rightskip}{0pt plus 5cm}int Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::global\-Num\-Constraint\-Vectors}}\label{classOpenHRP_1_1CFSImpl_aa2ce261868d0109321fd9d823aa19680}
+global\-Num\-Constraint\-Vectors = global\-Num\-Contact\-Normal\-Vectors + global\-Num\-Connection\-Vectors 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{ConstraintForceSolver_8cpp}{Constraint\-Force\-Solver.\-cpp}\end{DoxyCompactItemize}

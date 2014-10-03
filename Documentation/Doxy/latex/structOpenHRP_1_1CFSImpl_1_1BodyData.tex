@@ -1,0 +1,43 @@
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData}{\section{Open\-H\-R\-P\-:\-:C\-F\-S\-Impl\-:\-:Body\-Data Struct Reference}
+\label{structOpenHRP_1_1CFSImpl_1_1BodyData}\index{Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::\-Body\-Data@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::\-Body\-Data}}
+}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_a4697c57c13e1dd7c1a7c4a1fbb60f3c2}{Body\-Ptr {\bfseries body}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_a4697c57c13e1dd7c1a7c4a1fbb60f3c2}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_a706ba6649747cbad7b98e4c8ced4f19f}{bool {\bfseries is\-Static}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_a706ba6649747cbad7b98e4c8ced4f19f}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_ad69a87d6e6fd97134b135fc106bcbd60}{bool {\bfseries has\-Constrained\-Links}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_ad69a87d6e6fd97134b135fc106bcbd60}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_aa9ffddad678bbc5bb69e27687416dbd4}{bool {\bfseries is\-Test\-Force\-Being\-Applied}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_aa9ffddad678bbc5bb69e27687416dbd4}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_ad87536dff2fd3b65121cf0ba4dfab5fe}{Link\-Data\-Array {\bfseries links\-Data}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_ad87536dff2fd3b65121cf0ba4dfab5fe}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_af6f431288082cec128737c755025a240}{vector3 {\bfseries dpf}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_af6f431288082cec128737c755025a240}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_a456ad0dfb3b3dbe207015926bc717826}{vector3 {\bfseries dptau}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_a456ad0dfb3b3dbe207015926bc717826}
+
+\item 
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_ad367b651a9335667c4632443f395e48a}{vector3 $\ast$ \hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData_ad367b651a9335667c4632443f395e48a}{root\-Link\-Pos\-Ref}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_ad367b651a9335667c4632443f395e48a}
+
+\begin{DoxyCompactList}\small\item\em only used by the Forward\-Dynamics\-M\-M mode \end{DoxyCompactList}\item 
+Forward\-Dynamics\-M\-M\-Ptr \hyperlink{structOpenHRP_1_1CFSImpl_1_1BodyData_a8077fb9ac98541e9bf183b090f624f60}{forward\-Dynamics\-M\-M}
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structOpenHRP_1_1CFSImpl_1_1BodyData_a8077fb9ac98541e9bf183b090f624f60}{\index{Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::\-Body\-Data@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::\-Body\-Data}!forward\-Dynamics\-M\-M@{forward\-Dynamics\-M\-M}}
+\index{forward\-Dynamics\-M\-M@{forward\-Dynamics\-M\-M}!OpenHRP::CFSImpl::BodyData@{Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::\-Body\-Data}}
+\subsubsection[{forward\-Dynamics\-M\-M}]{\setlength{\rightskip}{0pt plus 5cm}Forward\-Dynamics\-M\-M\-Ptr Open\-H\-R\-P\-::\-C\-F\-S\-Impl\-::\-Body\-Data\-::forward\-Dynamics\-M\-M}}\label{structOpenHRP_1_1CFSImpl_1_1BodyData_a8077fb9ac98541e9bf183b090f624f60}
+If the body includes high-\/gain mode joints, the Forward\-Dynamis\-M\-M object of the body is set to this pointer. The pointer is null when all the joints are torque mode and the forward dynamics is calculated by A\-B\-M. 
+
+The documentation for this struct was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{ConstraintForceSolver_8cpp}{Constraint\-Force\-Solver.\-cpp}\end{DoxyCompactItemize}

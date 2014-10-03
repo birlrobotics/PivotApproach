@@ -1,0 +1,413 @@
+\hypertarget{classAssemblyStrategy}{\section{Assembly\-Strategy Class Reference}
+\label{classAssemblyStrategy}\index{Assembly\-Strategy@{Assembly\-Strategy}}
+}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries Control\-Paradigm} \{ {\bfseries motion\-Data}, 
+{\bfseries control\-Basis}
+ \}
+\item 
+enum {\bfseries Controller\-Type} \{ {\bfseries Null}, 
+{\bfseries Position\-Ctrl}, 
+{\bfseries Force\-Ctrl}, 
+{\bfseries Moment\-Ctrl}
+ \}
+\item 
+enum {\bfseries Ctrl\-Strategy} \{ {\bfseries Manipulation\-Test}, 
+{\bfseries Straight\-Line\-Approach}, 
+{\bfseries Pivot\-Approach}, 
+{\bfseries Side\-Approach}
+ \}
+\item 
+enum {\bfseries Test\-Axis} \{ \\*
+{\bfseries pos\-Fx}, 
+{\bfseries neg\-Fx}, 
+{\bfseries pos\-Fy}, 
+{\bfseries neg\-Fy}, 
+\\*
+{\bfseries pos\-Fz}, 
+{\bfseries neg\-Fz}, 
+{\bfseries pos\-Mx}, 
+{\bfseries neg\-Mx}, 
+\\*
+{\bfseries pos\-My}, 
+{\bfseries neg\-My}, 
+{\bfseries pos\-Mz}, 
+{\bfseries neg\-Mz}, 
+\\*
+{\bfseries all}, 
+{\bfseries none}
+ \}
+\item 
+enum {\bfseries ctrl\-Comp} \{ \\*
+{\bfseries Position\-Composition} = 1, 
+{\bfseries Position\-Orientation\-Composition}, 
+{\bfseries Pose\-Composition}, 
+{\bfseries I\-Kin\-Composition}, 
+\\*
+{\bfseries I\-Kin\-Force\-Composition}, 
+{\bfseries I\-Kin\-Moment\-Composition}, 
+{\bfseries Force\-Composition}, 
+{\bfseries Force\-I\-Kin\-Composition}, 
+\\*
+{\bfseries Force\-Moment\-Composition}, 
+{\bfseries F\-M\-P\-Composition}, 
+{\bfseries Moment\-Composition}, 
+{\bfseries Moment\-I\-Kin\-Composition}, 
+\\*
+{\bfseries Moment\-Force\-Composition}, 
+{\bfseries Moment\-Force\-I\-Kin\-Composition}, 
+{\bfseries M\-F\-P\-Composition}
+ \}
+\item 
+enum {\bfseries force\-Axes} \{ \\*
+{\bfseries Fx}, 
+{\bfseries Fy}, 
+{\bfseries Fz}, 
+{\bfseries Mx}, 
+\\*
+{\bfseries My}, 
+{\bfseries Mz}
+ \}
+\item 
+enum {\bfseries P\-A10\-\_\-\-P\-A\-\_\-\-States} \{ \\*
+{\bfseries pa\-Approach} = 1, 
+{\bfseries pa\-Rotation}, 
+{\bfseries pa\-Alignment}, 
+{\bfseries pa\-Insertion}, 
+\\*
+{\bfseries pa\-Mating}, 
+{\bfseries pa\-Finish}
+ \}
+\item 
+enum {\bfseries H\-I\-R\-O\-\_\-\-S\-A\-\_\-\-States} \{ \\*
+{\bfseries hsa\-Approach} = 1, 
+{\bfseries hsa\-Rotation}, 
+{\bfseries hsa\-Insertion}, 
+{\bfseries hsa\-Sub\-Insertion}, 
+\\*
+{\bfseries hsa\-Mating}, 
+{\bfseries hsa\-Finish}
+ \}
+\item 
+enum {\bfseries P\-A10\-\_\-\-P\-A\-\_\-\-Transitions} \{ \\*
+{\bfseries pa\-Approach2\-Rotation} = 1, 
+{\bfseries pa\-Rotation2\-I\-Alignment}, 
+{\bfseries pa\-Alignment2\-Insertion}, 
+{\bfseries pa\-Insertion2\-Mating}, 
+\\*
+{\bfseries pa\-Mating2\-Finish\-Time}
+ \}
+\item 
+enum {\bfseries H\-I\-R\-O\-\_\-\-S\-A\-\_\-\-Transitions} \{ \\*
+{\bfseries hsa\-Approach2\-Rotation} = 1, 
+{\bfseries hsa\-Rotation2\-Insertion}, 
+{\bfseries hsa\-Insertion2\-Ins\-Part\-B}, 
+{\bfseries hsa\-Ins\-Part\-B2\-Mating}, 
+\\*
+{\bfseries hsa\-Mating2\-Finish\-Time}
+ \}
+\item 
+enum {\bfseries H\-I\-R\-O\-\_\-\-S\-A\-\_\-\-Trnasition\-\_\-\-Exceptions} \{ {\bfseries normal} =1, 
+{\bfseries Ins2\-Ins\-Sub\-Part}, 
+{\bfseries Do\-Not\-Increase\-State\-Num}
+ \}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classAssemblyStrategy_ad134c5635804dfb9aab8534d3d487c4e}{{\bfseries Assembly\-Strategy} (int N\-U\-M\-\_\-q0, vector3 base2end\-Effector\-Pos, matrix33 base2end\-Effector\-Rot, vector3 e\-Ph, double moment\-Gain\-Fac)}\label{classAssemblyStrategy_ad134c5635804dfb9aab8534d3d487c4e}
+
+\item 
+\hypertarget{classAssemblyStrategy_ade006233fa6145e54c4a421110aacf24}{int {\bfseries State\-Machine} (Test\-Axis axis, Ctrl\-Strategy approach, Joint\-Path\-Ptr m\-\_\-path, Body\-Ptr body\-Ptr, double cur\-\_\-time, vector3 \&pos, matrix33 \&rot, dvector6 curr\-Forces, dvector6 \&Joint\-Angle\-Update, dvector6 \&Curr\-Angles, dmatrix Jacobian, dmatrix Pseudo\-Jacobian)}\label{classAssemblyStrategy_ade006233fa6145e54c4a421110aacf24}
+
+\item 
+\hypertarget{classAssemblyStrategy_a6804833518b3528f348cfc93905e6d77}{int {\bfseries State\-Switcher} (Ctrl\-Strategy approach, int \&State, double Error\-Norm1, double Error\-Norm2, vector3 pos, matrix33 rot, dvector6 Cur\-Joint\-Angles, dvector6 curr\-Forces, double cur\-\_\-time)}\label{classAssemblyStrategy_a6804833518b3528f348cfc93905e6d77}
+
+\item 
+\hypertarget{classAssemblyStrategy_a972284a38be7a99f9e27260fbf95e355}{void {\bfseries Next\-State\-Actions} (double cur\-\_\-time, int insertion\-State\-Sub\-Flag)}\label{classAssemblyStrategy_a972284a38be7a99f9e27260fbf95e355}
+
+\item 
+int \hyperlink{classAssemblyStrategy_a3422fe5c769ae2ef9ff977b95cafbdd2}{Control\-Compositions} (Joint\-Path\-Ptr m\-\_\-path, Body\-Ptr body\-Ptr, dvector6 \&Joint\-Angle\-Update, dvector6 \&Curr\-Angles, Ctrl\-Strategy strat, ctrl\-Comp type, vector3 \&Des\-Data1, vector3 \&Des\-Data2, dvector6 \&Des\-I\-Kin, double \&Error\-Norm1, double \&Error\-Norm2, vector3 \&pos, matrix33 \&rot, double cur\-\_\-time, dmatrix Jacobian, dmatrix Pseudo\-Jacobian)
+\item 
+\hypertarget{classAssemblyStrategy_a21d108334b97b444ddf1f0fc1161d973}{bool {\bfseries move\-Robot} (double cur\-\_\-time)}\label{classAssemblyStrategy_a21d108334b97b444ddf1f0fc1161d973}
+
+\item 
+\hypertarget{classAssemblyStrategy_a3df7bc77ca3f116e7329fbf1c54c0b3a}{int {\bfseries manipulation\-Test} (Test\-Axis axis, bool \&completion\-Flag, Joint\-Path\-Ptr m\-\_\-path, Body\-Ptr body\-Ptr, dvector6 \&Joint\-Angle\-Update, dvector6 \&Curr\-Angles, vector3 \&Des\-Data1, vector3 \&Des\-Data2, dvector6 \&Des\-I\-Kin, vector3 pos, matrix33 rot, double cur\-\_\-time, dmatrix Jacobian, dmatrix Pseudo\-Jacobian)}\label{classAssemblyStrategy_a3df7bc77ca3f116e7329fbf1c54c0b3a}
+
+\item 
+\hypertarget{classAssemblyStrategy_ae8fcf4e1ad20c0a1b69f650049d2f70d}{int {\bfseries Initialize} (char Traj\-State1\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, char Traj\-State2\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, char Angles\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, char Position\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, char State\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, char Forces\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, vector3 pos, matrix33 rot, double Cur\-Angles\mbox{[}15\mbox{]})}\label{classAssemblyStrategy_ae8fcf4e1ad20c0a1b69f650049d2f70d}
+
+\item 
+\hypertarget{classAssemblyStrategy_ac4ee085239f136606b30070383c22b65}{int {\bfseries End\-Eff2\-Wrist\-Trans} (Vector3 End\-Eff\-\_\-p, Vector3 End\-Eff\-\_\-r, Vector3 \&Wrist\-Pos, Vector3 \&Wrist\-Rot)}\label{classAssemblyStrategy_ac4ee085239f136606b30070383c22b65}
+
+\item 
+\hypertarget{classAssemblyStrategy_a9edccb051489ebb490c68489d8987e89}{int {\bfseries wrist2\-End\-Eff\-Trans} (vector3 \&Wrist\-Pos, vector3 \&Wrist\-Rot)}\label{classAssemblyStrategy_a9edccb051489ebb490c68489d8987e89}
+
+\item 
+\hypertarget{classAssemblyStrategy_ac7f889ea3c6191ac696db23644eae9c5}{void {\bfseries Free\-Resources} (ctrl\-Comp type)}\label{classAssemblyStrategy_ac7f889ea3c6191ac696db23644eae9c5}
+
+\item 
+\hypertarget{classAssemblyStrategy_a534a5e64dac6883d02a80b42818a4c8c}{void {\bfseries Open\-Files} ()}\label{classAssemblyStrategy_a534a5e64dac6883d02a80b42818a4c8c}
+
+\item 
+\hypertarget{classAssemblyStrategy_a7c9772295f1534a4b80b7fba22f010f7}{void {\bfseries Close\-Files} ()}\label{classAssemblyStrategy_a7c9772295f1534a4b80b7fba22f010f7}
+
+\item 
+\hypertarget{classAssemblyStrategy_aa9c04cd350cec3fc8a9682b85649c98b}{int {\bfseries Write\-Files} (double cur\-\_\-time, dvector6 Curr\-Angles, dvector6 Joint\-Angle\-Update, vector3 Curr\-Pos, vector3 Curr\-R\-P\-Y, dvector6 Curr\-Forces)}\label{classAssemblyStrategy_aa9c04cd350cec3fc8a9682b85649c98b}
+
+\item 
+\hypertarget{classAssemblyStrategy_a15cbf8fbf4107120e03da6e915b1a437}{int {\bfseries Process\-Traj\-File} (char path\mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}, int State, vector3 pos, vector3 rpy, double cur\-\_\-time)}\label{classAssemblyStrategy_a15cbf8fbf4107120e03da6e915b1a437}
+
+\item 
+\hypertarget{classAssemblyStrategy_a2d3e80441161b7e032d241fbfc4045a6}{bool {\bfseries check\-Arm\-Limit} (Joint\-Path\-Ptr arm\-\_\-path)}\label{classAssemblyStrategy_a2d3e80441161b7e032d241fbfc4045a6}
+
+\item 
+\hypertarget{classAssemblyStrategy_ae467edca27cb5c2162c7ee879a1e8ff7}{bool {\bfseries I\-K\-\_\-arm} (Joint\-Path\-Ptr arm\-\_\-path, Link $\ast$base, Link $\ast$waist, const vector3 \&p, const matrix33 \&R)}\label{classAssemblyStrategy_ae467edca27cb5c2162c7ee879a1e8ff7}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classAssemblyStrategy_a68a68ca0f4816d06e1fe332f31cd9975}{int {\bfseries approach\-Type}}\label{classAssemblyStrategy_a68a68ca0f4816d06e1fe332f31cd9975}
+
+\item 
+\hypertarget{classAssemblyStrategy_a69c96a140b7a3362b89c4b5be74457a2}{bool {\bfseries approach\-Flag}}\label{classAssemblyStrategy_a69c96a140b7a3362b89c4b5be74457a2}
+
+\item 
+\hypertarget{classAssemblyStrategy_a21d988ec3ba0a3c11555d64ccf35cef3}{bool {\bfseries ctrl\-Init\-Flag}}\label{classAssemblyStrategy_a21d988ec3ba0a3c11555d64ccf35cef3}
+
+\item 
+\hypertarget{classAssemblyStrategy_a3639f488b49196b96cef41d495f9717f}{bool {\bfseries no\-Contact}}\label{classAssemblyStrategy_a3639f488b49196b96cef41d495f9717f}
+
+\item 
+\hypertarget{classAssemblyStrategy_a728d5e14885a760ce858ca9ade278b07}{int {\bfseries test\-Counter}}\label{classAssemblyStrategy_a728d5e14885a760ce858ca9ade278b07}
+
+\item 
+\hypertarget{classAssemblyStrategy_ace1d978566d6e2db2771b7c966fdd0a8}{int {\bfseries composition\-Type\-Test}}\label{classAssemblyStrategy_ace1d978566d6e2db2771b7c966fdd0a8}
+
+\item 
+\hypertarget{classAssemblyStrategy_a977695946144085357afa708bcbbd4da}{int {\bfseries Des\-Force\-Switch}}\label{classAssemblyStrategy_a977695946144085357afa708bcbbd4da}
+
+\item 
+\hypertarget{classAssemblyStrategy_aba5c954d9d4635252269b7373d02a267}{bool {\bfseries initial\-Flag}}\label{classAssemblyStrategy_aba5c954d9d4635252269b7373d02a267}
+
+\item 
+\hypertarget{classAssemblyStrategy_a62e2e001f36446fd75aa7a1b8b030138}{bool {\bfseries completion\-Flag}}\label{classAssemblyStrategy_a62e2e001f36446fd75aa7a1b8b030138}
+
+\item 
+\hypertarget{classAssemblyStrategy_a27966ac973396d808938d118bf61cf6e}{double {\bfseries sign\-Changer}}\label{classAssemblyStrategy_a27966ac973396d808938d118bf61cf6e}
+
+\item 
+\hypertarget{classAssemblyStrategy_a86cce26adefd8ac9a7ce6188480e0434}{bool {\bfseries switch\-Flag}}\label{classAssemblyStrategy_a86cce26adefd8ac9a7ce6188480e0434}
+
+\item 
+\hypertarget{classAssemblyStrategy_ac06ad0a9e582f8a917ebd55cb5e13324}{bool {\bfseries next\-State}}\label{classAssemblyStrategy_ac06ad0a9e582f8a917ebd55cb5e13324}
+
+\item 
+\hypertarget{classAssemblyStrategy_a06cbaef78bb2be8b9c7e026826806851}{int {\bfseries hsa\-H\-I\-R\-O\-Transition\-Exepction}}\label{classAssemblyStrategy_a06cbaef78bb2be8b9c7e026826806851}
+
+\item 
+\hypertarget{classAssemblyStrategy_a5d0b68e3cda92e7ff6cbb56d07b5df6e}{int {\bfseries State}}\label{classAssemblyStrategy_a5d0b68e3cda92e7ff6cbb56d07b5df6e}
+
+\item 
+\hypertarget{classAssemblyStrategy_abba7de9e512c2ebd65909a6f0b0c40a9}{float {\bfseries transition\-Time}}\label{classAssemblyStrategy_abba7de9e512c2ebd65909a6f0b0c40a9}
+
+\item 
+\hypertarget{classAssemblyStrategy_a027cd488aeab27bbdabeb1aa5c141fb5}{bool {\bfseries transition\-Timebool}}\label{classAssemblyStrategy_a027cd488aeab27bbdabeb1aa5c141fb5}
+
+\item 
+\hypertarget{classAssemblyStrategy_af17fcbb14dbcffc615d076a37e705548}{double {\bfseries state3\-\_\-z\-Pos}}\label{classAssemblyStrategy_af17fcbb14dbcffc615d076a37e705548}
+
+\item 
+\hypertarget{classAssemblyStrategy_a014cae3b0cc5c2d184ab0ff243d2adab}{double {\bfseries state3\-\_\-z\-Prev\-Pos}}\label{classAssemblyStrategy_a014cae3b0cc5c2d184ab0ff243d2adab}
+
+\item 
+\hypertarget{classAssemblyStrategy_a5d449d8e517f691979c975a5c5cea647}{double {\bfseries S\-A\-\_\-\-S4\-\_\-\-Height}}\label{classAssemblyStrategy_a5d449d8e517f691979c975a5c5cea647}
+
+\item 
+\hypertarget{classAssemblyStrategy_a5873e3995574dac432bfdca332f1ba25}{float {\bfseries mating2\-End\-Time}}\label{classAssemblyStrategy_a5873e3995574dac432bfdca332f1ba25}
+
+\item 
+\hypertarget{classAssemblyStrategy_ad2a83ee6cd369b38a92ae82bc2b06cfa}{\hyperlink{classControlBasis}{Control\-Basis} $\ast$ {\bfseries c1}}\label{classAssemblyStrategy_ad2a83ee6cd369b38a92ae82bc2b06cfa}
+
+\item 
+\hypertarget{classAssemblyStrategy_a739944e8aff2960fc511ed3dd5ac2dae}{\hyperlink{classControlBasis}{Control\-Basis} $\ast$ {\bfseries c2}}\label{classAssemblyStrategy_a739944e8aff2960fc511ed3dd5ac2dae}
+
+\item 
+\hypertarget{classAssemblyStrategy_aee21acf35ee60df2e4f4788d9b3e1bf1}{\hyperlink{classControlBasis}{Control\-Basis} $\ast$ {\bfseries c3}}\label{classAssemblyStrategy_aee21acf35ee60df2e4f4788d9b3e1bf1}
+
+\item 
+\hypertarget{classAssemblyStrategy_a98fd38bf238f7693111754355e8a5b5a}{double {\bfseries moment\-Gain\-Factor}}\label{classAssemblyStrategy_a98fd38bf238f7693111754355e8a5b5a}
+
+\item 
+\hypertarget{classAssemblyStrategy_a8283e071e1c9651df9bbdf92432edb2f}{int {\bfseries C\-O\-N\-T\-R\-O\-L\-\_\-\-P\-A\-R\-A\-D\-I\-G\-M}}\label{classAssemblyStrategy_a8283e071e1c9651df9bbdf92432edb2f}
+
+\item 
+\hypertarget{classAssemblyStrategy_a0abb6a8bea88c83b5d518b4f4054562a}{int {\bfseries Num\-Ctlrs}}\label{classAssemblyStrategy_a0abb6a8bea88c83b5d518b4f4054562a}
+
+\item 
+\hypertarget{classAssemblyStrategy_aa03603d6bfbd642f70f341681f4151b8}{bool {\bfseries Error\-Flag}}\label{classAssemblyStrategy_aa03603d6bfbd642f70f341681f4151b8}
+
+\item 
+\hypertarget{classAssemblyStrategy_a2e371314fb53a163784752fd2ec3660b}{dvector6 {\bfseries Des\-I\-Kin}}\label{classAssemblyStrategy_a2e371314fb53a163784752fd2ec3660b}
+
+\item 
+\hypertarget{classAssemblyStrategy_a74ebed7366749082d5506c684eb06440}{dvector6 {\bfseries Cur\-Cart\-Pos}}\label{classAssemblyStrategy_a74ebed7366749082d5506c684eb06440}
+
+\item 
+\hypertarget{classAssemblyStrategy_ae7948ba63dd03bb55346a96c8086d094}{dvector6 {\bfseries Des\-Cart\-Pos}}\label{classAssemblyStrategy_ae7948ba63dd03bb55346a96c8086d094}
+
+\item 
+\hypertarget{classAssemblyStrategy_affe7af0d5cab994c7c5a8ba1a335363d}{dvector6 {\bfseries contact\-Pos}}\label{classAssemblyStrategy_affe7af0d5cab994c7c5a8ba1a335363d}
+
+\item 
+\hypertarget{classAssemblyStrategy_aa7529fee569e65996f873724db3a92c9}{dvector6 {\bfseries Cur\-Joint\-Angles}}\label{classAssemblyStrategy_aa7529fee569e65996f873724db3a92c9}
+
+\item 
+\hypertarget{classAssemblyStrategy_ad79943392fe5e2f2baad80bac9c0451c}{dvector6 {\bfseries Joint\-Angle\-Update}}\label{classAssemblyStrategy_ad79943392fe5e2f2baad80bac9c0451c}
+
+\item 
+\hypertarget{classAssemblyStrategy_afcb430de08b140f8b651ddda18c13ba5}{\hyperlink{classFilterTools}{Filter\-Tools} $\ast$ {\bfseries ft}}\label{classAssemblyStrategy_afcb430de08b140f8b651ddda18c13ba5}
+
+\item 
+\hypertarget{classAssemblyStrategy_a310ec651bac286b32af78522bb47715c}{int {\bfseries I\-Kin\-Test\-Flag}}\label{classAssemblyStrategy_a310ec651bac286b32af78522bb47715c}
+
+\item 
+\hypertarget{classAssemblyStrategy_a546aa647587d1f5c87ab8b9bdf6849c5}{int {\bfseries zeroth\-Joint}}\label{classAssemblyStrategy_a546aa647587d1f5c87ab8b9bdf6849c5}
+
+\item 
+\hypertarget{classAssemblyStrategy_aed5dd44539748a832ddb6c9d482c58cb}{vector3 {\bfseries trans\-Wrist2\-Cam\-X\-Eff}}\label{classAssemblyStrategy_aed5dd44539748a832ddb6c9d482c58cb}
+
+\item 
+\hypertarget{classAssemblyStrategy_a1e682b4c7fc397ab3f049bcd5deadb3f}{vector3 {\bfseries Contact\-Wrist\-Angle}}\label{classAssemblyStrategy_a1e682b4c7fc397ab3f049bcd5deadb3f}
+
+\item 
+\hypertarget{classAssemblyStrategy_a679e2b6d9bc05672efcefc3daf252409}{dmatrix {\bfseries Jacobian}}\label{classAssemblyStrategy_a679e2b6d9bc05672efcefc3daf252409}
+
+\item 
+\hypertarget{classAssemblyStrategy_a16860493938fc609d4b68045888ac3d1}{vector3 {\bfseries wrist\-\_\-p}}\label{classAssemblyStrategy_a16860493938fc609d4b68045888ac3d1}
+
+\item 
+\hypertarget{classAssemblyStrategy_a178d97f3a5f64debd8aba48749ef8931}{vector3 {\bfseries End\-Eff\-\_\-p}}\label{classAssemblyStrategy_a178d97f3a5f64debd8aba48749ef8931}
+
+\item 
+\hypertarget{classAssemblyStrategy_ad2694253267b4ce7f1192581e3616da3}{vector3 {\bfseries End\-Eff\-\_\-p\-\_\-org}}\label{classAssemblyStrategy_ad2694253267b4ce7f1192581e3616da3}
+
+\item 
+\hypertarget{classAssemblyStrategy_a8d423021cb658ad1091f08d1b377a7f9}{vector3 {\bfseries wrist\-\_\-r}}\label{classAssemblyStrategy_a8d423021cb658ad1091f08d1b377a7f9}
+
+\item 
+\hypertarget{classAssemblyStrategy_a1b516b9041e784d94274715e2d171d5b}{vector3 {\bfseries End\-Eff\-\_\-r}}\label{classAssemblyStrategy_a1b516b9041e784d94274715e2d171d5b}
+
+\item 
+\hypertarget{classAssemblyStrategy_a2e8e1aea37a6d16172b27dd01c961b18}{vector3 {\bfseries End\-Eff\-\_\-r\-\_\-org}}\label{classAssemblyStrategy_a2e8e1aea37a6d16172b27dd01c961b18}
+
+\item 
+\hypertarget{classAssemblyStrategy_acbca82b2752bbf066da960b4b640ecf8}{vector$<$ double $>$ {\bfseries ex\-\_\-time}}\label{classAssemblyStrategy_acbca82b2752bbf066da960b4b640ecf8}
+
+\item 
+\hypertarget{classAssemblyStrategy_a7336d0fb8e05921c6f700626ec5f7de1}{vector$<$ double $>$ {\bfseries x\-\_\-pos}}\label{classAssemblyStrategy_a7336d0fb8e05921c6f700626ec5f7de1}
+
+\item 
+\hypertarget{classAssemblyStrategy_aa10ec4f96f0d129e7e39e3c850e6647f}{vector$<$ double $>$ {\bfseries y\-\_\-pos}}\label{classAssemblyStrategy_aa10ec4f96f0d129e7e39e3c850e6647f}
+
+\item 
+\hypertarget{classAssemblyStrategy_a47f910008151884b9dddcdfbb2477ea0}{vector$<$ double $>$ {\bfseries z\-\_\-pos}}\label{classAssemblyStrategy_a47f910008151884b9dddcdfbb2477ea0}
+
+\item 
+\hypertarget{classAssemblyStrategy_abe9b5f5f041a367e3f13952778a5f17e}{vector$<$ double $>$ {\bfseries roll\-\_\-angle}}\label{classAssemblyStrategy_abe9b5f5f041a367e3f13952778a5f17e}
+
+\item 
+\hypertarget{classAssemblyStrategy_a69c6b7acec687d67dfe7a82366da169b}{vector$<$ double $>$ {\bfseries pitch\-\_\-angle}}\label{classAssemblyStrategy_a69c6b7acec687d67dfe7a82366da169b}
+
+\item 
+\hypertarget{classAssemblyStrategy_aec8dba6d3327ce660827ab4c730c06d1}{vector$<$ double $>$ {\bfseries yaw\-\_\-angle}}\label{classAssemblyStrategy_aec8dba6d3327ce660827ab4c730c06d1}
+
+\item 
+\hypertarget{classAssemblyStrategy_a388de7cb771657f7f3b43039422619f1}{double {\bfseries angle\-\_\-o} \mbox{[}7\mbox{]}}\label{classAssemblyStrategy_a388de7cb771657f7f3b43039422619f1}
+
+\item 
+\hypertarget{classAssemblyStrategy_a44100d5b37b7ed554947e362c6684b1a}{ifstream {\bfseries ifstr\-\_\-piv\-Approach\-State1}}\label{classAssemblyStrategy_a44100d5b37b7ed554947e362c6684b1a}
+
+\item 
+\hypertarget{classAssemblyStrategy_a0587b2140784653f110524c455779969}{ofstream {\bfseries ostr\-\_\-\-Traj\-State2}}\label{classAssemblyStrategy_a0587b2140784653f110524c455779969}
+
+\item 
+\hypertarget{classAssemblyStrategy_a4d2c12a45614901a5502673440f6bfc9}{ofstream {\bfseries ostr\-\_\-cart\-Pos}}\label{classAssemblyStrategy_a4d2c12a45614901a5502673440f6bfc9}
+
+\item 
+\hypertarget{classAssemblyStrategy_aae5ce598b51493f2d191c15309606a24}{ofstream {\bfseries ostr\-\_\-angles}}\label{classAssemblyStrategy_aae5ce598b51493f2d191c15309606a24}
+
+\item 
+\hypertarget{classAssemblyStrategy_a0dc4b036d19e9e2ed688d5d31bc47da2}{ofstream {\bfseries ostr\-\_\-state}}\label{classAssemblyStrategy_a0dc4b036d19e9e2ed688d5d31bc47da2}
+
+\item 
+\hypertarget{classAssemblyStrategy_a699e1fb6edca7e9f08aed9a86086f928}{ofstream {\bfseries ostr\-\_\-\-Forces}}\label{classAssemblyStrategy_a699e1fb6edca7e9f08aed9a86086f928}
+
+\item 
+\hypertarget{classAssemblyStrategy_a2dcb3758f5040440c425e9caa514699f}{ofstream {\bfseries ostr\-\_\-des}}\label{classAssemblyStrategy_a2dcb3758f5040440c425e9caa514699f}
+
+\item 
+\hypertarget{classAssemblyStrategy_a97688f69937747987b72ee828edd37cd}{ofstream {\bfseries ostr\-\_\-cur}}\label{classAssemblyStrategy_a97688f69937747987b72ee828edd37cd}
+
+\item 
+\hypertarget{classAssemblyStrategy_a77df722986410178376348845f00df18}{char {\bfseries str\-Traj\-State1} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classAssemblyStrategy_a77df722986410178376348845f00df18}
+
+\item 
+\hypertarget{classAssemblyStrategy_a2c800ce072cf015b09bb7d0a6247d446}{char {\bfseries str\-Traj\-State2} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classAssemblyStrategy_a2c800ce072cf015b09bb7d0a6247d446}
+
+\item 
+\hypertarget{classAssemblyStrategy_af89f8ed564082c0ead44bc772541ee37}{char {\bfseries str\-Cart\-Pos} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classAssemblyStrategy_af89f8ed564082c0ead44bc772541ee37}
+
+\item 
+\hypertarget{classAssemblyStrategy_aa2c5fd24d6ddc4c9e81a47a9f07acc6b}{char {\bfseries str\-Angles} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classAssemblyStrategy_aa2c5fd24d6ddc4c9e81a47a9f07acc6b}
+
+\item 
+\hypertarget{classAssemblyStrategy_a967feaa7f1165203f83370e210ce4ceb}{char {\bfseries str\-State} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classAssemblyStrategy_a967feaa7f1165203f83370e210ce4ceb}
+
+\item 
+\hypertarget{classAssemblyStrategy_ab3107255ed682c914d515a924137afa0}{char {\bfseries str\-Forces} \mbox{[}S\-T\-R\-\_\-\-L\-E\-N\mbox{]}}\label{classAssemblyStrategy_ab3107255ed682c914d515a924137afa0}
+
+\item 
+\hypertarget{classAssemblyStrategy_ab38c32a11838367176e25ebf6f8dbc7c}{double {\bfseries cur\-\_\-time}}\label{classAssemblyStrategy_ab38c32a11838367176e25ebf6f8dbc7c}
+
+\item 
+\hypertarget{classAssemblyStrategy_ace3df50255e41e416e8dfd779a50c4c9}{bool {\bfseries flag\-Filtering}}\label{classAssemblyStrategy_ace3df50255e41e416e8dfd779a50c4c9}
+
+\item 
+\hypertarget{classAssemblyStrategy_a8c35a6cabdc2f669ea2982678d89fc0b}{dvector6 {\bfseries avg\-Sig}}\label{classAssemblyStrategy_a8c35a6cabdc2f669ea2982678d89fc0b}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classAssemblyStrategy_a3422fe5c769ae2ef9ff977b95cafbdd2}{\index{Assembly\-Strategy@{Assembly\-Strategy}!Control\-Compositions@{Control\-Compositions}}
+\index{Control\-Compositions@{Control\-Compositions}!AssemblyStrategy@{Assembly\-Strategy}}
+\subsubsection[{Control\-Compositions}]{\setlength{\rightskip}{0pt plus 5cm}int Assembly\-Strategy\-::\-Control\-Compositions (
+\begin{DoxyParamCaption}
+\item[{Joint\-Path\-Ptr}]{m\-\_\-path, }
+\item[{Body\-Ptr}]{body\-Ptr, }
+\item[{dvector6 \&}]{Joint\-Angle\-Update, }
+\item[{dvector6 \&}]{Curr\-Angles, }
+\item[{Ctrl\-Strategy}]{strat, }
+\item[{ctrl\-Comp}]{type, }
+\item[{vector3 \&}]{Des\-Data1, }
+\item[{vector3 \&}]{Des\-Data2, }
+\item[{dvector6 \&}]{Des\-I\-Kin, }
+\item[{double \&}]{Error\-Norm1, }
+\item[{double \&}]{Error\-Norm2, }
+\item[{vector3 \&}]{pos, }
+\item[{matrix33 \&}]{rot, }
+\item[{double}]{cur\-\_\-time, }
+\item[{dmatrix}]{Jacobian, }
+\item[{dmatrix}]{Pseudo\-Jacobian}
+\end{DoxyParamCaption}
+)}}\label{classAssemblyStrategy_a3422fe5c769ae2ef9ff977b95cafbdd2}
+I\-Kin Segment 
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+Assembly\-Strategy.\-h\item 
+Assembly\-Strategy.\-cpp\end{DoxyCompactItemize}
