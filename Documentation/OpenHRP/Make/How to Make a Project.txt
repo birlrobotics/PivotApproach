@@ -1,4 +1,29 @@
 ﻿Making the Code
 
-To make the file, go to the forceSensorPlugin_Juan/server directory and type: 
-“make ROBOT=HRP2STEP1. “
+To make the file, go to the ~/src/OpenHRP3.0/Controller/IOserver/plugin/forceSensorPlugin_Juan/server directory and type: 
+“make ROBOT=HRP2STEP1”
+
+Cleaning the Code
+To clean the code you can simply run: 
+“make clean”
+
+Enabling/Disabling Debugging
+To enable debugging you nead to open the following Makefile: ~/src/OpenHRP3.0/Controller/IOserver/plugin/forceSensorPlugin_Juan/server/Makefile
+
+Under the “Compile Commands”section of the code, comment or uncomment the following line:
+“CXX_FLAGS += -g -Wall -O0”
+
+Enabling/Disabling Simulation
+To enable debugging you nead to open the following Makefile: ~/src/OpenHRP3.0/Controller/IOserver/plugin/forceSensorPlugin_Juan/server/Makefile
+
+Under the “Compile Commands”section of the code, include or remove the -D flag for Simulation:
+CXX_FLAGS += -DPIVOTAPPROACH  -DSIMULATION #-DIMPEDANCE 
+
+Enabling/Disabling Simulation
+Same as above for Pivot Approach.
+
+One more note about debugging:
+Debugging can further be enabled/disabled for the whole OpenHRP3 system in the following file:
+~/src/OpenHRP3.0
+
+In the “Make.vars”file, change the following flag DEBUG_VER to the desired behavior.
