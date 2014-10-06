@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<grxui>
+   <processmanagerconfig>
+     <process autostart="false" com="$(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/bin/HRP2STEP1Controller$(BIN_SFX)" dir="$(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/bin/" hasshutdown="true" id="HRP2STEP1ControllerFactory" waitcount="2000"/>
+   </processmanagerconfig>
+
+   <mode name="Simulation">
+        <item class="com.generalrobotix.ui.item.GrxWorldStateItem" name="HRP2STEP1" select="true">
+            <property name="logTimeStep" value="0.0010 "/>
+            <property name="integrate" value="true"/>
+            <property name="viewsimulate" value="false"/>
+            <property name="totalTime" value="60.0 "/>
+            <property name="timeStep" value="0.0010 "/>
+            <property name="method" value="RUNGE_KUTTA"/>
+            <property name="gravity" value="9.8 "/>
+            <property name="viewsimulationTimeStep" value="0.033 "/>
+        </item>
+        <item class="com.generalrobotix.ui.item.GrxModelItem" name="HRP2STEP1" select="true" url="$(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/model/main_pivot.wrl">
+            <property name="WAIST.translation" value="0.0 0.0 0.0 "/>
+            <property name="LARM_JOINT3.angle" value="0"/>
+            <property name="LARM_JOINT2.angle" value="-1.59965"/>
+            <property name="WAIST.rotation" value="0.0 1.0 0.0 0.0 "/>
+            <property name="RARM_JOINT5.angle" value="-0.011541986508434847 "/>
+            <property name="RARM_JOINT4.angle" value="0.5298115503218156 "/>
+            <property name="controlTime" value="0.0010"/>
+            <property name="CHEST_JOINT0.angle" value="0.0"/>
+            <property name="LARM_JOINT5.angle" value="0.0"/>
+            <property name="RARM_JOINT1.angle" value="0.021919274442720637 "/>
+            <property name="LARM_JOINT4.angle" value="0.0"/>
+            <property name="isRobot" value="true"/>
+            <property name="RARM_JOINT0.angle" value="0.0490074648916289 "/>
+            <property name="controller" value="HRP2STEP1ControllerFactory"/>
+            <property name="LARM_JOINT1.angle" value="0"/>
+            <property name="LARM_JOINT0.angle" value="0"/>
+            <property name="WAIST.angle" value="0.0"/>
+            <property name="RARM_JOINT3.angle" value="0.262299"/>
+            <property name="RARM_JOINT2.angle" value="-2.0108816089530137 "/>
+            <property name="HEAD_JOINT1.angle" value="0"/>
+            <property name="HEAD_JOINT0.angle" value="0"/>
+        </item>
+        <item class="com.generalrobotix.ui.item.GrxModelItem" name="femaleCam" select="true" url="$(OPENHRPHOME)/etc/femaleCam.wrl">
+            <property name="isRobot" value="false"/>
+            <property name="FIXED_CAM.translation" value="-0.0665 0.001 0.029"/>
+            <property name="FIXED_CAM.rotation" value="0.0 1.0 0.0 0.0 "/>
+        </item>
+        <item class="com.generalrobotix.ui.item.GrxCollisionPairItem" name="CP#femaleCam#HRP2STEP1" select="true">
+            <property name="springConstant" value="100000 100000 100000 800 800 800"/>
+            <property name="slidingFriction" value="0.5"/>
+            <property name="jointName2" value=""/>
+            <property name="jointName1" value=""/>
+            <property name="sprintDamperModel" value="false"/>
+            <property name="damperConstant" value="100000 100000 100000 800 800 800"/>
+            <property name="objectName2" value="HRP2STEP1"/>
+            <property name="objectName1" value="femaleCam"/>
+            <property name="staticFriction" value="0.5"/>
+        </item>
+        <item class="com.generalrobotix.ui.item.GrxPythonScriptItem" name="pivot" select="true" url="$(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/script/pivot.py">
+        </item>
+        <view class="com.generalrobotix.ui.view.GrxLoggerView" name="Logger View" select="false">
+            <property name="showFrameRateSlider" value="true"/>
+        </view>
+        <view class="com.generalrobotix.ui.view.Grx3DView" name="3DView" select="false">
+            <property name="corbaServer" value="true"/>
+            <property name="view.eye" value="2.0 2.0 0.8"/>
+            <property name="view.upward" value="0.0 0.0 1.0"/>
+            <property name="view.lookat" value="0.0 0.0 0.8"/>
+        </view>
+    
+        <windowconfig>
+            <window fullScreen="false" height="917" root="true" width="1662" x="5" y="24">
+                <layout position="Center" splitratio="0.791">
+                    <layout position="Center" splitratio="0.314">
+                        <layout position="Center" splitratio="0.313">
+                            <layout position="Center" splitratio="0.0">
+                                <tab name="Jython Prompt" select="true"/>
+                                <tab name="NameService Monitor"/>
+                                <tab name="Process Manager"/>
+                            </layout>
+                            <layout position="West" splitratio="0.0">
+                                <tab name="Item View" select="true"/>
+                            </layout>
+                        </layout>
+                        <layout position="South" splitratio="0.0">
+                            <tab name="3DView" select="true"/>
+                            <tab name="OpenHRP"/>
+                            <tab name="Text Editor"/>
+                        </layout>
+                    </layout>
+                    <layout position="East" splitratio="0.0">
+                        <tab name="Graph"/>
+                        <tab name="Robot State"/>
+                        <tab name="Property" select="true"/>
+                    </layout>
+                </layout>
+            </window>
+        </windowconfig>
+    </mode>
+  <mode name="Robot">
+	     <property name="nsHost" value="hrp2001c"/>
+     <property name="nsPort" value="2809"/>
+	      <item class="com.generalrobotix.ui.item.GrxWorldStateItem" name="untitled" select="true" url="">
+          <property name="useDisk" value="false"/>
+     </item>
+        
+      <item class="com.generalrobotix.ui.item.GrxModelItem" name="HRP2STEP1" select="true" url="$(OPENHRPHOME)/Controller/IOserver/robot/HRP2STEP1/model/main.wrl">
+           <property name="isRobot" value="true"/>
+          <property name="WAIST.translation" value="0 -0.0028 0.694"/>      
+      </item>
+        
+      
+      <item class="com.generalrobotix.ui.item.GrxModelItem" name="femaleCam" select="false" url="$(OPENHRPHOME)/etc/femaleCam.wrl">
+            <property name="isRobot" value="false"/>
+         <property name="WAIST.rotation" value="0.0 1.0 0.0 0.0 "/>
+           <property name="WAIST.translation" value="0.0 0.0 -0.1 "/>
+       </item>
+        
+       <item class="com.generalrobotix.ui.item.GrxCollisionPairItem" name="CP#femaleCam#HRP2STEP1" select="false" url="">
+          <property name="springConstant" value="100000 100000 100000 800 800 800"/>
+        <property name="slidingFriction" value="0.5"/>
+         <property name="jointName2" value=""/>
+        <property name="jointName1" value=""/>
+       <property name="sprintDamperModel" value="false"/>
+           <property name="damperConstant" value="100000 100000 100000 800 800 800"/>
+            <property name="objectName2" value="HRP2STEP1"/>
+       <property name="objectName1" value="femaleCam"/>
+       <property name="staticFriction" value="0.5"/>     
+      </item>
+      <view class="com.generalrobotix.ui.hrpsys.GrxIOBClientView" name="IOBClient">
+        <property name="modelName" value="HRP2STEP1"/>
+    </view>
+       <view class="com.generalrobotix.ui.view.Grx3DView" name="3DView">
+	   <property name="view.eye" value="2.0 2.0 0.8"/>
+        <property name="view.lookat" value="0.0 0.0 0.8"/>
+          <property name="view.upward" value="0.0 0.0 1.0"/>
+      </view>
+   </mode>
+</grxui>
