@@ -100,8 +100,8 @@ class AssemblyStrategy {
   // Control Paradigm
   enum ControlParadigm
   {
-    motionData,
-    controlBasis
+    motionData,				// Uses kinematics and way-points
+    controlBasis			// Uses FT controllers.
   };
 
   // Controller Type Enumeration: What type of basis control are you working with?
@@ -119,7 +119,8 @@ class AssemblyStrategy {
     ManipulationTest,
     StraightLineApproach,
     PivotApproach,
-    SideApproach
+    SideApproach,
+    FailureCharacerization
   };
 
   enum TestAxis
@@ -213,19 +214,20 @@ class AssemblyStrategy {
   };
 
   /*--------------------------------------------------- Strategy --------------------------------------------------------*/
-  int		approachType;				// Save the kind of approach.
+  int		approachType;				// What kind of assembly strategy will we use?
+  int 		controlType;				// What kind of control method will we use?
   bool 		approachFlag;				// Used to switch values
-  bool 		ctrlInitFlag;				// Ussed to determine if its our first time in a state
+  bool 		ctrlInitFlag;				// Used to determine if its our first time in a state
 
   // Pivot Approach
   bool 		noContact;					// Flag become true when after a contact, the private member m_ContactPt return to the zero value.
 
   // Manipulation Test
-  int testCounter;
-  int compositionTypeTest;
-  int DesForceSwitch;
-  bool initialFlag;
-  bool completionFlag;
+  int 		testCounter;
+  int 		compositionTypeTest;
+  int 		DesForceSwitch;
+  bool 		initialFlag;
+  bool 		completionFlag;
 
   // Transition
   double  	signChanger;				// Changes the sign of data after a certain amount of time.
@@ -246,9 +248,6 @@ class AssemblyStrategy {
   ControlBasis* c3;
 
   double momentGainFactor;
-
-  // Control Paradigm
-  int CONTROL_PARADIGM;
 
   // Controller
   int 	NumCtlrs;						// How many primitive controllers are being compounded in the CtrlBasis framework?
@@ -278,6 +277,9 @@ class AssemblyStrategy {
   vector<double> 	ex_time, x_pos, y_pos, z_pos;				// Save robot position in vectors
   vector<double>	roll_angle, pitch_angle, yaw_angle;			// Endeffector orientation in terms of roll picth angle
   double angle_o[7]; 											// rhand_org, lhand_org, hando[2],
+
+  // Failure Case Characterization
+  dvector6 divPoint;											// This vector will hold x,y, and roll, yall values that will be added to the way-points in order to control which directions we want to modify to test failure case scenarios
 
   // Files
   ifstream ifstr_pivApproachState1;																			// Input Streams
@@ -335,8 +337,12 @@ class AssemblyStrategy {
 							  dmatrix 		Jacobian,
 							  dmatrix 		PseudoJacobian);
 
-  // Motion
+  // Motion Methods
+  // moveRobot: take waypoints, convert them from end-effector coords to wrist coordinates and write the values to the private member vars. Later used by Inverse Kinematics functions to convert the wrist position into joint angle variables.
   bool moveRobot(double cur_time);
+
+  // manipulationTest:
+  // User can assign axis of motion in which one would like to test either the force controllers or the moment controllers
   int manipulationTest(TestAxis 		axis,
 					   bool&			completionFlag,
 					   JointPathPtr 	m_path,
@@ -353,7 +359,10 @@ class AssemblyStrategy {
 					   dmatrix 			PseudoJacobian);
 
   // Other
-  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN], vector3 pos, matrix33 rot, double CurAngles[15]);
+  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN],
+		  	  	  	vector3 pos, matrix33 rot, double CurAngles[15],
+		            int strategyType, int controlMethodType);
+
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);
   void FreeResources(ctrlComp type);
