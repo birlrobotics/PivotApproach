@@ -737,8 +737,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 				nextState	 	= false;
 				ctrlInitFlag 	= false;
-				// Set up a new trajectory file with current information
-				ProcessTrajFile(strTrajState2,State,pos,CurRPY,cur_time);
+
 				EndEff_p_org = pos;
 				EndEff_r_org = CurRPY;
 			}
