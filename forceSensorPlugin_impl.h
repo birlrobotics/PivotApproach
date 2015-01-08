@@ -25,6 +25,8 @@ extern "C" {
 #include "ifs_com.h"    // Driver
 #include "ifs.h"
 }
+
+#include <stdio.h>
 //---------------------------------------------------------------------------------------------------------------------------------- 
 #include "hiroArm.h"
 //---------------------------------------------------------------------------------------------------------------------------------- 
@@ -47,6 +49,9 @@ using OpenHRP::DblArray3;
 static const double	deg2radC  	= M_PI/180.0;
 static const double	rad2degC	= 180.0/M_PI;
 //----------------------------------------------------------------------------------------------------------------------------------
+
+static const char* dataCollectHomePath= " ~//testData//";
+static const char* mkdir = "mkdir ";
 
 // Class
 class forceSensorPlugin_impl : public plugin,
@@ -136,6 +141,11 @@ class forceSensorPlugin_impl : public plugin,
 
   // Flags
   bool initFlag;
+
+  // Loop back
+  RobotState initRs;
+  int resetTime;
+	int proState;
 
   // Log
   ofstream ostr_rstate, ostr_astate, ostr_force, ostr_worldforce;
