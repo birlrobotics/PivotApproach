@@ -145,7 +145,11 @@ class forceSensorPlugin_impl : public plugin,
   // Loop back
   RobotState initRs;
   int resetTime;
-	int proState;
+  int proState;
+
+  //Deviation
+  ifstream deviation_file;
+  double deviation[6];
 
   // Log
   ofstream ostr_rstate, ostr_astate, ostr_force, ostr_worldforce;

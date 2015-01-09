@@ -408,11 +408,20 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	int ret = 0;
 	double CurAngles[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-	//For loop
+	// Initial steps For setting up loop
 	initRs = *rs;
 	resetTime = 0;
 	proState = 0;
-	//end of loop
+	// End of setting up loop
+
+	//Initial stepsetup deviation
+	if (deviation_file.is_open())
+		deviation_file.close();
+	deviation_file.open("./data/PivotApproach/deviation.dat");
+	for (int i=0; i < 6; i ++)
+		deviation_file>>deviation[i];
+
+	std::cout<<deviation[0]<<std::endl;
 
 	char mkdirCommand[256] = "";
 	sprintf(mkdirCommand, "%s %s %s", mkdir, dataCollectHomePath, "-p");
@@ -488,6 +497,9 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 #endif
 
 	ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
+
+	for (int i=0; i < 6; i ++)
+		rArm->PA->deviation[i] = this->deviation[i];
 
 	// Update the latest data angles and position
 	if(DEBUG)
@@ -590,7 +602,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 		// if time exceed 6 then it will restart
 		cur_time=DT*double(rArm->get_Iteration());
 		std::cout<<cur_time<<" now..."<<std::endl;
-		if(cur_time > 1 && proState == 1)
+		if(cur_time > 3 && proState == 1)
 		{
 			// What did it go wrong with rArm?
 
@@ -600,6 +612,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			initControl = 0;
 			resetTime += 1;
 
+			for (int i=0;i < 6; i++)
+				deviation_file>>deviation[i];
+
+
+			std::cout<<deviation[0]<<std::endl;
 			char commend[256];
 			sprintf(commend, "%s %s/%d/ %s", mkdir, dataCollectHomePath, resetTime, "-p");
 			system (commend);
@@ -681,6 +698,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				rArm->PA->State = 1;
 				rArm->PA->ctrlInitFlag = true;
+				for (int i=0;i < 6;i ++)
+					rArm->PA->deviation[i] = deviation[i];
 
 				for (int i = 0; i < 6; i ++) rArm->PA->avgSig(i) = 0;
 				for(int i=0; i<6; i++)

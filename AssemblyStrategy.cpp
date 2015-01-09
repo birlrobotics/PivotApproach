@@ -1700,14 +1700,16 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //-------------------------------------------------------------------------------------------------------------------------------------------
   else if(i<T)
   {
-	  coswt = coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-	  EndEff_p = x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-			  	 y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
-			  	 z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
+	  coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
+	  EndEff_p = x_pos[i-1] + (x_pos[i]+deviation[0]-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
+			  	 y_pos[i-1] + (y_pos[i]+deviation[3]-y_pos[i-1]) * coswt,
+			  	 z_pos[i-1] + (z_pos[i]+deviation[2]-z_pos[i-1]) * coswt;
 
-	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+divPoint(3)-roll_angle[i-1])  * coswt,
-			  	 pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
-			  	 yaw_angle[i-1]   + (   yaw_angle[i]+divPoint(5)-yaw_angle[i-1])   * coswt;
+	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+deviation[3]-roll_angle[i-1])  * coswt,
+			  	 pitch_angle[i-1] + ( pitch_angle[i]+deviation[4]-pitch_angle[i-1]) * coswt,
+			  	 yaw_angle[i-1]   + (   yaw_angle[i]+deviation[5]-yaw_angle[i-1])   * coswt;
+
+	  std::cout<<"IF    "<<deviation[0] <<" "<<deviation[1] <<" "<<deviation[2] <<" "<<deviation[3] <<" "<<deviation[4] <<" "<<deviation[5] <<std::endl;
 	  //		 hand[0] = 	l_hand[i-1] + (l_hand[i] - l_hand[i-1]) * coswt;
 	  //		 hand[1] = 	r_hand[i-1] + (r_hand[i] - r_hand[i-1]) * coswt;
   }
@@ -1716,12 +1718,14 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //---------------	----------------------------------------------------------------------------------------------------------------------------
   else
     {
-      EndEff_p = x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
-    		  	 y_pos[i-1]			+divPoint(1),
-    		  	 z_pos[i-1]			+divPoint(2);
-      EndEff_r = roll_angle[i-1]	+divPoint(3),
-    		     pitch_angle[i-1]	+divPoint(4),
-    		     yaw_angle[i-1]		+divPoint(5);
+      EndEff_p = x_pos[i-1]			+deviation[0], 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
+    		  	 y_pos[i-1]			+deviation[1],
+    		  	 z_pos[i-1]			+deviation[2];
+      EndEff_r = roll_angle[i-1]	+deviation[3],
+    		     pitch_angle[i-1]	+deviation[4],
+    		     yaw_angle[i-1]		+deviation[5];
+      std::cout<<"ELSE    "<<deviation[0] <<" "<<deviation[1] <<" "<<deviation[2] <<" "<<deviation[3] <<" "<<deviation[4] <<" "<<deviation[5] <<std::endl;
+
       //		hand[0] = 	l_hand[i-1];
       //		hand[1] = 	r_hand[i-1];
       ret = false;

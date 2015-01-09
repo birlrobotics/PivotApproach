@@ -292,6 +292,9 @@ class AssemblyStrategy {
   // Filtering
   bool 			flagFiltering;
   dvector6 		avgSig;													// contains filtered/moving average result signal
+
+  // Deviation
+  double deviation[6];
   /**************************************************************************** Methods **********************************************************************************/
 
   int StateMachine(TestAxis 		axis,																		// Used exclusively for AssemblyStrategy::manipulatorTest
