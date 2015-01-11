@@ -263,8 +263,8 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	EndEff_p_org			= base2endEffectorPos;
 	wrist_p = EndEff_p_org;
 
-	divPoint(0) = 0;
-
+	// Deviation setup
+	for(int i=0;i < 6; i++) deviation[i] = 0;
 	#ifdef DEBUG_PLUGIN3
 		std::cerr << "The EndEffector position during the constructor is: " << wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2) << std::endl;
 	#endif
@@ -317,7 +317,7 @@ AssemblyStrategy::~AssemblyStrategy()
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char AnglesDir[STR_LEN], char CartPosDir[STR_LEN], char StateDir[STR_LEN], char ForcesDir[STR_LEN],
 									 vector3 pos, matrix33 rot, double CurAngles[15],
-									 int strategyType, int controlMethodType)
+									 int strategyType, int controlMethodType, double* d)
 {
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;	
@@ -443,9 +443,6 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 //	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;			// z-axis
 //	  else		  		   divPoint(2) 	= 0.000;			// If there is deviation in the x-axis, then we need to add a devaition in the z-axis with value of -0.005 such that there is contact after moving forward.
 //	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
-
-	  for (int ii = 0; ii < 6; ii ++)
-		  divPoint(ii) = 0;
 //	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
 
   }
@@ -456,7 +453,21 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   //--------------------------------------------------------------------------------------------------------------------------------
   // 5) Filter Class Allocation
   //--------------------------------------------------------------------------------------------------------------------------------
+  if (ft != NULL)
+	delete ft;
   ft = new FilterTools();
+
+  //--------------------------------------------------------------------------------------------------------------------------------
+  // 6) Loop back init
+  ctrlInitFlag = true;
+  for (int i=0;i < 6;i ++) { 
+	  if (d == 0) deviation[i] = 0;
+	  else        deviation[i] = d[i];
+	avgSig(i) = 0;
+  }
+
+
+  this->State = 1;
 
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - exited" << std::endl;
@@ -686,7 +697,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	/*---------------------------------------------------------------------- SIDE APPROACH ------------------------------------------------------------------------*/
 	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
-		std::cout<<"State Machine "<<State<<std::endl;
+		//std::cout<<"State Machine "<<State<<std::endl;
 		switch (State)
 		{
 		/*-------------------------------------------------- Approach --------------------------------------------------*/
@@ -1523,9 +1534,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  {
 				  // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
 				  float endApproachTime=ex_time[1];						// Check the pivotApproachState1.dat carefully. If 1 line choose ex_time[0], if there are two lines choose ex_time[0]
-				  std::cout<<(endApproachTime*0.80)<<"s should be finished here and now it's "<<cur_time<<"."<<std::endl;
 				  if( cur_time>(endApproachTime*0.80) )					// Want to make sure we are near the region of contact before we start measuring.
-					  std::cout<<HSA_App2Rot_Fx<<"f should be finished here and now it's "<<avgSig(Fx)<<"."<<std::endl;
 					  if(avgSig(Fx)>HSA_App2Rot_Fx)						// Vertical Contact Force along X-Direction in local coordinates. // Lateral contact for x-axis
 					  {
 							  NextStateActions(cur_time,hsaHIROTransitionExepction);

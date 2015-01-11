@@ -66,6 +66,8 @@ extern "C" {
 #define FORCE_TEST 			0 			// Used to test if force drivers are working in Old HIRO
 #define SIMULATION_TEST 	1	 		// Used to test certain pieces of code within the control method for testing purposes
 #define DEBUG 				1 			// Used to test temporary cerr statements
+#define LOOPBACK            1
+#define DEVIATION           1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // GLOBALS
 unsigned long long distate; // Digital state parameter. Holds bit values.
@@ -407,27 +409,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	// 1) Local variable initialization
 	int ret = 0;
 	double CurAngles[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-	// Initial steps For setting up loop
-	initRs = *rs;
-	resetTime = 0;
-	proState = 0;
-	// End of setting up loop
-
-	//Initial stepsetup deviation
-	if (deviation_file.is_open())
-		deviation_file.close();
-	deviation_file.open("./data/PivotApproach/deviation.dat");
-	for (int i=0; i < 6; i ++)
-		deviation_file>>deviation[i];
-
-	std::cout<<deviation[0]<<std::endl;
-
-	char mkdirCommand[256] = "";
-	sprintf(mkdirCommand, "%s %s %s", mkdir, dataCollectHomePath, "-p");
-	system(mkdirCommand);
-
-
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin::setup() - entered" << std::endl;
 #endif
@@ -498,8 +479,29 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 
 	ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
 
+	/***************************************** LOOP BACK SETUP *****************************************************************/
+#ifdef LOOPBACK
+	// Initial steps For setting up loop
+	initRs = *rs;
+	resetTime = 0;
+	proState = 0;
+	// End of setting up loop
+#endif
+
+#ifdef DEVIATION
+	//Initial stepsetup deviation
+	if (deviation_file.is_open())
+		deviation_file.close();
+	deviation_file.open("./data/PivotApproach/deviation.dat");
+	for (int i=0; i < 6; i ++)
+		deviation_file>>deviation[i];
+
+	char mkdirCommand[256] = "";
+	sprintf(mkdirCommand, "%s %s %s", mkdir, dataCollectHomePath, "-p");
+	system(mkdirCommand);
 	for (int i=0; i < 6; i ++)
 		rArm->PA->deviation[i] = this->deviation[i];
+#endif
 
 	// Update the latest data angles and position
 	if(DEBUG)
@@ -541,11 +543,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	controlmode_r = PivotApproach;
 #endif
 
-
-	//~ if((fp_nitta=fopen(f_name1.c_str(),"w"))==NULL){
-	//~ std::cerr<< "file open error!!" << std::endl;	//~ }
-
-	// Exit
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin::setup() - Exiting" << std::endl;
 #endif
@@ -553,7 +550,7 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	return true;
 
 }
-
+ 
 /******************************************************************************************************************************************/
 // Control()
 // The control function is called by the GrxUI simulation every 2-5ms. This method implements the control routine that will control HIRO.
@@ -599,27 +596,26 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 		/********************************************************* Resettting Code *****************************************************************/
 
-		// if time exceed 6 then it will restart
-		cur_time=DT*double(rArm->get_Iteration());
-		std::cout<<cur_time<<" now..."<<std::endl;
-		if(cur_time > 3 && proState == 1)
-		{
-			// What did it go wrong with rArm?
-
+#ifdef LOOPBACK
+		//The loopback_condition is used for determine whether it needs to restart or not
+		if (this->loopback_condition())  {
 			// set up the whole thing ... what ... same function as setup()
-
+			// state control. should enter this function once to setup mc before initControl
 			proState = 0;
 			initControl = 0;
+			//Record the loop time.
 			resetTime += 1;
 
-			for (int i=0;i < 6; i++)
-				deviation_file>>deviation[i];
+#ifdef DEVIATION
+			// Collect the data of the previous loop.
+			this->loopback_collectData();
 
+			// After collecting previous data, read new deviations from file.
+			if (!deviation_file.eof())
+				for (int i=0;i < 6; i++)
+					deviation_file>>deviation[i];
 
-			std::cout<<deviation[0]<<std::endl;
-			char commend[256];
-			sprintf(commend, "%s %s/%d/ %s", mkdir, dataCollectHomePath, resetTime, "-p");
-			system (commend);
+#endif
 
 			//Build a folder for the data last time.
 
@@ -636,14 +632,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				for(int i=0; i<6; i++)
 					rArm->raw_forces[i] = firstRs->force[0][i];
 			#endif
-
-
-
 				// ----------------------------------------------------------- FORCE SENSOR -----------------------------------------------------------------/
-			#ifndef SIMULATION
-				initialize_ifs(0);
-				initialize_ifs(1);
-			#endif
 
 			#ifndef SIMULATION
 				firstRs->angle[8] -= 0.531117;
@@ -660,19 +649,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				}
 				int NUM_q0=3;
 				// And also set CurrentAngles -- private member variable -- to rs->angle
-				CurrentAngles[0]=firstRs->angle[NUM_q0];
-				CurrentAngles[1]=firstRs->angle[NUM_q0+1];
-				CurrentAngles[2]=firstRs->angle[NUM_q0+2];
-				CurrentAngles[3]=firstRs->angle[NUM_q0+3];
-				CurrentAngles[4]=firstRs->angle[NUM_q0+4];
-				CurrentAngles[5]=firstRs->angle[NUM_q0+5];
-//
-//				CurrentAngles[0]=rs->angle[NUM_q0];
-//				CurrentAngles[1]=rs->angle[NUM_q0+1];
-//				CurrentAngles[2]=rs->angle[NUM_q0+2];
-//				CurrentAngles[3]=rs->angle[NUM_q0+3];
-//				CurrentAngles[4]=rs->angle[NUM_q0+4];
-//				CurrentAngles[5]=rs->angle[NUM_q0+5];
+				for (unsigned int i=0; i<6; ++i)
+					CurrentAngles[i]=firstRs->angle[NUM_q0 + i];
 //
 			#ifndef SIMULATION
 				mc->angle[8] += 0.531117;
@@ -691,22 +669,12 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 
 				//ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
-				if (rArm->PA->ft != NULL)
-					delete rArm->PA->ft;
 
-				rArm->PA->ft = NULL;
-
-				rArm->PA->State = 1;
-				rArm->PA->ctrlInitFlag = true;
-				for (int i=0;i < 6;i ++)
-					rArm->PA->deviation[i] = deviation[i];
-
-				for (int i = 0; i < 6; i ++) rArm->PA->avgSig(i) = 0;
 				for(int i=0; i<6; i++)
 					rArm->raw_forces[i] = firstRs->force[0][i];
 				// Update the latest data angles and position
 
-				ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
+				ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles, deviation); // Body object 15 DOF. Need link8 or RARM_JOINT5.
 
 #endif
 
@@ -723,6 +691,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				return;
 		}
+#endif // end of loopback
 
 		if(initControl==0)
 				{
@@ -1119,6 +1088,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					vector3 GainP_tmp, GainR_tmp;
 
 					// GainP
+
 					if (DioState & ASSL)
 						GainP_tmp = GainP[0]; // high
 					else if (DioState & ASSR)
@@ -2024,4 +1994,34 @@ unsigned long long get_tick()
 	unsigned int l=0, h=0;
 	__asm__ __volatile__("rdtsc": "=a" (l), "=d"(h) );
 	return (unsigned long long)h<<32;
+}
+
+bool forceSensorPlugin_impl::loopback_condition()
+{
+	cur_time=DT*double(rArm->get_Iteration());
+	std::cout<<cur_time<<std::endl;
+	return cur_time > 11 && proState == 1;
+}
+
+void forceSensorPlugin_impl::loopback_collectData()
+{
+	char commend[256];
+	sprintf(commend, "%s %s/%s/ %s", mkdir, dataCollectHomePath, deviation_toString(), "-p");// $: mkdir ~/home/of/data/resetTime/
+	system (commend);
+	sprintf(commend, "%s %s %s/%s/", mv, "./data/Results/*", dataCollectHomePath, deviation_toString());// $: mv ./data/Results/* ~/home/of/data/resetTime
+	system (commend);
+}
+
+
+char* forceSensorPlugin_impl::deviation_toString ()
+{
+	sprintf(deviation_name, "LoopbackTest%cx%f%cy%f%cz%f%cxR%f%cyR%f%czR%f", //LoopbackTest+x0.00+y0.00+z0.00+xRoll0.00+yRoll0.00+zRoll0.00
+			(deviation[0]>=0)?'+':'-',(deviation[0]>=0)?deviation[0]:(-deviation[0]),
+			(deviation[1]>=0)?'+':'-',(deviation[1]>=0)?deviation[1]:(-deviation[1]),
+			(deviation[2]>=0)?'+':'-',(deviation[2]>=0)?deviation[2]:(-deviation[2]),
+			(deviation[3]>=0)?'+':'-',(deviation[3]>=0)?deviation[3]:(-deviation[3]),
+			(deviation[4]>=0)?'+':'-',(deviation[4]>=0)?deviation[4]:(-deviation[4]),
+			(deviation[5]>=0)?'+':'-',(deviation[5]>=0)?deviation[5]:(-deviation[5])
+			);
+	return deviation_name;
 }

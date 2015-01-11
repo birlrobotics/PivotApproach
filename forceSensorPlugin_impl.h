@@ -52,6 +52,7 @@ static const double	rad2degC	= 180.0/M_PI;
 
 static const char* dataCollectHomePath= " ~//testData//";
 static const char* mkdir = "mkdir ";
+static const char* mv = "mv ";
 
 // Class
 class forceSensorPlugin_impl : public plugin,
@@ -158,6 +159,18 @@ class forceSensorPlugin_impl : public plugin,
   void 	 readInitialFile(const char *filename);
   void 	 readGainFile(const char *filename);
   matrix33 get_rot33(int dir, double rad );
+
+  /********************************************************** Loop back func *****************************************************/
+  bool loopback_condition ();
+  void loopback_collectData();
+
+  /********************************************************** Deviation func ****************************************************/
+  char* deviation_toString ();
+  char deviation_name[1024];
+
+ /*********************************************************** Deviation func ****************************************************/
+  void deviation_init();
+  void deviation_setup();  
 
  public:
   forceSensorPlugin_impl(istringstream &strm);
