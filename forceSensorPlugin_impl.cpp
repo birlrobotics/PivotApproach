@@ -724,21 +724,20 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				/*-------------------------------------------------------------------------------------------- Gravity Compensaation ---------------------------------------------------------------------------------------*/
 
 			case GravityCompensation:
-#ifdef DEBUG_PLUGIN
-				std::cout << "GravityCompensation" << std::endl;
-#endif
+				#ifdef DEBUG_PLUGIN
+								std::cout << "GravityCompensation" << std::endl;
+				#endif
 
 				// Go to the Initial Position
 				// (A) LEFT ARM
-				if (!f_gravity_comp[0])
-				{
+				if (!f_gravity_comp[0]){
 					// Call gravity compsensation
 					int res_gc;
 					res_gc = lArm->gravity_comp();
 
-#ifdef DEBUG_PLUGIN
-					std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
-#endif
+					#ifdef DEBUG_PLUGIN
+										std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
+					#endif
 
 					// Success
 					if (res_gc == 1)
@@ -751,16 +750,15 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				}
 
 				// (B) RIGHT ARM
-				else if (!f_gravity_comp[1])
-				{
+				else if (!f_gravity_comp[1]){
 
 					// Call gravity compensation
 					int res_gc;
 					res_gc = rArm->gravity_comp();
 
-#ifdef DEBUG_PLUGIN
-					std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
-#endif
+					#ifdef DEBUG_PLUGIN
+										std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
+					#endif
 
 					// Success
 					if (res_gc == 1)
@@ -1386,7 +1384,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				for (int i=0; i < ARM_DOF; i++)
 					mc->angle[i+3] = qref_r[i];
 
-				mc->angle[0]=0; mc->angle[1]=0; mc->angle[2]=0;	// Alway sset the chest, pan, tilt angles to zero.
+				mc->angle[0]=0; mc->angle[1]=0; mc->angle[2]=0;	// Alway set the chest, pan, tilt angles to zero.
 			}
 
 #ifdef DEBUG_PLUGIN

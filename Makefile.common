@@ -1,0 +1,34 @@
+# -*- Makefile -*-
+
+PLUGIN = $(BIN_DIR)forceSensorPlugin_impl.$(DLLSFX)
+
+OBJS = \
+	forceSensorPlugin_impl.o \
+	ifs_com.o \
+	ifs.o \
+	AssemblyStrategy.o \
+	ControlBasis.o \
+	FilterTools.o \
+	hiroArm.o
+
+
+ALL_OBJS = $(OBJS) ../corba/forceSensorPlugin.o $(STUBS) $(P_STUBS)
+
+SPI_HEADERS = \
+	hiroArm.h \
+	$(TOP)Controller/IOserver/robot/HRP2STEP1/iob/hrp_servo/ifspci/ifs_com.h \
+	$(TOP)Controller/IOserver/robot/HRP2STEP1/iob/hrp_servo/ifspci/ifs.h \
+	forceSensorPlugin_impl.h \
+	$(TOP)Controller/IOserver/plugin/forceSensorPlugin/server/forceSensorPlugin_impl.h \
+        $(TOP)Controller/IOserver/plugin/forceSensorPlugin/server/AssemblyStrategy.h \
+        $(TOP)Controller/IOserver/plugin/forceSensorPlugin/server/ControlBasis.h \
+        $(TOP)Controller/IOserver/plugin/forceSensorPlugin/server/FilterTools.h \
+	$(TOP)Controller/IOserver/include/Plugin_impl.h
+
+forceSensorPlugin_impl.o: forceSensorPlugin_impl.cpp $(SPI_HEADERS)
+#nittaFS.o: nittaFS.cpp nittaFS.h
+#ifs_com.o: $(TOP)Controller/IOserver/robot/HRP2STEP1/iob/hrp_servo/ifspci/ifs_com.c ifs_com.h
+hiroArm.o: hiroArm.cpp hiroArm.cpp
+AssemblyStrategy.o: AssemblyStrategy.cpp 
+ControlBasis.o: ControlBasis.cpp
+FilterTools.o: FilterTools.cpp

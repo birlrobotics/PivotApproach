@@ -1,0 +1,53 @@
+----------------------------------------------Online pRCBHT
+----------------------------------------------
+
+* Load all data upfront for all functions
+
+* snap3data - make sure it works when a single index is provided
+
+* At llbBelief - we return the end times, how to deal with them if we have six separate items.
+
+----------------------------------------------
+Primitives
+----------------------------------------------
+- Need a flag when correlation breaks. Sometimes the end of file will be reached, but at the next iteration the file will grow...
+
+Save that current wStart and also i
+
+
+----------------------------------------------
+Loading Data
+----------------------------------------------
+
+- Do we load, one, two, or all data every step
+- It seems best to preallocate the torques and stateData matrices with zeros and then fill them over time.
+
+----------------------------------------------
+Insert States
+----------------------------------------------
+- Will only insert state lines if the vector state is available
+
+
+----------------------------------------------
+Primitives
+----------------------------------------------
+- When do we plot and save data
+----------------------------------------------
+
+Recomputing
+----------------------------------------------
+- We don't want to recompute all the data if we have to. How do we need to adjust it?
+
+----------------------------------------------
+- CleanUp cycles need the whole things
+----------------------------------------------
+- primitives layers needs an increasing size until a new primitive starts. Then only the new data can start to accumulate. Flag indicators will be necessary.
+
+- Same as above for motion composition/llbBehavior
+
+- llbBelief, only needs the latest piece and a way to accumulate cumDuration.
+
+----------------------------------------------
+Threads
+----------------------------------------------
+- Do we need different copies to everything so that memory does not overwrite itself, or when you have threads there are separate memory scopes for everything?
