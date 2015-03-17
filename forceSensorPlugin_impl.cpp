@@ -346,14 +346,8 @@ void forceSensorPlugin_impl::init(void)
 	// Allocate the slave arm - right arm
 	int NUM_q0 = 3; // Joint angle at which the right arm starts
 	rArm = new hiroArmSla("right", body, NUM_q0, DT, ang_limit_sub, ePh, eRh, hPfs, hRfs);
-<<<<<<< HEAD
-	//rArm->set_FSptr(fs, 1);
-	//IFS_Init(CHANNEL,FULL_SCALE);
-
-=======
 
 	//To save the parameters of rArm
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 	// Assign Joint Angle Limits
 	for(int i = 0; i < ARM_DOF; i++){									// 6 DOF per arm
 		for(int j = 0; j < 5; j++){
@@ -411,14 +405,6 @@ void forceSensorPlugin_impl::init(void)
 /******************************************************************************************************************************************/
 bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 {
-<<<<<<< HEAD
-
-	// 1) Local variable initialization
-	int ret = 0;
-	double CurAngles[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
-
 	// 1) Local variable initialization
 	int ret = 0;
 	double CurAngles[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -492,8 +478,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 
 	ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
 
-<<<<<<< HEAD
-=======
 	/***************************************** LOOP BACK SETUP *****************************************************************/
 #ifdef LOOPBACK
 	// Initial steps For setting up loop
@@ -518,7 +502,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 		rArm->PA->deviation[i] = this->deviation[i];
 #endif
 
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 	// Update the latest data angles and position
 	if(DEBUG)
 	{
@@ -559,14 +542,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	controlmode_r = PivotApproach;
 #endif
 
-<<<<<<< HEAD
-
-	//~ if((fp_nitta=fopen(f_name1.c_str(),"w"))==NULL){
-	//~ std::cerr<< "file open error!!" << std::endl;	//~ }
-
-	// Exit
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin::setup() - Exiting" << std::endl;
 #endif
@@ -618,32 +593,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 		std::cerr << "/----------------------------------\nforceSensorPlugin::control() - entered\n-------------------------------------/\n\n" << std::endl;
 #endif	
 
-<<<<<<< HEAD
-		// Initial code
-		if(initControl==0)
-		{
-			// Initialize the iteration
-			rArm->m_time=0;
-
-			if(DEBUG)
-			{
-				// Update the latest data angles and position
-				vector3 rpy(0);
-				rArm->set_OrgPosRot(CurXYZ,rpy);
-				rArm->m_path->calcInverseKinematics(CurXYZ,CurRot);
-				for (int i=0;i<6;i++)
-					CurrentAngles(i) = rArm->m_path->joint(i)->q;
-
-				cerr << "\n\nforceSensorPlugin::control()-Current time is:\t" << DT*double(rArm->get_Iteration()) << std::endl;
-				cerr << "forceSensorPlugin::control()-Current position is:\t" << CurXYZ << std::endl;
-				cerr << "forceSensorPlugin::control()-Current pose is:\t" << rpy << std::endl;
-				cerr << "forceSensorPlugin::control()-Current Angles (radians) are:\t" << CurrentAngles << std::endl;
-			}
-			// Change the flag
-			initControl=1;
-		}
-
-=======
 		/********************************************************* Resettting Code *****************************************************************/
 
 #ifdef LOOPBACK
@@ -754,7 +703,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					// Change the flag
 					initControl=1;
 				}
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 		// Simulation test is used to skip code that is enclosed the if function.
 		if(SIMULATION_TEST)
 		{
@@ -801,67 +749,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			if(initFlag==false)
 			{
 				/*---------------------- Angle Update --------------------------*/
-<<<<<<< HEAD
-
-				// For the first iteration make sure that output angles are the same as input angles for all 15 DOF.
-				for (unsigned int i = 0; i < DOF; ++i)
-				{
-					body->joint(i)->q 	= rs->angle[i];	// the body object is for the entire body 15 DoF
-					mc->angle[i] 		= rs->angle[i];
-				}
-				//for(int i=0; i<ARM_DOF; i++)			//body->joint(i)->q = rs->angle[i+3];			// Copy the latest actual angles into our private member variable.
-
-				// change flag
-				initFlag = true;
-				//controlmode_pre = controlmode_r;
-
-#ifdef DEBUG_PLUGIN
-				std::cerr << "\n/---------------------------------------------------------------------------------------------------------------------------\n"
-						"forceSensorPlugin - The 15 current angles in radians are:\t"   << rs->angle[0]/**rad2degC*/ << "\t" << rs->angle[1]/**rad2degC*/ << "\t" << rs->angle[2]/**rad2degC*/ << "\t"
-						<< rs->angle[3]/**rad2degC*/ << "\t" << rs->angle[4]/**rad2degC*/ << "\t" << rs->angle[5]/**rad2degC*/ << "\t"
-						<< rs->angle[6]/**rad2degC*/ << "\t" << rs->angle[7]/**rad2degC*/ << "\t" << rs->angle[8]/**rad2degC*/ << "\t"
-						<< rs->angle[9]/**rad2degC*/ << "\t" << rs->angle[10]/**rad2degC*/<< "\t" << rs->angle[11]/**rad2degC*/<< "\t"
-						<< rs->angle[12]/**rad2degC*/<< "\t" << rs->angle[13]/**rad2degC*/<< "\t" << rs->angle[14]/**rad2degC*/<<
-						"\n/------------------------------------------------------------------------------------------------------------\n" << std::endl;
-#endif
-
-				// Timing
-				if(DB_TIME)
-				{
-					// Get end time
-					gettimeofday(&endTime,NULL);
-
-					// Compute duration
-					duration = (double)(endTime.tv_sec - startTime.tv_sec) * 1000.0; 		// Get from sec to msec
-					duration += (double)(endTime.tv_usec - startTime.tv_usec) / 1000.0; 	// From usec to msec
-
-					// Print out the duration of the function
-					std::cerr << "Duration of forceSensorPlugin::control() is: " << duration << "ms." << std::endl;
-				}
-
-			} // End initFlag
-			/*----------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-#ifdef DEBUG_PLUGIN
-			std::cerr << "Calculate Fwd Kins" << std::endl;
-#endif
-
-			// Calculate cartesian positions
-			body->calcForwardKinematics();
-
-
-#ifdef DEBUG_PLUGIN
-			std::cerr << "Update the current position data." << std::endl;
-#endif	
-
-
-			// Update cartesian position of robot arms
-			//lArm->update_currposdata();	// Gets base2wrist translation/rotation, and base2endeffector translation/rotation
-			rArm->update_currposdata(); // And, current joint angles for the respective arm
-
-			/*------------------------------------------------------------- Select Control Mode-----------------------------------------------------------------------*/
-=======
-
 				// For the first iteration make sure that output angles are the same as input angles for all 15 DOF.
 				for (unsigned int i = 0; i < DOF; ++i)
 				{
@@ -974,77 +861,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					// Call gravity compensation
 					int res_gc;
 					res_gc = rArm->gravity_comp();
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 
 			// There are eight control modes: NotControlled, GravityCompensation, ResetGravityCompensation, BirateralControl, DirectTeaching, Impedance Control, and Pivot Approach
 #ifdef DEBUG_PLUGIN
-<<<<<<< HEAD
-			std::cerr << "Current  mode is: " << controlmode_r << std::endl;
-#endif	
-
-			switch (controlmode_r)
-			{
-
-			/*--------------------------------------------------------------------------- Not Controlled ----------------------------------------------------*/
-
-			case NotControlled:
-#ifdef DEBUG_PLUGIN
-				std::cout << "NotControlled" << std::endl;
-#endif
-
-				f_control[0] = f_control[1] = false;
-				break;
-
-				/*-------------------------------------------------------------------------------------------- Gravity Compensaation ---------------------------------------------------------------------------------------*/
-
-			case GravityCompensation:
-				#ifdef DEBUG_PLUGIN
-								std::cout << "GravityCompensation" << std::endl;
-				#endif
-
-				// Go to the Initial Position
-				// (A) LEFT ARM
-				if (!f_gravity_comp[0]){
-					// Call gravity compsensation
-					int res_gc;
-					res_gc = lArm->gravity_comp();
-
-					#ifdef DEBUG_PLUGIN
-										std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
-					#endif
-
-					// Success
-					if (res_gc == 1)
-					{
-						f_gravity_comp[0] = true;
-						num_test = 0;
-					}
-					else if (res_gc == 0)
-						f_control[0] = true;
-				}
-
-				// (B) RIGHT ARM
-				else if (!f_gravity_comp[1]){
-
-					// Call gravity compensation
-					int res_gc;
-					res_gc = rArm->gravity_comp();
-
-					#ifdef DEBUG_PLUGIN
-										std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
-					#endif
-
-					// Success
-					if (res_gc == 1)
-					{
-						f_gravity_comp[1] = true;
-						num_test = 0;
-					}
-					else if (res_gc == 0)
-						f_control[1] = true;
-				}
-
-=======
 					std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
 #endif
 
@@ -1058,7 +877,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 						f_control[1] = true;
 				}
 
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 				// Manual Algorithm
 				else
 				{
@@ -1188,11 +1006,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			case ResetGravityCompensation:
 
 #ifdef DEBUG_PLUGIN
-<<<<<<< HEAD
-				std::cout << "ResetGravityCompensation" << std::endl;
-=======
 				std::cout << "ResetGravityCompensatiPivotApproachon" << std::endl;
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 #endif
 
 				lArm->reset_gravity_comp();
@@ -1273,10 +1087,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					vector3 GainP_tmp, GainR_tmp;
 
 					// GainP
-<<<<<<< HEAD
-=======
-
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 					if (DioState & ASSL)
 						GainP_tmp = GainP[0]; // high
 					else if (DioState & ASSR)
@@ -1312,35 +1122,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					std::cout << "rW: " << rW << std::endl;
 #endif
 
-<<<<<<< HEAD
-					/*//~ if(test < 200){
-		  //~ rdP(0) = 0.05;  rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;    rW(1) = 0.0;   rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<400){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.05; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;  rW(1) = 0.0;   rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<600){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0;  rdP(2) = 0.05;
-		  //~ rW(0) = 0.0;    rW(1) = 0.0;  rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<800){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.1;  rW(1) = 0.0;  rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<1000){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;    rW(1) = 0.1;  rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<1200){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;    rW(1) = 0.0;  rW(2) = 0.1;
-		  //~ }
-		  //~ test++;*/
-
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 					// for master
 					if (lArm->velocity_control(rdP, rW, f_new))
 						f_control[0] = true;
@@ -1437,49 +1218,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					std::cerr << "gravity control is not finished." << std::endl;
 					f_control[0] = false;
 #endif
-<<<<<<< HEAD
-				}
-
-				f_control[1] = false;
-
-				break;
-				/*
-		case ReadyPosition:
-		dvector6 q_ready_l, q_ready_r;
-		q_ready_l(0) = 0.0; q_ready_l(1) = 0.0; q_ready_l(2) = -M_PI/2; q_ready_l(3) = -15.0*M_PI/180; q_ready_l(4) = 0.0; q_ready_l(5) = 0.0;
-		q_ready_r(0) = 0.0; q_ready_r(1) = 0.0; q_ready_r(2) = -M_PI/2; q_ready_r(3) = 15.0*M_PI/180; q_ready_r(4) = 0.0; q_ready_r(5) = 0.0;
-
-		int res;
-		res = lArm->moveto_q_goal(q_ready_l);
-		if(res == 0){
-		f_control[0] = true;
-		}
-		else f_control[0] = false;
-
-		res = rArm->moveto_q_goal(q_ready_r);
-		if(res == 0){
-		f_control[1] = true;
-		}
-		else f_control[1] = false;
-
-		break;
-				 */
-
-				/* 		case Playback:
-				if(controlmode_pre != controlmode_r){
-				//~ fv.close();
-				ifs.open("./velocity.dat");
-				if(!ifs.is_open()) std::cerr << "ERROR: can't open velocity.dat" << std::endl;
-				else std::cout << "open velocity.dat" << std::endl;
-				}
-				if(!ifs.eof()){
-				vector3 rdP, rW;//Playback};
-				for(int i=0; i<3; i++){
-				std::string res;
-				ifs >> res;
-				rdP[i] = atof(res.c_str());
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 				}
 
 				f_control[1] = false;
@@ -1521,22 +1259,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// Select to work only on right arm
 				f_control[1] = true;
 
-
-<<<<<<< HEAD
-				/*		#ifdef DEBUG_PLUGIN
-				std::cerr << "forceSensorPlugin::PivotApproach case - Getting force data" << std::endl;
-				#endif			
-
-
-				// Copy update forces into a local variable
-				#ifdef SIMULATION
-				for(int i=0;i<6;i++)
-				CurrentForces(i)    = rArm->raw_forces[i];
-
-				#else
-				 */
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 				// Update the forces
 #ifdef SIMULATION
 				for(int i=0;i<6;i++)
@@ -1544,13 +1266,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #else
 				rArm->update_currforcedata();
 
-<<<<<<< HEAD
-				/*	      for(int i=0;i<3;i++)
-		{
-		  CurrentForces(i)   = rArm->fsF_raw[i];
-		  CurrentForces(i+3) = rArm->fsM_raw[i];
-		  }*/
-
 				vector3 tmp_force;
 				vector3 tmp_moment;
 				vector3 rotated_force;
@@ -1563,20 +1278,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					tmp_moment(i) = rArm->fsM_raw[i];
 				}
 
-=======
-				vector3 tmp_force;
-				vector3 tmp_moment;
-				vector3 rotated_force;
-				vector3 rotated_moment;
-				matrix33 mod_rot;
-				mod_rot = get_rot33(Y,-(M_PI/2.0)) * get_rot33(Z,-(M_PI/4));
-				for(int i=0;i<3;i++)
-				{
-					tmp_force(i)   = rArm->fsF_raw[i];
-					tmp_moment(i) = rArm->fsM_raw[i];
-				}
-
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 				rotated_force = mod_rot * tmp_force;
 				rotated_moment = mod_rot * tmp_moment;
 
@@ -1665,20 +1366,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				//~ dvector6 tmp;
 				dvector6 qref_l = lArm->get_qref();
-<<<<<<< HEAD
-				/*//~ bool check = false;		 //~ for(int i=0; i<6; i++){		 //~ tmp[i] = fabs(qref_l[i]-rs->angle[9+i]);		 //~ if(fabs(tmp[i]) > (ang_limit[9+i][2]*DT*2)){		 //~ check = true;		 //~ std::cout << "ERROR: left[" << i << "]" << qref_l[i] << " " << rs->angle[9+i] << std::endl;
-		  //~ }		 //~ }		 //~ fprintf(fv_L,"%f %f %f %f %f %f\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);		 //~ if(!check){*/
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 
 				// MC Angles 9-14 belong to the left arm
 				for (int i = 0; i < 6; i++)
 					mc->angle[9 + i] = qref_l[i];
 
-<<<<<<< HEAD
-				/*1~ fprintf(fv_L,"%f %f %f %f %f %f\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);		   ~ }		 else{ for(int i=0; i<6; i++){ mc->angle[9+i]=rs->angle[9+i];} }		 */
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 #ifdef DEBUG_PLUGIN
 				std::cout << "q_ref to mc: ";
 				for(int i=0; i<6; i++) std::cout << mc->angle[9+i] << ", ";
@@ -1696,49 +1388,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// MC Angles 3-8 belong to the right arm
 				for (int i=0; i < ARM_DOF; i++)
 					mc->angle[i+3] = qref_r[i];
-<<<<<<< HEAD
 
-				mc->angle[0]=0; mc->angle[1]=0; mc->angle[2]=0;	// Alway set the chest, pan, tilt angles to zero.
-			}
-
-#ifdef DEBUG_PLUGIN
-			std::cerr << "\nforceSensorPlugin - The current angles in degrees (including chest and head) are:\t" << mc->angle[0]*rad2degC << "\t" << mc->angle[1]*rad2degC << "\t" << mc->angle[2]*rad2degC << "\t"
-					<< mc->angle[3]*rad2degC << "\t" << mc->angle[4]*rad2degC << "\t" << mc->angle[5]*rad2degC << "\t"
-					<< mc->angle[6]*rad2degC << "\t" << mc->angle[7]*rad2degC << "\t" << mc->angle[8]*rad2degC << std::endl;
-#endif
-
-			/* save data		//~ if(f_gravity_comp[0] && f_gravity_comp[1]){		//~ lArm->savedata();	//~ rArm->savedata();	//~ }*/
-			controlmode_pre = controlmode_r;
-
-			// Timing
-			if(DB_TIME)
-			{
-				// Get end time		//gettimeofday(&endTime,NULL);
-
-				// Compute duration
-				duration = (double)(endTime.tv_sec - startTime.tv_sec) * 1000.0; 		// Get from sec to msec
-				duration += (double)(endTime.tv_usec - startTime.tv_usec) / 1000.0; 	// From usec to msec
-
-				// Print out the duration of the function
-				std::cerr << "Duration of forceSensorPlugin::control() is: " << duration << "ms." << std::endl;
-			}
-
-		} // END !FORCE_TEST
-
-		else
-		{
-
-			rArm->update_currforcedata();
-
-			for(int i=0;i<3;i++)
-			{
-				CurrentForces(i)   = rArm->fsF_raw[i];
-				CurrentForces(i+3) = rArm->fsM_raw[i];
-			}
-
-=======
 				// Bug happens here.
-
 				mc->angle[0]=0; mc->angle[1]=0; mc->angle[2]=0;	// Alway sset the chest, pan, tilt angles to zero.
 			}
 
@@ -1777,7 +1428,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				CurrentForces(i+3) = rArm->fsM_raw[i];
 			}
 
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 			// Controller time counter
 			cur_time=DT*double(rArm->get_Iteration());      // sampling time * iteration
 			rArm->set_Iteration();                          // Increase iteration           // Controller time counter
@@ -1866,7 +1516,6 @@ matrix33 forceSensorPlugin_impl::get_rot33(int dir, double rad)
 {
 	// Initialization
 	matrix33 rot_temp;
-<<<<<<< HEAD
 
 	// before_R_after
 
@@ -1892,78 +1541,6 @@ matrix33 forceSensorPlugin_impl::get_rot33(int dir, double rad)
 	}
 	return rot_temp;
 }
-
-//~ void forceSensorPlugin_impl::calRotMatrix(){
-//~ /*
-//~ LA.rPh = body->joint(14)->p;
-//~ LA.rRh = body->joint(14)->R;
-//~ for(int i=0; i<6; ++i)  LA.q[i]=body->joint(9+i)->q;
-//~ */
-//~ }
-
-///////////////////////////////////////////////////////////////
-//
-//  Get position teaching enable matrix
-//
-////////////////////////////////////////////////////////////////
-/*
-  matrix33 forceSensorPlugin_impl::getPositionEnableMatrix()
-  {
-  matrix33 ASMPo;
-  unsigned long DioState= distate >> 32;
-
-  ASMPo(0,0)=0;   ASMPo(0,1)=0;   ASMPo(0,2)=0;
-  ASMPo(1,0)=0;   ASMPo(1,1)=0;   ASMPo(1,2)=0;
-  ASMPo(2,0)=0;   ASMPo(2,1)=0;   ASMPo(2,2)=0;
-
-  if(DioState&MSSL){
-  if(DioState&ASSL) ASMPo(0,0)=1;               // enable x
-  else if(DioState&ASSR) ASMPo(2,2)=1;          // enable z
-  else ASMPo(1,1)=1;                            // enable y
-  }
-  else if(DioState&MSSR){
-  ASMPo(0,0)=0; ASMPo(1,1)=0; ASMPo(2,2)=0;
-  }
-  else {
-  if(DioState&ASSR){
-  ASMPo(0,0)=0; ASMPo(1,1)=0; ASMPo(2,2)=0;
-  }
-  else {ASMPo(0,0)=1; ASMPo(1,1)=1; ASMPo(2,2)=1;
-  }
-  }
-=======
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
-
-	// before_R_after
-
-	// Rotation about X
-	if (dir == X)
-	{
-		rot_temp = 1, 0, 0, 0, cos(rad), -sin(rad), 0, sin(rad), cos(rad);
-		return rot_temp;
-	}
-
-	// Rotation about Y
-	if (dir == Y)
-	{
-		rot_temp = cos(rad), 0, sin(rad), 0, 1, 0, -sin(rad), 0, cos(rad);
-		return rot_temp;
-	}
-
-<<<<<<< HEAD
-  return ASMRo;
-  }
- */
-=======
-	// Rotation about z
-	if (dir == Z)
-	{
-		rot_temp = cos(rad), -sin(rad), 0, sin(rad), cos(rad), 0, 0, 0, 1;
-		return rot_temp;
-	}
-	return rot_temp;
-}
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 
 /*********************************************************************/
 // Set Direct teaching method type
@@ -2414,8 +1991,6 @@ unsigned long long get_tick()
 	unsigned int l=0, h=0;
 	__asm__ __volatile__("rdtsc": "=a" (l), "=d"(h) );
 	return (unsigned long long)h<<32;
-<<<<<<< HEAD
-=======
 }
 
 bool forceSensorPlugin_impl::loopback_condition()
@@ -2446,5 +2021,4 @@ char* forceSensorPlugin_impl::deviation_toString ()
 			(deviation[5]>=0)?'+':'-',(deviation[5]>=0)?deviation[5]:(-deviation[5])
 			);
 	return deviation_name;
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 }
