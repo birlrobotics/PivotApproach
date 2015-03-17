@@ -25,8 +25,6 @@ extern "C" {
 #include "ifs_com.h"    // Driver
 #include "ifs.h"
 }
-
-#include <stdio.h>
 //---------------------------------------------------------------------------------------------------------------------------------- 
 #include "hiroArm.h"
 //---------------------------------------------------------------------------------------------------------------------------------- 
@@ -49,10 +47,6 @@ using OpenHRP::DblArray3;
 static const double	deg2radC  	= M_PI/180.0;
 static const double	rad2degC	= 180.0/M_PI;
 //----------------------------------------------------------------------------------------------------------------------------------
-
-static const char* dataCollectHomePath= " ~//testData//";
-static const char* mkdir = "mkdir ";
-static const char* mv = "mv ";
 
 // Class
 class forceSensorPlugin_impl : public plugin,
@@ -135,22 +129,13 @@ class forceSensorPlugin_impl : public plugin,
 
   // Pivot Approach
   double cur_time;
-  vector3 CurXYZ;
-  matrix33 CurRot;
-  dvector6 CurrentForces;
-  dvector6 CurrentAngles, JointAngleUpdate;
+  vector3 CurXYZ, L_CurXYZ;
+  matrix33 CurRot, L_CurRot;
+  dvector6 CurrentForces, L_CurrentForces;
+  dvector6 CurrentAngles, JointAngleUpdate, L_CurrentAngles, L_JointAngleUpdate;
 
   // Flags
   bool initFlag;
-
-  // Loop back
-  RobotState initRs;
-  int resetTime;
-  int proState;
-
-  //Deviation
-  ifstream deviation_file;
-  double deviation[6];
 
   // Log
   ofstream ostr_rstate, ostr_astate, ostr_force, ostr_worldforce;
@@ -159,18 +144,6 @@ class forceSensorPlugin_impl : public plugin,
   void 	 readInitialFile(const char *filename);
   void 	 readGainFile(const char *filename);
   matrix33 get_rot33(int dir, double rad );
-
-  /********************************************************** Loop back func *****************************************************/
-  bool loopback_condition ();
-  void loopback_collectData();
-
-  /********************************************************** Deviation func ****************************************************/
-  char* deviation_toString ();
-  char deviation_name[1024];
-
- /*********************************************************** Deviation func ****************************************************/
-  void deviation_init();
-  void deviation_setup();  
 
  public:
   forceSensorPlugin_impl(istringstream &strm);

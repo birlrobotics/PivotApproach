@@ -1,0 +1,1270 @@
+#VRML V2.0 utf8
+#--------------------------------------------------------------
+#
+# S - STEP1
+#
+# author    Hajime Saito
+# version   0.1 (2005.11.01)
+#
+#--------------------------------------------------------------
+
+PROTO Joint 
+[
+ exposedField SFVec3f	center    0 0 0
+ exposedField MFNode	children   []
+ exposedField MFFloat	llimit    []
+ exposedField MFFloat	lvlimit    []
+ exposedField SFRotation	limitOrientation 0 0 1 0
+ exposedField SFString name    ""
+ exposedField SFRotation rotation   0 0 1 0
+ exposedField SFVec3f  scale    1 1 1
+ exposedField SFRotation scaleOrientation 0 0 1 0
+ exposedField MFFloat  stiffness   [ 0 0 0 ]
+ exposedField SFVec3f  translation   0 0 0
+ exposedField MFFloat  ulimit    []
+ exposedField MFFloat  uvlimit    []
+ exposedField SFString jointType   ""
+ exposedField SFInt32  jointId    -1
+ exposedField SFString  jointAxis   "Z"
+
+ exposedField     SFFloat      equivalentInertia     0
+ exposedField     SFFloat      gearRatio     1
+ exposedField     SFFloat      gearEfficiency     1
+ exposedField     SFFloat      rotorInertia  0
+ exposedField     SFFloat      rotorResistor 0
+ exposedField     SFFloat      torqueConst   1
+ exposedField     SFFloat      encoderPulse  1
+]
+{
+   Transform {
+      center    IS center
+      children   IS children
+      rotation   IS rotation
+      scale    IS scale
+      scaleOrientation IS scaleOrientation
+      translation   IS translation
+   }
+}
+
+PROTO Segment 
+[
+ field   SFVec3f  bboxCenter   0 0 0
+ field   SFVec3f  bboxSize   -1 -1 -1
+ exposedField SFVec3f  centerOfMass  0 0 0
+ exposedField MFNode  children   [ ]
+ exposedField SFNode  coord    NULL
+ exposedField MFNode  displacers   [ ]
+ exposedField SFFloat  mass    0
+ exposedField MFFloat  momentsOfInertia [ 0 0 0 0 0 0 0 0 0 ]
+ exposedField SFString name    ""
+ eventIn   MFNode  addChildren
+ eventIn   MFNode  removeChildren
+]
+{
+   Group {
+      addChildren  IS addChildren
+      bboxCenter  IS bboxCenter
+      bboxSize  IS bboxSize
+      children  IS children
+      removeChildren IS removeChildren
+   }
+}
+
+
+PROTO Humanoid 
+[
+ field   SFVec3f  bboxCenter   0 0 0
+ field   SFVec3f  bboxSize   -1 -1 -1
+ exposedField SFVec3f  center    0 0 0
+ exposedField MFNode  humanoidBody  [ ]
+ exposedField MFString info    [ ]
+ exposedField MFNode  joints    [ ]
+ exposedField SFString name    ""
+ exposedField SFRotation rotation   0 0 1 0
+ exposedField SFVec3f  scale    1 1 1
+ exposedField SFRotation scaleOrientation 0 0 1 0
+ exposedField MFNode  segments   [ ]
+ exposedField MFNode  sites    [ ]
+ exposedField SFVec3f  translation   0 0 0
+ exposedField SFString version    "1.1"
+ exposedField MFNode  viewpoints   [ ]
+]
+{
+   Transform {
+      bboxCenter       IS bboxCenter
+      bboxSize         IS bboxSize
+      center           IS center
+      rotation         IS rotation
+      scale            IS scale
+      scaleOrientation IS scaleOrientation
+      translation      IS translation
+      children [
+	 Group {
+	    children IS viewpoints
+	 }
+	 Group {
+	    children IS humanoidBody
+	 }
+      ]
+   }
+}
+
+PROTO VisionSensor
+[
+ exposedField	SFVec3f		translation			0 0 0
+ exposedField	SFRotation	rotation			0 0 1 0
+
+ exposedField	SFFloat		fieldOfView			0.785398
+ field		SFString	name				""
+ exposedField	SFFloat		frontClipDistance		0.01
+ exposedField	SFFloat		backClipDistance		10.0
+ exposedField	SFString	type				"NONE"
+ exposedField	SFInt32		sensorId			-1
+ exposedField	SFInt32		width				320
+ exposedField	SFInt32		height				240
+  exposedField SFFloat    frameRate         30
+]
+{
+   Transform
+   {
+      translation IS translation
+      rotation IS rotation
+   }
+}
+
+PROTO ForceSensor [  
+ exposedField SFVec3f maxForce -1 -1 -1
+  exposedField SFVec3f maxTorque -1 -1 -1
+  exposedField SFVec3f translation 0 0 0
+  exposedField SFRotation rotation 0 0 1 0
+  exposedField SFInt32 sensorId -1
+]
+{
+  Transform {
+translation IS translation
+    rotation IS rotation
+  }
+}
+
+PROTO Gyro 
+[
+ exposedField SFVec3f maxAngularVelocity -1 -1 -1
+ exposedField SFVec3f translation 0 0 0
+ exposedField SFRotation rotation 0 0 1 0
+ exposedField SFInt32 sensorId -1
+]
+{
+   Transform {
+      translation IS translation
+      rotation IS rotation
+   }
+}
+
+PROTO AccelerationSensor 
+[
+ exposedField SFVec3f maxAcceleration -1 -1 -1
+ exposedField SFVec3f translation 0 0 0
+ exposedField SFRotation rotation 0 0 1 0
+ exposedField SFInt32 sensorId -1
+]
+{
+   Transform {
+      translation IS translation
+      rotation IS rotation
+   }
+}
+
+PROTO PressureSensor [
+  exposedField SFFloat maxPressure -1
+  exposedField SFVec3f translation 0 0 0
+  exposedField SFRotation rotation 0 0 1 0
+  exposedField SFInt32 sensorId -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation IS rotation
+  }
+}
+
+PROTO PhotoInterrupter [
+  exposedField SFVec3f transmitter 0 0 0
+  exposedField SFVec3f receiver 0 0 0
+  exposedField SFInt32 sensorId -1
+]
+{
+  Transform{
+    children [
+      Transform{
+        translation IS transmitter
+      }
+      Transform{
+        translation IS receiver
+      }
+    ]
+  }
+}
+
+PROTO CylinderSensorZ [
+    exposedField    SFFloat    maxAngle	      -1
+    exposedField    SFFloat    minAngle        0
+    exposedField    MFNode     children        [ ]
+]
+{
+  Transform{
+    rotation 1 0 0 1.5708
+    children [
+      DEF SensorY CylinderSensor{
+	maxAngle IS maxAngle
+	minAngle IS minAngle
+      }
+      DEF AxisY Transform{
+        children [
+          Transform{
+            rotation 1 0 0 -1.5708
+            children IS children
+          }
+        ]
+      }
+    ]
+  }
+  ROUTE SensorY.rotation_changed TO AxisY.set_rotation
+}
+
+PROTO CylinderSensorY [
+    exposedField    SFFloat    maxAngle	      -1
+    exposedField    SFFloat    minAngle        0
+    exposedField    MFNode     children        [ ]
+]
+{
+  Transform{
+    rotation 0 1 0 1.5708
+    children [
+      DEF SensorX CylinderSensor{
+	maxAngle IS maxAngle
+	minAngle IS minAngle
+      }
+      DEF AxisX Transform{
+        children [
+          Transform{
+            rotation 0 1 0 -1.5708
+            children IS children
+          }
+        ]
+      }
+    ]
+  }
+  ROUTE SensorX.rotation_changed TO AxisX.set_rotation
+}
+
+PROTO CylinderSensorX [
+    exposedField    SFFloat    maxAngle	      -1
+    exposedField    SFFloat    minAngle        0
+    exposedField    MFNode     children        [ ]
+]
+{
+  Transform{
+    rotation 0 0 1 -1.5708
+    children [
+      DEF SensorZ CylinderSensor{
+	maxAngle IS maxAngle
+	minAngle IS minAngle
+      }
+      DEF AxisZ Transform{
+        children [
+          Transform{
+            rotation 0 0 1 1.5708
+            children IS children
+          }
+        ]
+      }
+    ]
+  }
+  ROUTE SensorZ.rotation_changed TO AxisZ.set_rotation
+}
+
+NavigationInfo {
+  avatarSize    0.5
+  headlight     TRUE
+  type  ["EXAMINE", "ANY"]
+}
+
+Background {
+  #skyColor 0.6 0.4 0.4
+  skyColor 0.4 0.6 0.4
+}
+
+Viewpoint {
+  position    3 0 0.835
+  orientation 0.5770 0.5775 0.5775 2.0935
+}
+
+#==================== Root ====================
+
+DEF HRP2STEP1 Humanoid {
+
+   name "HRP2STEP1"
+   version "0.2"
+   info 
+   [
+    "Step 1 of the Project S(for OpenHRP3)"
+    "Author  : Hajime Saito, General Robotix, Inc."
+    "Date    : 2005.11.01,2012.07.31"
+   ]
+
+   humanoidBody  
+   [
+    
+    DEF WAIST Joint {
+       jointType "fixed"
+       translation 0 0 0.450
+       
+       children
+       [
+	  
+	  DEF WAIST_LINK0 Segment {
+#b
+centerOfMass -0.00038809 0.00000166 0.16466017
+mass 3.11081000
+momentsOfInertia [0.03473180 0.00000578 -0.00003341 0.00000578 0.03474816 0.00000063 -0.00003343 0.00000062 0.00438238]
+	     
+	     children [
+		Inline {url "MODEL_B.wrl"}
+	     ]
+	  }
+	  
+	  DEF CHEST_JOINT0 Joint {
+	     jointType "rotate"
+	     jointId  0
+	     #translation 0 0 0.05
+	     translation 0 0 0  
+	     
+	     gearRatio	273
+	     rotorInertia	1.5e-6
+	     encoderPulse 512
+	     torqueConst	0.0704
+	     rotorResistor 12.5
+	     
+	     children 
+	     [
+		
+		DEF CHEST_LINK0 Segment {
+#cy
+centerOfMass -0.00493378 -0.00097682 0.34405202
+mass 6.20761000
+momentsOfInertia [0.06395752 -0.00022833 0.00011172 -0.00022833 0.03108451 0.00006480 0.00011172 0.00006480 0.05011067]
+		   
+		   children [
+		      Transform {
+			 translation -0.00493378 -0.00097682 0.34405202
+			 children Shape {
+			    appearance Appearance {
+			       material Material {
+				  diffuseColor 0.0 2.0 2.0
+			       }
+			    }
+			    geometry Sphere {
+			       radius 0.0075
+			    }
+			 }
+		      }
+		      #Inline { url "axis.wrl" }
+		      Inline { url "CY.wrl"}
+		   ]
+		} # segment CHEST_LINK0
+		
+		#===================== Head - start =======================
+		
+		DEF HEAD_JOINT0 Joint { #head yaw
+		   jointType "rotate"
+		   jointId 1
+		   jointAxis "Z"
+                   #translation 0 0 0.5355
+		   translation 0.0 0 0.4855    #true
+		   rotation 0 0 1 0
+		   #dh [0 0 0 0] # not used
+		   llimit [-0.785398163]  #-45
+		   ulimit [0.785398163]   #+45
+#		   lvlimit [-6.87679]
+#		   uvlimit [ 6.87679]
+		   children [
+		      DEF HEAD_LINK0 Segment {
+			 #HEAD_LINK0
+#ny
+centerOfMass -0.00002292 0.00547848 -0.00784016
+mass 0.31792900
+momentsOfInertia [0.00027682 0.00000003 -0.00000033 0.00000003 0.00013009 -0.00001092 -0.00000033 -0.00001092 0.00020954]
+			 children [
+			    Inline {
+			       url "NY.wrl"
+			    }
+			 ]
+		      } # End of HEAD_LINK0
+		      
+		      DEF HEAD_JOINT1 Joint {  #head pitch
+			 jointType "rotate"
+			 jointId 2
+			 jointAxis "Y"
+                         #translation 0 0 0.05
+			 translation 0 0 0   
+			 rotation 0 1 0 0
+			 #dh [0 0 0 0] # not used
+			 llimit [-0.523598775]  #-30
+			 ulimit [0.785398163]   #+45
+			 #			       lvlimit [-6.87679]
+			 #			       uvlimit [ 6.87679]
+			 children [
+			    DEF HEAD_LINK1 Segment {
+			       #HEAD_LINK1
+#np
+centerOfMass 0.00000502 -0.01667768 0.01631533
+mass 0.08085931
+momentsOfInertia [0.00008070 -0.00000003 -0.00000000 -0.00000003 0.00003025 -0.00001277 -0.00000000 -0.00001277 0.00006637]
+			       children [
+				  Inline {
+				     url "NP.wrl"
+				  }
+			       ]
+			    } # End of HEAD_LINK1
+			 ]
+		      } # End of HEAD_JOINT1
+		   ]
+		} # End of HEAD_JOINT0
+
+		#===================== Head - end =======================
+		
+		#==================== Right Arm ====================
+		
+		DEF RARM_JOINT0 Joint { # Yaw
+		   jointType "rotate"
+		   jointAxis "Z"
+		   jointId    3
+		   
+                   #translation 0 -0.25 0.3
+		   translation 0.00 -0.150 0.3550  
+		   rotation   1 0 0  0.261799
+		   
+		   gearRatio	273
+		   rotorInertia	1.5e-6
+		   encoderPulse	512
+		   torqueConst	0.0704
+		   rotorResistor	12.5
+		   
+		   children [
+		      
+		      DEF RARM_LINK0 Segment {
+			 
+#rsy
+centerOfMass -0.00226388 0.00521383 0.01560807
+mass 1.32626000
+momentsOfInertia [0.00207537 -0.00011276 0.00008927 -0.00011276 0.00240295 0.00004570 0.00008927 0.00004570 0.00141912]
+			 
+			 children [ 
+			    # RARM_LINK0 Center of Mass
+			    Transform {
+			       translation -0.00226388 0.00521383 0.01560807
+			       children Shape {
+				  appearance Appearance {
+				     material Material {
+					diffuseColor 0.0 2.0 2.0
+				     }
+				  }
+				  geometry Sphere {
+				     radius 0.0075
+				  }
+			       }
+			    }
+			    # RARM_LINK0 Center of Axis
+			    Transform {
+			       children Shape {
+				  appearance Appearance {
+				     material Material {
+					diffuseColor 2.0 2.0 0.0
+				     }
+				  }
+				  geometry Sphere {
+				     radius 0.005
+				  }
+			       }
+			    }
+			    #Inline { url "axis.wrl" }
+			    Inline { url "RSY.wrl" } 
+			 ]
+			 
+			 
+		      } # Endof Segment RARM_LINK0
+		      
+		      DEF RARM_JOINT1 Joint { # Pitch
+			 jointType "rotate"
+			 jointAxis "Y"
+			 jointId 4
+
+                         #translation 0 -0.05 0
+			 translation  0.0 0.0 0.0     
+			 
+			 gearRatio	200
+			 rotorInertia	4.2e-6
+			 encoderPulse	512
+			 torqueConst	0.762
+			 rotorResistor	6.56
+			 
+			 children [
+			    DEF RARM_LINK1 Segment {
+#rsp
+centerOfMass -0.00005236 -0.05831338 -0.10706059
+mass 1.14898000
+momentsOfInertia [0.01541678 -0.00000097 0.00000352 -0.00000098 0.01471175 -0.00213705 0.00000351 -0.00213704 0.00126575]
+			       
+			       children [
+				  # RARM_LINK1 COM
+				  Transform {
+				     translation -0.00005236 -0.05831338 -0.10706059
+				     children Shape {
+					appearance Appearance {
+					   material Material {
+					      diffuseColor 2.0 0.0 0.0
+					   }
+					}
+					geometry Sphere {
+					   radius 0.0075
+					}
+				     }
+				  }
+				  # RARM_LINK1 Center of Axis
+				  Transform {
+				     children Shape {
+					appearance Appearance {
+					   material Material {
+					      diffuseColor 2.0 2.0 0.0
+					   }
+					}
+					geometry Sphere {
+					   radius 0.005
+					}
+				     }
+				  }
+				  #Inline { url "axis.wrl" }
+				  Inline { url "RSP.wrl" } 
+			       ]
+			       
+			    } # Segment RARM_LINK1
+			    
+			    DEF RARM_JOINT2 Joint { # Elbow Pitch
+			       jointType "rotate"
+			       jointId 5
+			       jointAxis   "Y"
+			       
+                               #translation 0 -0.08 -0.350
+			       translation 0 -0.080 -0.250  
+			       
+			       gearRatio		200
+			       rotorInertia	1.5e-6
+			       encoderPulse	512
+			       torqueConst	0.0704
+			       rotorResistor	12.5
+			       
+			       children [
+				  DEF RARM_LINK2 Segment {
+#rep
+centerOfMass -0.00002254 -0.00167107 -0.07151163
+mass 0.57751838
+momentsOfInertia [0.00143966 0.00000030 0.00000120 0.00000030 0.00141763 0.00007596 0.00000120 0.00007596 0.00019720]
+				     
+				     children [ 
+					# RARM_LINK2 Center of Mass
+					Transform {
+					   translation -0.00002254 -0.00167107 -0.07151163
+					   children Shape {
+					      appearance Appearance {
+						 material Material {
+						    diffuseColor 0.0 2.0 2.0
+						 }
+					      }
+					      geometry Sphere {
+						 radius 0.0075
+					      }
+					   }
+					}
+					# RARM_LINK2 Center of Axis
+					Transform {
+					   children Shape {
+					      appearance Appearance {
+						 material Material {
+						    diffuseColor 2.0 2.0 0.0
+						 }
+					      }
+					      geometry Sphere {
+						 radius 0.005
+					      }
+					   }
+					}
+					#Inline { url "axis.wrl" }
+					Inline { url "REP2.wrl"} 
+				     ]
+				     
+				  } # Segment RARM_LINK2
+				  
+				  DEF RARM_JOINT3 Joint { # Wrist Yaw
+				     jointType "rotate"
+				     jointId 6
+				     jointAxis "Z"
+                                     #translation    -0.02 0 -0.05
+				     translation     -0.02 0.0 0.0
+				     
+				     gearRatio		100
+				     rotorInertia		3.74e-7
+				     encoderPulse		512
+				     torqueConst		0.0613
+				     rotorResistor	57.9
+				     
+				     children [
+					DEF RARM_LINK3 Segment {
+#rwy
+centerOfMass -0.00001788 0.00395812 -0.20273050
+mass 0.45741788
+momentsOfInertia [0.00069205 -0.00000003 0.00000052 -0.00000003 0.00068903 0.00001915 0.00000052 0.00001915 0.00013509]
+					   
+					   children [ 
+					      # RARM_LINK3 Center of Mass
+					      Transform {
+						 translation 0.00243131 -0.00379733 -0.05770359
+						 children Shape {
+						    appearance Appearance {
+						       material Material {
+							  diffuseColor 0.0 2.0 0.0
+						       }
+						    }
+						    geometry Sphere {
+						       radius 0.0075
+						    }
+						 }
+					      }
+					      # RARM_LINK3 Center of Axis
+					      Transform {
+						 children Shape {
+						    appearance Appearance {
+						       material Material {
+							  diffuseColor 2.0 2.0 0.0
+						       }
+						    }
+						    geometry Sphere {
+						       radius 0.005
+						    }
+						 }
+					      }
+					      #Inline { url "axis.wrl" } 
+					      Inline { url "RWY.wrl" } 
+					   ]
+					}
+					
+					DEF RARM_JOINT4 Joint { # Wrist Pitch
+					   jointType "rotate"
+					   jointId 7
+					   jointAxis "Y"
+                                           #translation  0 0 -0.28
+					   translation   0 0.0 -0.230
+
+					   gearRatio	200
+					   rotorInertia	3.74e-7
+					   encoderPulse	512
+					   torqueConst	0.0613
+					   rotorResistor	57.9
+
+					   children [
+					      DEF RARM_LINK4 Segment {
+#rwp
+centerOfMass 0.00243131 -0.00379733 -0.05770359
+mass 0.41843443
+momentsOfInertia [0.00052016 -0.00000169 0.00000790 -0.00000169 0.00050569 0.00005377 0.00000790 0.00005377 0.00014004]
+						 
+						 children [ 
+						    # RARM_LINK4 Center of Mass
+						    Transform {
+						       translation 0.00243131 -0.00379733 -0.05770359
+						       children Shape {
+							  appearance Appearance {
+							     material Material {
+								diffuseColor 0.0 2.0 2.0
+							     }
+							  }
+							  geometry Sphere {
+							     radius 0.0075
+							  }
+						       }
+						    }
+						    # RARM_LINK4 Center of Axis
+						    Transform {
+						       children Shape {
+							  appearance Appearance {
+							     material Material {
+								diffuseColor 2.0 2.0 0.0
+							     }
+							  }
+							  geometry Sphere {
+							     radius 0.005
+							  }
+						       }
+						    }
+						    #Inline { url "axis.wrl" }
+						    Inline { url "RWP.wrl"} 
+						 ]
+
+					      } # Segment RARM_LINK4
+					      
+					      DEF RARM_JOINT5 Joint {
+						 jointType "rotate"
+						 jointId 8
+						 jointAxis "X"
+
+						 translation  -0.0486  0.0 -0.092   
+        				         #translation  -0.1396  0 -0.092						
+						 #rotation 1 0 0 -0.531117
+						 
+						 gearRatio		200
+						 rotorInertia	1.890e-7
+						 encoderPulse	512
+						 torqueConst	0.469
+						 rotorResistor	78.8
+
+						 children [
+						    DEF RARM_LINK5 Segment {
+						    #rwr
+						    centerOfMass -0.04847597 0.00000320 -0.03889875
+						    mass 1.05156000
+						    momentsOfInertia [0.00194072 -0.00000011 -0.00042482 -0.00000011 0.00209392 -0.00000012 -0.00042482 -0.00000012 0.00035788]
+						    						       
+						       children [ 
+
+							DEF lfsensor ForceSensor {
+                               				    	     	translation 0 0 0.0
+                                  						rotation 1 0 0 0
+				  				sensorId 0
+                                					 }
+							  # RARM_END Effecter
+#							  Transform { 
+#							     translation 0.009  0.0 0.0
+#							     #translation -0.0396  0.0 -0.092
+#							     children Shape {
+#								appearance Appearance {
+#								   material Material {
+#								      diffuseColor 1.0 1.0 1.0
+#								   }
+#								}
+#								geometry Sphere {
+#								   radius 0.0075
+#								}
+#							     }
+#							  }
+#
+#							 #Inline { url "RWR.wrl" } 
+#							 #Inline { url "HandA.wrl" }
+#							 Inline {url "male_camera_Xeff.wrl" }
+
+							 ##### CAMERA ####
+							  Transform { 
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 1.0 1.0 1.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.0075
+								}
+							     }
+							  }
+                                                          #The position of the end-effector in the code 
+                                                          Transform {
+                                                             translation -0.051 0.002 -0.0225
+                                                             children Shape {
+                                                               appearance Appearance {
+                                                                  material Material {
+                                                                    diffuseColor 1.0 0 0
+                                                                  }
+                                                                }
+                                                               geometry Sphere {
+                                                                 radius 0.001
+                                                              }
+                                                            }   
+                                                          }
+                                                          #The positon of the fs in the code
+                                                          Transform {
+                                                            translation 0.02775 0.002 -0.0225
+                                                            children Shape {
+                                                              appearance Appearance {
+                                                                material Material {
+                                                                  diffuseColor 1 1 0
+                                                                }
+                                                             }
+                                                              geometry Sphere {
+                                                               radius 0.005
+                                                              }
+                                                           }
+                                                         }
+                                                         
+
+							 Inline {url "upper_vrml97_10000_point.wrl" }
+							 									     	     
+						          ] # End children
+						    } # End of Segment RARM_LINK5
+                                                                                       ]
+
+					      } # Joint RARM_JOINT5
+					      
+					   ]
+					} # Joint RARM_JOINT4
+					
+				     ]
+				  } # Joint RARM_JOINT3
+				  
+			       ]
+			    } # Joint RARM_JOINT2
+			    
+			 ]
+		      } # Joint RARM_JOINT1
+		      
+		   ]
+		} # Joint RARM_JOINT0
+
+		#==================== Left Arm ====================
+
+		DEF LARM_JOINT0 Joint {
+		   jointType "rotate"
+		   jointAxis "Z"
+		   jointId    9
+		   #translation 0 0.25 0.3
+		   translation 0.0 0.150 0.355 
+		   rotation   1 0 0  -0.261799
+
+		   gearRatio	273
+		   rotorInertia	1.5e-6
+		   encoderPulse	512
+		   torqueConst	0.0704
+		   rotorResistor	12.5
+		   
+		   children [
+		      
+		      DEF LARM_LINK0 Segment {
+#lsy
+centerOfMass -0.00226388 -0.00521383 0.01560807
+mass 1.32626000
+momentsOfInertia [0.00207537 0.00011276 0.00008927 0.00011276 0.00240295 -0.00004570 0.00008927 -0.00004570 0.00141912]
+			 
+			 children [ 
+			    # LARM_LINK0 Center of Mass
+			    Transform {
+			       translation -0.00226388 -0.00521383 0.01560807
+			       children Shape {
+				  appearance Appearance {
+				     material Material {
+					diffuseColor 0.0 2.0 2.0
+				     }
+				  }
+				  geometry Sphere {
+				     radius 0.0075
+				  }
+			       }
+			    }
+			    # LARM_LINK0 Center of Axis
+			    Transform {
+			       children Shape {
+				  appearance Appearance {
+				     material Material {
+					diffuseColor 2.0 2.0 0.0
+				     }
+				  }
+				  geometry Sphere {
+				     radius 0.005
+				  }
+			       }
+			    }
+			    #Inline { url "axis.wrl" }
+			    Inline { url "LSY.wrl" } 
+			 ]
+
+			 
+		      } # Endof Segment LARM_LINK0
+		      
+		      DEF LARM_JOINT1 Joint {
+			 jointType "rotate"
+			 jointAxis "Y"
+			 jointId 10
+			 translation  0.0 0.0 0.0 
+                         #translation 0 0.05 0
+			 gearRatio	200
+			 rotorInertia	4.2e-6
+			 encoderPulse	512
+			 torqueConst	0.762
+			 rotorResistor	6.56
+			 
+			 children [
+			    DEF LARM_LINK1 Segment {
+#lsp
+centerOfMass -0.00005236 0.05831338 -0.10706059
+mass 1.14898000
+momentsOfInertia [0.01541678 0.00000097 0.00000352 0.00000098 0.01471175 0.00213705 0.00000351 0.00213704 0.00126575]
+			       
+			       children [
+				  # LARM_LINK1 COM
+				  Transform {
+				     #translation -0.00005236 0.05831338 -0.10706059
+				     translation 0.000 0.0897 -0.1223
+				     children Shape {
+					appearance Appearance {
+					   material Material {
+					      diffuseColor 2.0 0.0 0.0
+					   }
+					}
+					geometry Sphere {
+					   radius 0.0075
+					}
+				     }
+				  }
+				  # LARM_LINK1 Center of Axis
+				  Transform {
+				     children Shape {
+					appearance Appearance {
+					   material Material {
+					      diffuseColor 2.0 2.0 0.0
+					   }
+					}
+					geometry Sphere {
+					   radius 0.005
+					}
+				     }
+				  }
+				  #Inline { url "axis.wrl" }
+				  Inline { url "LSP.wrl" } 
+			       ]
+
+			    } # Segment LARM_LINK1
+
+			    DEF LARM_JOINT2 Joint {
+			       jointType "rotate"
+			       jointId 11
+			       jointAxis   "Y"
+
+			       translation 0 0.080 -0.250 
+                               #translation 0 0.08 -0.350
+
+			       gearRatio		200
+			       rotorInertia	1.5e-6
+			       encoderPulse	512
+			       torqueConst	0.0704
+			       rotorResistor	12.5
+			       
+			       children [
+				  DEF LARM_LINK2 Segment {
+#lep
+centerOfMass -0.00002254 0.00167107 -0.07151163
+mass 0.57751838
+momentsOfInertia [0.00143966 -0.00000030 0.00000120 -0.00000030 0.00141763 -0.00007596 0.00000120 -0.00007596 0.00019720]
+
+				     children [ 
+					# LARM_LINK2 Center of Mass
+					Transform {
+					   translation -0.00002254 0.00167107 -0.07151163
+					   children Shape {
+					      appearance Appearance {
+						 material Material {
+						    diffuseColor 0.0 2.0 2.0
+						 }
+					      }
+					      geometry Sphere {
+						 radius 0.0075
+					      }
+					   }
+					}
+					# LARM_LINK2 Center of Axis
+					Transform {
+					   children Shape {
+					      appearance Appearance {
+						 material Material {
+						    diffuseColor 2.0 2.0 0.0
+						 }
+					      }
+					      geometry Sphere {
+						 radius 0.005
+					      }
+					   }
+					}
+					#Inline { url "axis.wrl" }
+					Inline { url "LEP2.wrl"} 
+				     ]
+
+				  } # Segment LARM_LINK2
+				  
+				  DEF LARM_JOINT3 Joint {
+				     jointType "rotate"
+				     jointId 12
+				     jointAxis "Z"
+
+                                     #translation    -0.02 0 -0.05
+				     translation     -0.02 0.0 0.0
+				     
+				     gearRatio		100
+				     rotorInertia		3.74e-7
+				     encoderPulse		512
+				     torqueConst		0.0613
+				     rotorResistor	57.9
+
+				     children [
+					DEF LARM_LINK3 Segment {
+#lwy
+centerOfMass -0.00001788 -0.00395812 -0.20273050
+mass 0.45741788
+momentsOfInertia [0.00069205 0.00000003 0.00000052 0.00000003 0.00068903 -0.00001915 0.00000052 -0.00001915 0.00013509]
+					   
+					   children [ 
+					      # LARM_LINK3 Center of Mass
+					      Transform {
+						 translation 0.0 0.00135013 -0.0960
+						 children Shape {
+						    appearance Appearance {
+						       material Material {
+							  diffuseColor 0.0 2.0 0.0
+						       }
+						    }
+						    geometry Sphere {
+						       radius 0.0075
+						    }
+						 }
+					      }
+					      # LARM_LINK3 Center of Axis
+					      Transform {
+						 children Shape {
+						    appearance Appearance {
+						       material Material {
+							  diffuseColor 2.0 2.0 0.0
+						       }
+						    }
+						    geometry Sphere {
+						       radius 0.005
+						    }
+						 }
+					      }
+					      #Inline { url "axis.wrl" } 
+					      Inline { url "LWY.wrl" } 
+					   ]
+					}
+					
+					DEF LARM_JOINT4 Joint {
+					   jointType "rotate"
+					   jointId 13
+					   jointAxis "Y"
+
+					   translation   0 0.0 -0.230
+                                           #translation 0 0 -0.28
+
+					   gearRatio	200
+					   rotorInertia	3.74e-7
+					   encoderPulse	512
+					   torqueConst	0.0613
+					   rotorResistor	57.9
+
+					   children [
+					      DEF LARM_LINK4 Segment {
+#lwp
+centerOfMass 0.00243131 0.00379733 -0.05770359
+mass 0.41843443
+momentsOfInertia [0.00052016 0.00000169 0.00000790 0.00000169 0.00050569 -0.00005377 0.00000790 -0.00005377 0.00014004]
+						 
+						 children [ 
+						    # LARM_LINK4 Center of Mass
+						    Transform {
+						       translation 0.00243131 0.00379733 -0.05770359
+						       children Shape {
+							  appearance Appearance {
+							     material Material {
+								diffuseColor 0.0 2.0 2.0
+							     }
+							  }
+							  geometry Sphere {
+							     radius 0.0075
+							  }
+						       }
+						    }
+						    # LARM_LINK4 Center of Axis
+						    Transform {
+						       children Shape {
+							  appearance Appearance {
+							     material Material {
+								diffuseColor 2.0 2.0 0.0
+							     }
+							  }
+							  geometry Sphere {
+							     radius 0.005
+							  }
+						       }
+						    }
+						    #Inline { url "axis.wrl" }
+						    Inline { url "LWP.wrl"} 
+						 ]
+
+					      } # Segment LARM_LINK4
+					      
+					      DEF LARM_JOINT5 Joint {
+						 jointType "rotate"
+						 jointId 14
+						 jointAxis "X"
+
+						 #translation  -0.030  0.0 -0.100
+						 translation  -0.019  0.0 -0.080
+						 
+						 gearRatio		200
+						 rotorInertia	1.890e-7
+						 encoderPulse	512
+						 torqueConst	0.469
+						 rotorResistor	78.8
+
+						 children [
+						    DEF LARM_LINK5 Segment {
+#lwr
+centerOfMass -0.04847597 -0.00000320 -0.03889875
+mass 1.05156000
+momentsOfInertia [0.00194072 0.00000011 -0.00042482 0.00000011 0.00209392 0.00000012 -0.00042482 0.00000012 0.00035788]
+						       
+						       children [ 
+							  # LARM_LINK5 Center of Mass
+							  Transform {
+							     translation -0.04847597 -0.00000320 -0.03889875
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 2.0 0.0 0.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.0075
+								}
+							     }
+							  }
+							  # LARM_LINK5 Center of Axis
+							  Transform {
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 2.0 2.0 0.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.005
+								}
+							     }
+							  }
+							  
+							  # 							    # LARM_PAYLOAD
+							  # 							    Transform { 
+							  # 							       #translation -0.061 0.0 -0.002
+							  # 							       translation -0.070 0.0 -0.080
+							  # 							       children Shape {
+							  # 								  appearance Appearance {
+							  # 								     material Material {
+							  # 									diffuseColor 0.0 2.0 2.0
+							  # 								     }
+							  # 								  }
+							  # 								  geometry Sphere {
+							  # 								     radius 0.0075
+							  # 								  }
+							  # 							       }
+							  # 							    }
+							  
+							  # LARM_CLAW
+							  Transform { 
+							     #translation -0.0225  0.010 -0.0301
+							     translation -0.0061  0.0 -0.002
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 1.0 1.0 1.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.0075
+								}
+							     }
+							  }
+
+							  #Inline { url "axis.wrl" }
+							  Inline { url "WR.wrl" } 
+							  #Inline { url "larm-clawL.wrl" } 
+							  #Inline { url "larm-clawR.wrl" }
+						       ]
+
+						    } # End of Segment LARM_LINK5
+						    
+						 ]
+					      } # Joint LARM_JOINT5
+					      
+					   ]
+					} # Joint LARM_JOINT4
+					
+				     ]
+				  } # Joint LARM_JOINT3
+				  
+			       ]
+			    } # Joint LARM_JOINT2
+			    
+			 ]
+		      } # Joint LARM_JOINT1
+		      
+		   ]
+		} # Joint LARM_JOINT0
+
+	     ]
+	  } # Joint CHEST_JOINT0
+	  
+       ]
+    } # Joint WAIST
+    
+   ]
+
+   
+   # List up all the joints' name you use
+   joints 
+   [
+    USE WAIST,
+    USE CHEST_JOINT0,
+    
+    USE HEAD_JOINT0,
+    USE HEAD_JOINT1,
+
+    USE RARM_JOINT0,
+    USE RARM_JOINT1,
+    USE RARM_JOINT2,
+    USE RARM_JOINT3,
+    USE RARM_JOINT4,
+    USE RARM_JOINT5,
+    
+    USE LARM_JOINT0,
+    USE LARM_JOINT1,
+    USE LARM_JOINT2,
+    USE LARM_JOINT3,
+    USE LARM_JOINT4,
+    USE LARM_JOINT5,
+   ]
+
+   # List up all the segments' name you use
+   segments 
+   [
+    USE WAIST_LINK0,
+    USE CHEST_LINK0,
+    
+    USE HEAD_LINK0,
+    USE HEAD_LINK1,
+
+    USE RARM_LINK0,
+    USE RARM_LINK1,
+    USE RARM_LINK2,
+    USE RARM_LINK3,
+    USE RARM_LINK4,
+    USE RARM_LINK5,
+
+    USE LARM_LINK0,
+    USE LARM_LINK1,
+    USE LARM_LINK2,
+    USE LARM_LINK3,
+    USE LARM_LINK4,
+    USE LARM_LINK5,
+   ]
+}

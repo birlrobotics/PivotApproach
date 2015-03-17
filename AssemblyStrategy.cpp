@@ -11,7 +11,9 @@
 // ----------------------------------------------------- PLEASE SEE MORE DESIGN PARAMETERS IN hiroArm ------------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
-#define HIRO					1
+#define HIRO					0
+// ==== Diro:: new the Flag  ======
+#define TWOARM_HIRO				1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSEMBLY_STRATEGY_AUTOMATA STATES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -19,11 +21,11 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE   0.0
-#define ANGLE_DEVIATION_MAGNITDUE  0.0
+#define PATH_DEVIATION_MAGNITUDE  0.0104
+#define ANGLE_DEVIATION_MAGNITDUE 0.1826
 											// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
 											// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
-											// RollDir 0.08725, 0.1745, 0.2618, 0.3490, 0.4363, 0.5235
+											// xRoll 0.1745, 0.3490, 0.5235
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -41,13 +43,18 @@
 // Vertical Axes in WORLD coordinates using a right handed coordinate system: +Z:Up, +Y:Right, +X:Out
 #if(PA10==1)
 	#define UP_AXIS  			2   		// Defines the local wrist axis for a robot. Used to set desired forces.
-#else // HIRO
+#elif(HIRO==1) // HIRO
 	#define UP_AXIS  			0			// x becomes up/down after transform
 	#define FWD_AXIS			2			// z becomes backward/forward after transform
 	#define SIDE_AXIS 			1
+#else //TWO_ARM HIRO
+	#define UP_AXIS				1		//+ down after transform
+	#define FWD_AXIS			2		//+ forward after transform
+	#define SIDE_AXIS			0		//+ left after transform
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Default Constructor
@@ -106,6 +113,15 @@ AssemblyStrategy::AssemblyStrategy()
       DesIKin(5) = -3.1415;
     }
   else if(HIRO)
+    {
+      DesIKin(0) =  0.0000;
+      DesIKin(1) = -0.7330;
+      DesIKin(2) =  0.0075;
+      DesIKin(3) =  3.1415;
+      DesIKin(4) =  0.0000;
+      DesIKin(5) = -3.1415;
+    }
+  else if(TWOARM_HIRO)
     {
       DesIKin(0) =  0.0000;
       DesIKin(1) = -0.7330;
@@ -226,6 +242,15 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 		DesIKin(4) =  0.0000;
 		DesIKin(5) = -3.1415;
 	}
+	else if(TWOARM_HIRO)
+		{
+			DesIKin(0) =  0.0000;
+			DesIKin(1) = -0.7330;
+			DesIKin(2) =  0.0075;
+			DesIKin(3) =  3.1415;
+			DesIKin(4) =  0.0000;
+			DesIKin(5) = -3.1415;
+		}
 	else
 		for(int i=0; i<6; i++) DesIKin(i)=0.0;
 
@@ -262,8 +287,7 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	EndEff_p_org			= base2endEffectorPos;
 	wrist_p = EndEff_p_org;
 
-	// Deviation setup
-	for(int i=0;i < 6; i++) deviation[i] = 0;
+	divPoint(0) = 0;
 
 	#ifdef DEBUG_PLUGIN3
 		std::cerr << "The EndEffector position during the constructor is: " << wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2) << std::endl;
@@ -317,10 +341,10 @@ AssemblyStrategy::~AssemblyStrategy()
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char AnglesDir[STR_LEN], char CartPosDir[STR_LEN], char StateDir[STR_LEN], char ForcesDir[STR_LEN],
 									 vector3 pos, matrix33 rot, double CurAngles[15],
-									 int strategyType, int controlMethodType, double* d)
+									 int strategyType, int controlMethodType)
 {
 #ifdef DEBUG_PLUGIN3
-  std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;
+  std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;	
   std::cerr << "\n These are the file names: \n" << TrajState1 << "\n" << TrajState2 << "\n" << AnglesDir << "\n" << CartPosDir << "\n" << StateDir << "\n" << ForcesDir << "\n" << std::endl;
 #endif
 
@@ -359,7 +383,7 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - extract information from waypoint file: " << strTrajState1 << std::endl;	
 #endif	
-
+		
   //--------------------------------------------------------------------------------------------------------------------------------
   // 3) Reassign original end effector position and rotation
   //--------------------------------------------------------------------------------------------------------------------------------
@@ -367,21 +391,21 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   wrist_r = EndEff_r_org;
 
   EndEff_p_org			= pos;
-  wrist_p = EndEff_p_org;
+  wrist_p = EndEff_p_org;		
 
-#ifdef DEBUG_PLUGIN3
+#ifdef DEBUG_PLUGIN3		
   // Cartesian Position
   std::cerr 	<< "/--------------------------------------------------------------------------------------------------------------------------------------------------------------------/\n"
-    "AssemblyStrategy::Initialize(): \nThe EndEffector position during initialization is: "
-		<< wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2)
+    "AssemblyStrategy::Initialize(): \nThe EndEffector position during initialization is: " 
+		<< wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2)  
     // Joint Angles
-		<< "\n\nThe 15 body joint angles in radians are: "
+		<< "\n\nThe 15 body joint angles in radians are: " 
 		<< CurAngles[0] << "\t" << CurAngles[1] << "\t" << CurAngles[2] << "\t" << CurAngles[3] << "\t" << CurAngles[4] << "\t" << CurAngles[5] << "\t"
-		<< CurAngles[6] << "\t" << CurAngles[7] << "\t" << CurAngles[8] << "\t" << CurAngles[9] << "\t" << CurAngles[10] << "\t" << CurAngles[11]
-		<< CurAngles[12] << "\t" << CurAngles[13] << "\t" << CurAngles[14] << "\t"
+		<< CurAngles[6] << "\t" << CurAngles[7] << "\t" << CurAngles[8] << "\t" << CurAngles[9] << "\t" << CurAngles[10] << "\t" << CurAngles[11]  
+		<< CurAngles[12] << "\t" << CurAngles[13] << "\t" << CurAngles[14] << "\t"     
 		<< "\n/--------------------------------------------------------------------------------------------------------------------------------------------------------------------/" << std::endl;
 #endif
-
+		
   vector3 rpy=rpyFromRot(rot);
 
   // Extract information from the way point file for state 1
@@ -426,6 +450,13 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	  approachType = SideApproach;
   }
 
+  // ==== Diro ======
+  else if(strategyType==TwoArm_HSA)
+  {
+	  approachFlag = false;
+	  approachType = TwoArm_HSA;
+  }
+
   else if(strategyType==FailureCharacerization)
   {
 	  approachFlag = false;
@@ -436,15 +467,28 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	  // Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
 
 	  // Keep the z-axis and the pitch at zero
-//	  divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
-//
-//	  divPoint(0) 						= 0.0100;			// x-axis
-//	  divPoint(1) 						=-0.0100; 			// y-axis
-//	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;			// z-axis
-//	  else		  		   divPoint(2) 	= 0.000;			// If there is deviation in the x-axis, then we need to add a devaition in the z-axis with value of -0.005 such that there is contact after moving forward.
-//	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
-//	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
+	  divPoint(2)=0; divPoint(4)=0;
 
+	  // Axis to Modify
+	  // These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
+	  // Test xDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xDir3 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir3 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xRollDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test xRollDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test x-yDir  divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test x-xRoll divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test yDir-xRoll divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+	  // Test x-y-xRoll  divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
+
+	  divPoint(0) =     0.00;	// x-axis
+	  divPoint(1) =     0.0083; 						// y-axis
+	  divPoint(2) =     0.00;						// z-axis
+	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;	// ROLL PATH_DEVIATION_MAGNITUDE
+	  divPoint(5) =    0.00;						// YALL
   }
 
   // For the first iteration they are both the same.
@@ -453,21 +497,7 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   //--------------------------------------------------------------------------------------------------------------------------------
   // 5) Filter Class Allocation
   //--------------------------------------------------------------------------------------------------------------------------------
-  if (ft != NULL)
-	delete ft;
   ft = new FilterTools();
-
-  //--------------------------------------------------------------------------------------------------------------------------------
-  // 6) Loop back init
-  ctrlInitFlag = true;
-  for (int i=0;i < 6;i ++) { 
-	  if (d == 0) deviation[i] = 0;
-	  else        deviation[i] = d[i];
-	avgSig(i) = 0;
-  }
-
-
-  this->State = 1;
 
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - exited" << std::endl;
@@ -506,7 +536,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 										dmatrix 		Jacobian,			/*in*/
 										dmatrix 		PseudoJacobian) 	/*in*/
 {
-	/*----------------------------- Local variables ----------------------------------------*/
+	/*----------------------------- Local variables ----------------------------------------*/     //Gray
 	//float 		MaxErrNorm = 0.0;
 	int 		ret = 0;
 
@@ -536,9 +566,13 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			temp[i]=currForces(i);
 
 		ft->LowPassFilter(temp,filteredSig);
+//		ft->LowPassFilter(currForces,avgSig);
+//		ft->secOrderFilter(temp,filteredSig);
+//		ft->secOrderFilter(currForces,avgSig);
 
 		for(int i=0;i<6;i++)
 			avgSig(i) = filteredSig[i];
+		//ft->LowPassFilter(currForces,avgSig);
 	}
 	else
 		avgSig = currForces;
@@ -697,7 +731,6 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	/*---------------------------------------------------------------------- SIDE APPROACH ------------------------------------------------------------------------*/
 	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
-		//std::cout<<"State Machine "<<State<<std::endl;
 		switch (State)
 		{
 		/*-------------------------------------------------- Approach --------------------------------------------------*/
@@ -752,7 +785,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 				nextState	 	= false;
 				ctrlInitFlag 	= false;
 				// Set up a new trajectory file with current information
-//				ProcessTrajFile(strTrajState2,State,pos,CurRPY,cur_time);
+				ProcessTrajFile(strTrajState2,State,pos,CurRPY,cur_time);
 				EndEff_p_org = pos;
 				EndEff_r_org = CurRPY;
 			}
@@ -882,6 +915,306 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		// case hsaFinsih
 		}
 	}
+
+	// =====Diro=========
+	else if(approach==TwoArm_HSA)
+	{
+		switch(State)
+		{
+
+		// ------------------------ Approach --------------------------
+		case twoArm_hsaApproach:
+		{
+			//Initialize
+			if(ctrlInitFlag)
+			{
+				// ensure that the original end-effector position and orientation are set correctly.
+				EndEff_r_org = rpyFromRot(rot);
+				wrist_r	=	EndEff_r_org;
+
+				EndEff_p_org = pos;
+				wrist_p = EndEff_p_org;
+
+				nextState = false;
+				ctrlInitFlag = false;
+
+				std::cerr << "Diro :: on the Approach state, now: " << cur_time << std::endl;
+			}
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+		// ------------------- Rotation ---------------------------
+		case twoArm_hsaRotation:
+		{
+			if(ctrlInitFlag)
+			{
+				nextState = false;
+				ctrlInitFlag = false;
+
+				// set up a new trajectory file with current information
+				ProcessTrajFile(strTrajState2, State, pos, CurRPY, cur_time);
+				EndEff_p_org = pos;
+				EndEff_r_org = CurRPY;
+
+				std::cerr << "Diro :: on the Rotation state, now: " << cur_time << std::endl;
+			}
+
+#ifdef SIMULATION
+			/*------------------------ WORLD COORDINATES -------------------------------*/
+			// +X: Downwards
+			// +Y: Moves right
+			// +Z: Moves forward (and a bit left)
+//			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;  //10
+			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
+//			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE; //4
+//			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+			DesForce(FWD_AXIS) 	=	-13.85;//-32.000*TRANSVERSE_FORCE;
+			DesForce(UP_AXIS)	=	-7.18;//-0.5*VERTICAL_FORCE;
+			DesForce(SIDE_AXIS)	=	6.5;//1.0*HORIZONTAL_FORCE;
+
+			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+#else
+			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
+			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+			DesForce(FWD_AXIS) 	= -20*TRANSVERSE_FORCE;
+			DesMoment(1) 		= 2.100*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach,
+//					MomentForceComposition,  DesMoment,DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+
+		// ----------------------- Insertion Controller ------------------
+		case twoArm_hsaInsertion:
+		{
+			// Initialize
+			if(ctrlInitFlag)
+			{
+				nextState 		= false;
+				ctrlInitFlag 	= false;
+
+				std::cerr << "Diro :: on the Insertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+
+//			DesForce(UP_AXIS)		=	1.300*VERTICAL_FORCE;		//13.0
+//			DesForce(SIDE_AXIS)		=	2.000*HORIZONTAL_FORCE;		//0.60
+//			DesForce(FWD_AXIS)		= -13.000*TRANSVERSE_FORCE;		//-3.25
+
+			DesForce(FWD_AXIS) 	=	-13.85;
+			DesForce(UP_AXIS)	=	-7.00;
+			DesForce(SIDE_AXIS)	=	6.5;
+
+			DesMoment(1)			=	3.750*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+
+		case twoArm_hsaSubInsertion:
+		{
+			if(ctrlInitFlag)
+			{
+				nextState	=	false;
+				ctrlInitFlag	=	false;
+
+				std::cerr << "Diro :: on the SubInsertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+//			DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
+			DesForce(UP_AXIS)	=	-5.90;
+			DesForce(SIDE_AXIS) =	11.50;
+			DesForce(FWD_AXIS) 	=	-12.10;
+			DesMoment(1)			=	4.00*ROTATIONAL_FORCE;
+#endif
+
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+
+			ret = StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+
+		case twoArm_hsaMating:
+		{
+
+			std::cerr << "Diro :: on the Mating state, now: " << cur_time << std::endl;
+			avgSig = avgSig * exp(-cur_time/2.5);
+		}
+		break;
+
+		case twoArm_hsaFinish:
+		{
+//			std::cout << "twoArm_hsaFinish" << endl;
+		}
+		break;
+		}
+	}
+	else if(approach == Left_Arm_Hold)
+	{
+		std::cerr<<"LEFT ARM HOLD"<<std::endl;
+	}
+
+
+	//====Gray=====
+	else if(approach==L_TwoArm_HSA)
+	{
+		switch(State)
+		{
+
+		// ------------------------ Approach --------------------------
+		case twoArm_hsaApproach:
+		{
+			//Initialize
+			if(ctrlInitFlag)
+			{
+				// ensure that the original end-effector position and orientation are set correctly.
+				EndEff_r_org = rpyFromRot(rot);
+				wrist_r	=	EndEff_r_org;
+
+				EndEff_p_org = pos;
+				wrist_p = EndEff_p_org;
+
+				nextState = false;
+				ctrlInitFlag = false;
+
+				std::cerr << "Diro :: on the Approach state, now: " << cur_time << std::endl;
+			}
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+		// ------------------- Rotation ---------------------------
+		case twoArm_hsaRotation:
+		{
+		    /* Gray
+			if(ctrlInitFlag)
+			{
+				nextState = false;
+				ctrlInitFlag = false;
+
+				// set up a new trajectory file with current information
+				ProcessTrajFile(strTrajState2, State, pos, CurRPY, cur_time);
+				EndEff_p_org = pos;
+				EndEff_r_org = CurRPY;
+
+				std::cerr << "Diro :: on the Rotation state, now: " << cur_time << std::endl;
+			}
+
+#ifdef SIMULATION
+			/*------------------------ WORLD COORDINATES -------------------------------*/
+			// +X: Downwards
+			// +Y: Moves right
+			// +Z: Moves forward (and a bit left)
+//			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;  //10
+			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
+//			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE; //4
+//			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+/* Gray			DesForce(FWD_AXIS) 	=	-13.85;//-32.000*TRANSVERSE_FORCE;
+			DesForce(UP_AXIS)	=	-7.18;//-0.5*VERTICAL_FORCE;
+			DesForce(SIDE_AXIS)	=	6.5;//1.0*HORIZONTAL_FORCE;
+
+			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+#else
+			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
+			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+			DesForce(FWD_AXIS) 	= -20*TRANSVERSE_FORCE;
+			DesMoment(1) 		= 2.100*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach,
+//					MomentForceComposition,  DesMoment,DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+Gray	*/	}
+		break;
+
+		// ----------------------- Insertion Controller ------------------
+		case twoArm_hsaInsertion:   /* Gray
+		{
+			// Initialize
+			if(ctrlInitFlag)
+			{
+				nextState 		= false;
+				ctrlInitFlag 	= false;
+
+				std::cerr << "Diro :: on the Insertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+
+//			DesForce(UP_AXIS)		=	1.300*VERTICAL_FORCE;		//13.0
+//			DesForce(SIDE_AXIS)		=	2.000*HORIZONTAL_FORCE;		//0.60
+//			DesForce(FWD_AXIS)		= -13.000*TRANSVERSE_FORCE;		//-3.25
+
+			DesForce(FWD_AXIS) 	=	-13.85;
+			DesForce(UP_AXIS)	=	-7.00;
+			DesForce(SIDE_AXIS)	=	6.5;
+
+			DesMoment(1)			=	3.750*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}    Gray */
+		break;
+
+		case twoArm_hsaSubInsertion:    /* Gray
+		{
+			if(ctrlInitFlag)
+			{
+				nextState	=	false;
+				ctrlInitFlag	=	false;
+
+				std::cerr << "Diro :: on the SubInsertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+//			DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
+			DesForce(UP_AXIS)	=	-5.90;
+			DesForce(SIDE_AXIS) =	11.50;
+			DesForce(FWD_AXIS) 	=	-12.10;
+			DesMoment(1)			=	4.00*ROTATIONAL_FORCE;
+#endif
+
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+
+			ret = StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}    Gray */
+		break;
+
+		case twoArm_hsaMating:
+		{
+
+			std::cerr << "Diro :: on the Mating state, now: " << cur_time << std::endl;
+			avgSig = avgSig * exp(-cur_time/2.5);
+		}
+		break;
+
+		case twoArm_hsaFinish:
+		{
+//			std::cout << "twoArm_hsaFinish" << endl;
+		}
+		break;
+		}
+	}
 	else
 		return -1;
 
@@ -890,7 +1223,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 	if(DB_WRITE)
 	{
-		if(approach==SideApproach || approach==FailureCharacerization)
+		//============ Diro ============================
+		if(approach==SideApproach || approach==FailureCharacerization ||approach==TwoArm_HSA || approach==Left_Arm_Hold)
 		{
 			vector3 handRPY;
 			vector3 handPos;
@@ -1513,6 +1847,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				break;
 		}
 	}
+
 	/*--------------------------------------------------------------------------------- SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
 	else if(approach==SideApproach || approach==FailureCharacerization)
 	{
@@ -1569,6 +1904,11 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 			  case hsaInsertion2InsPartB:
 			  {
 				#ifdef SIMULATION
+				  //if(CurJointAngles(My)<0.116877)			//for simulation
+				  //if(CurJointAngles(4)<0.097688)
+				  //if(CurJointAngles(4)<-0.264) 		// if the wrist pitch joint angle is less than 14 degrees
+				  //if(CurJointAngles(4)<-0.104717333)
+				  //if(CurJointAngles(4)<0.104717333) 	// if the wrist pitch joint angle is less than 6 degrees
 				  if( attitude(1) < -1.55200 || CurJointAngles(My) < 0.3850 )			//For 2013July-Rojas, This is about 20 degrees.This angle is not very precise because it changes depending on the pose of the elbow. If the male part is closer to the robot, the more bending there will be. This is in local coordinates, we need the angles in world coordinates.
 					  {
 					  	  hsaHIROTransitionExepction = Ins2InsSubPart; 						// Used to tell NextStateActions not to insert an entry in the time transition vector.
@@ -1581,24 +1921,25 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 					  NextStateActions(cur_time,hsaHIROTransitionExepction);
 				  }
 				#endif
-				  if(State != hsaInsertion2InsPartB)
-				  {
-					  std::cerr<<"Suspious sequence of Code Inside hsaInsertion2InsPartB."<<std::endl;
-				  }
 			  }
 			  break;
 
 			  /*------------------------------------------------------------ Insertion2b2Mating Transition ------------------------------------------------------------------------------------------------------------------------*/
 			  case hsaInsPartB2Mating:
 			  {
+				  // If the height of the wrist is less than 0.7290 we are finished
+				  // if(pos(2)<0.07290)
+				  // if(pos(2)<0.533) 	// for simulation
+				  // if(pos(2) < 0.575)  // This number is relative and can change depending on where to put the object of interest
+				  // 2013Aug. New parameters.
+				  // if(attitude(1) < -1.5400 || CurJointAngles(My) < 0.3700)
+				  // if( (attitude(1) < -1.5330 && currForces(4) > 1.2) || (CurJointAngles(My) < 0.3870 && currForces(4) > 1.2) )	Used with 2nd Order Filter of Cutoff Freq 0.1
 				  if( (attitude(1) < -1.5330 && currForces(4) > 0.9) || (CurJointAngles(My) < 0.3870 && currForces(4) > 0.9) )		// Used with 2nd Order Filter of Cutoff Freq 0.095
 				  {
 					  NextStateActions(cur_time,	 			hsaHIROTransitionExepction);		// Enter a time entry for the mating state
 					  hsaHIROTransitionExepction = DoNotIncreaseStateNum;
 					  NextStateActions(cur_time+mating2EndTime,	hsaHIROTransitionExepction);		// Enter a hard-coded time entry for the end of the experiment one second later
-					  std::cout<<"above"<<std::endl;
 					  hsaHIROTransitionExepction = normal;
-					  std::cout<<"under"<<std::endl;
 					  return PA_FINISH;
 				  }
 			  }
@@ -1609,7 +1950,81 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  break;
 
 		  } // End Switch
-    }		// End if==PivotApproach
+	} // End if == SideApproach
+	/*---------------------------------------------------------------------------------TWO ARM SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
+	else if(approach==TwoArm_HSA)        //Gray
+	{
+		Vector3 position(0), attitude(0);
+		position = pos;
+		attitude = rpyFromRot(rot);
+
+		switch (State) {
+			case TWOARM_hsaApproach2Rotation:
+			{
+				float endApproachTime = ex_time[1];
+				if(cur_time > (endApproachTime*0.80))
+				{
+//					std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << std::endl;
+					if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx)
+					{
+						NextStateActions(cur_time,hsaHIROTransitionExepction);
+						std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << " :change to Rotation state" << std::endl;
+					}
+				}
+			}
+				break;
+
+			case TWOARM_hsaRotation2Insertion:
+			{
+				float endApproachTime = ex_time[1];
+//				std::cerr << "Diro :: start Rotation State" << std::endl;
+#ifdef SIMULATION
+//				std::cerr << "Diro :: CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
+				if(cur_time > endApproachTime )
+				{
+//					std::cerr << "Diro :: CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
+					if(CurJointAngles(4) < TwoArm_SA_Rot2Ins_My)
+					{
+						NextStateActions(cur_time, hsaHIROTransitionExepction);
+						std::cerr << "Diro :: change to Insertion state" << std::endl;
+					}
+				}
+#endif
+			}
+				break;
+
+			case TWOARM_hsaInsertion2InsPartB:
+			{
+#ifdef SIMULATION
+				if(CurJointAngles(My) < TwoArm_SA_Ins2SubIns_My)
+				{
+					hsaHIROTransitionExepction = Ins2InsSubPart;
+					NextStateActions(cur_time, hsaHIROTransitionExepction);
+					hsaHIROTransitionExepction = normal;
+
+				}
+#endif
+			}
+				break;
+
+			case TWOARM_hsaInsPartB2Mating:
+			{
+				if(CurJointAngles(My) < -0.275851)
+				{
+					std::cerr << "Diro :: change to Mating state" << std::endl;
+					NextStateActions(cur_time, hsaHIROTransitionExepction);
+//					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
+					NextStateActions(cur_time+mating2EndTime, hsaHIROTransitionExepction);
+					hsaHIROTransitionExepction = normal;
+					return PA_FINISH;
+				}
+			}
+				break;
+			default:
+				break;
+		}
+
+	}// End if== TwoArm_HSA
 
   return 0;
 }
@@ -1619,7 +2034,6 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 // Except for listed exceptions.
 void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionExepction)
 {
-
 	nextState		= true;
 	ctrlInitFlag	= true;
 
@@ -1647,12 +2061,12 @@ void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionEx
 //**********************************************************************************************************************
 // moveRobot()
 // This function uses the motion.dat file to create sub-waypoints for the motion trajectory. Output points are saved
-// into the classes private member variables wrist_p and wrist_r. These in turns are used when calling AssemblyStrategy::
+// into the class' private member variables wrist_p and wrist_r. These in turn are used when calling AssemblyStrategy::
 // ControlCompositions.IkinCompositions.
 //
 // An Inverse Kinematics Function is called (OpenRAVE or OpenHRP's IK lib) with wrist_p and wrist_r as desired quantities.
 // There can be multiple way-points in the motion.dat file.
-// i is used an index to indicated if we are still in the trajectory from:
+// i is used an index to indicate if we are still in the trajectory from:
 // 		a) Origin to waypoint 1 (i=0),
 // 		b) waypoint 1 to 2 (i<T), and
 //		c) waypoint 2 to 3, etc.
@@ -1665,6 +2079,7 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   bool 	ret			= true;									// Return flag
   int  	i 			= 0;									// Counter
   int  	T 			= ex_time.size();						// Read the number of waypoints contained in motion.dat
+
   double 	m_pi 	= 3.141592;								// Pi
   double 	coswt	= 0.0;									// Scaling function between waypoints
 
@@ -1672,7 +2087,7 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   // If the time-stamp (from way-point file) is less than the accumulated time of our simulation, increase counter i.
   for(int j=0; j<T; j++)
   {
-	  // Compare cur_time, which is the time recorded in code (every cycle of onExecute updates by 0.005) with the waypoint time slots (i.e. 4 secs, 7 secs, 10 secs).
+	  // Compare cur_time, which is the time recorded in code (every cycle of onExecute updates by 0.001) with the waypoint time slots (i.e. 4 secs, 7 secs, 10 secs).
 	  if(ex_time[j] < cur_time)
 		  i++;						// Increments when new time stage arrives but it is never equal to the last one.
 	  // So, I can be 0,1, but it is not set to two.
@@ -1709,17 +2124,14 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //-------------------------------------------------------------------------------------------------------------------------------------------
   else if(i<T)
   {
-	  coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-	  EndEff_p = x_pos[i-1] + (x_pos[i]+deviation[0]-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-			  	 y_pos[i-1] + (y_pos[i]+deviation[3]-y_pos[i-1]) * coswt,
-			  	 z_pos[i-1] + (z_pos[i]+deviation[2]-z_pos[i-1]) * coswt;
+	  coswt = coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
+	  EndEff_p = x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
+			  	 y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
+			  	 z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
 
-	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+deviation[3]-roll_angle[i-1])  * coswt,
-			  	 pitch_angle[i-1] + ( pitch_angle[i]+deviation[4]-pitch_angle[i-1]) * coswt,
-			  	 yaw_angle[i-1]   + (   yaw_angle[i]+deviation[5]-yaw_angle[i-1])   * coswt;
-
-	  std::cout<<"IF    "<<deviation[0] <<" "<<deviation[1] <<" "<<deviation[2] <<" "<<deviation[3] <<" "<<deviation[4] <<" "<<deviation[5] <<std::endl;
-
+	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+divPoint(3)-roll_angle[i-1])  * coswt,
+			  	 pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
+			  	 yaw_angle[i-1]   + (   yaw_angle[i]+divPoint(5)-yaw_angle[i-1])   * coswt;
 	  //		 hand[0] = 	l_hand[i-1] + (l_hand[i] - l_hand[i-1]) * coswt;
 	  //		 hand[1] = 	r_hand[i-1] + (r_hand[i] - r_hand[i-1]) * coswt;
   }
@@ -1728,14 +2140,12 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //---------------	----------------------------------------------------------------------------------------------------------------------------
   else
     {
-      EndEff_p = x_pos[i-1]			+deviation[0], 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
-    		  	 y_pos[i-1]			+deviation[1],
-    		  	 z_pos[i-1]			+deviation[2];
-      EndEff_r = roll_angle[i-1]	+deviation[3],
-    		     pitch_angle[i-1]	+deviation[4],
-    		     yaw_angle[i-1]		+deviation[5];
-      std::cout<<"ELSE    "<<deviation[0] <<" "<<deviation[1] <<" "<<deviation[2] <<" "<<deviation[3] <<" "<<deviation[4] <<" "<<deviation[5] <<std::endl;
-
+      EndEff_p = x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
+    		  	 y_pos[i-1]			+divPoint(1),
+    		  	 z_pos[i-1]			+divPoint(2);
+      EndEff_r = roll_angle[i-1]	+divPoint(3),
+    		     pitch_angle[i-1]	+divPoint(4),
+    		     yaw_angle[i-1]		+divPoint(5);
       //		hand[0] = 	l_hand[i-1];
       //		hand[1] = 	r_hand[i-1];
       ret = false;
@@ -2165,22 +2575,17 @@ void AssemblyStrategy::OpenFiles()
 	#endif
 
   /*************************************** Robot Joint Angles ***************************************/
-  if (ostr_angles.is_open())
-      ostr_angles.close();
   ostr_angles.open(strAngles);			// "Angles.dat");
   if (!ostr_angles.is_open())
-      std::cerr << strAngles << " was not opened." << std::endl;
+    std::cerr << strAngles << " was not opened." << std::endl;
 
   /*************************************** EndEffector Cart Positions (World Coordinates) ***************************************/
-  if (ostr_cartPos.is_open())
-        ostr_cartPos.close();
   ostr_cartPos.open(strCartPos); 		// "CartPos.dat");
+  //	#endif
   if (!ostr_cartPos.is_open())
     std::cerr << strCartPos << " was not  opened." << std::endl;
 
   /*************************************** State Time Data ***************************************/
-  if (ostr_state.is_open())
-        ostr_state.close();
   ostr_state.open(strState);			// "State.dat"); //
   if (!ostr_state.is_open())
     std::cerr << strState << " was not opened." << std::endl;
@@ -2189,22 +2594,16 @@ void AssemblyStrategy::OpenFiles()
   ostr_state << "0.0" << endl;;
 
   /*************************************** Joint Torque Data in World Coordinates ***************************************/
-  if (ostr_Forces.is_open())
-        ostr_Forces.close();
   ostr_Forces.open(strForces);			// "Torques.dat");
   if (!ostr_Forces.is_open())
     std::cerr << strForces << " was not opened." << std::endl;
 
   /*************************************** Desired Joint Torque Data in Local Coordinates ***************************************/
-  if (ostr_des.is_open())
-        ostr_des.close();
   ostr_des.open("TorquesLocal.dat");
   if(!ostr_des.is_open())
     std::cerr << "TorquesLocal.dat was not opened." << std::endl;
 
   /*************************************** Actual Joint Torque Data in World Coordinates ***************************************/
-  if (ostr_cur.is_open())
-        ostr_cur.close();
   ostr_cur.open("AnglesLocal.dat");
   if(!ostr_cur.is_open())
     std::cerr << "AnglesLocal.dat was not opened." << std::endl;
@@ -2302,7 +2701,7 @@ int AssemblyStrategy::WriteFiles(double cur_time, dvector6 CurrAngles, dvector6 
 
 //************************************************************************************************************
 // ProcessTrajFile
-// Has different functionalities depending on whether the value of State is 1 or 2.
+// Has different functionality depending on whether the value of State is 1 or 2.
 // If State is 1, we extract 1 time element, and 6 position elements for each line that exists in the file.
 // 
 // If the State is 2, we write 2 new lines that describe the trajectory for that file. 
@@ -2376,8 +2775,6 @@ int AssemblyStrategy::ProcessTrajFile(char path[STR_LEN], int State, vector3 pos
 	}
 
 	// Use input file stream to open the pivotApproachState1.dat file
-	if( ifstr_pivApproachState1.is_open())
-		ifstr_pivApproachState1.close();
 	ifstr_pivApproachState1.open(path);
 
 	// Save data stored in motion.dat into <vector> of doubles for t,xyz,rpy
