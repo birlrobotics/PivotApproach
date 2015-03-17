@@ -60,7 +60,7 @@ using std::ceil;
 #define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define STRAIGHT_LINE_APPROACH 1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
+#define STRAIGHT_LINE_APPROACH  1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
 #define PIVOT_APPROACH 			2
 #define SIDE_APPROACH			3
 #define FAILURE_CHARAC 			4
@@ -254,7 +254,7 @@ void hiroArm::init()
 // Kensuke: Open position and force data for left and right arms.
 // Yamanobe: reads force, position, and velocity information.
 /*************************************************************************************************************/
-int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
+int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15], double* deviation)
 {
   // Local variables
 #ifdef DEBUG_PLUGIN2
@@ -301,8 +301,7 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15])
   // 4) Declare and Allocate Filtering Object (consider using a static object instead for faster real-time performance).
   ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, 			// Data Directories
 		  	  	  	 pos, rot, CurAngles,											// Homing Data
-		  	  	  	 APPROACH_TYPE, CONTROL_TYPE);									// Assembly Strategy and Control Method Used
-
+		  	  	  	 APPROACH_TYPE, CONTROL_TYPE, deviation);									// Assembly Strategy and Control Method Used
 #endif
 
   // Compute the current position vector and rotation matrix from base to end effector and current joint angles.

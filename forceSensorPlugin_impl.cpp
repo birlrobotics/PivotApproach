@@ -49,6 +49,7 @@ extern "C" {
 #include <unistd.h>			// Provides access to the POSIX operating system API
 #include <stdio.h>
 }
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +66,8 @@ extern "C" {
 #define FORCE_TEST 			0 			// Used to test if force drivers are working in Old HIRO
 #define SIMULATION_TEST 	1	 		// Used to test certain pieces of code within the control method for testing purposes
 #define DEBUG 				1 			// Used to test temporary cerr statements
+#define LOOPBACK            1
+#define DEVIATION           1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // GLOBALS
 unsigned long long distate; // Digital state parameter. Holds bit values.
@@ -343,9 +346,8 @@ void forceSensorPlugin_impl::init(void)
 	// Allocate the slave arm - right arm
 	int NUM_q0 = 3; // Joint angle at which the right arm starts
 	rArm = new hiroArmSla("right", body, NUM_q0, DT, ang_limit_sub, ePh, eRh, hPfs, hRfs);
-	//rArm->set_FSptr(fs, 1);
-	//IFS_Init(CHANNEL,FULL_SCALE);
 
+	//To save the parameters of rArm
 	// Assign Joint Angle Limits
 	for(int i = 0; i < ARM_DOF; i++){									// 6 DOF per arm
 		for(int j = 0; j < 5; j++){
@@ -403,11 +405,9 @@ void forceSensorPlugin_impl::init(void)
 /******************************************************************************************************************************************/
 bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 {
-
 	// 1) Local variable initialization
 	int ret = 0;
 	double CurAngles[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin::setup() - entered" << std::endl;
 #endif
@@ -478,6 +478,30 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 
 	ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
 
+	/***************************************** LOOP BACK SETUP *****************************************************************/
+#ifdef LOOPBACK
+	// Initial steps For setting up loop
+	initRs = *rs;
+	resetTime = 0;
+	proState = 0;
+	// End of setting up loop
+#endif
+
+#ifdef DEVIATION
+	//Initial stepsetup deviation
+	if (deviation_file.is_open())
+		deviation_file.close();
+	deviation_file.open("./data/PivotApproach/deviation.dat");
+	for (int i=0; i < 6; i ++)
+		deviation_file>>deviation[i];
+
+	char mkdirCommand[256] = "";
+	sprintf(mkdirCommand, "%s %s %s", mkdir, dataCollectHomePath, "-p");
+	system(mkdirCommand);
+	for (int i=0; i < 6; i ++)
+		rArm->PA->deviation[i] = this->deviation[i];
+#endif
+
 	// Update the latest data angles and position
 	if(DEBUG)
 	{
@@ -518,11 +542,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	controlmode_r = PivotApproach;
 #endif
 
-
-	//~ if((fp_nitta=fopen(f_name1.c_str(),"w"))==NULL){
-	//~ std::cerr<< "file open error!!" << std::endl;	//~ }
-
-	// Exit
 #ifdef DEBUG_PLUGIN
 	std::cerr << "forceSensorPlugin::setup() - Exiting" << std::endl;
 #endif
@@ -530,7 +549,7 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	return true;
 
 }
-
+ 
 /******************************************************************************************************************************************/
 // Control()
 // The control function is called by the GrxUI simulation every 2-5ms. This method implements the control routine that will control HIRO.
@@ -574,30 +593,116 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 		std::cerr << "/----------------------------------\nforceSensorPlugin::control() - entered\n-------------------------------------/\n\n" << std::endl;
 #endif	
 
-		// Initial code
-		if(initControl==0)
-		{
-			// Initialize the iteration
-			rArm->m_time=0;
+		/********************************************************* Resettting Code *****************************************************************/
 
-			if(DEBUG)
-			{
+#ifdef LOOPBACK
+		//The loopback_condition is used for determine whether it needs to restart or not
+		if (this->loopback_condition())  {
+			// set up the whole thing ... what ... same function as setup()
+			// state control. should enter this function once to setup mc before initControl
+			proState = 0;
+			initControl = 0;
+			//Record the loop time.
+			resetTime += 1;
+
+#ifdef DEVIATION
+			// Collect the data of the previous loop.
+			this->loopback_collectData();
+
+			// After collecting previous data, read new deviations from file.
+			if (!deviation_file.eof())
+				for (int i=0;i < 6; i++)
+					deviation_file>>deviation[i];
+
+#endif
+
+			//Build a folder for the data last time.
+
+			RobotState* firstRs;
+			firstRs = &initRs;
+			rs = &initRs;
+			// 1) Local variable initialization
+				int ret = 0;
+				double CurAngles[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+
+				/*------------------------------------------------------------- Simulation ---------------------------------------------------*/
+			#ifdef SIMULATION
+				for(int i=0; i<6; i++)
+					rArm->raw_forces[i] = firstRs->force[0][i];
+			#endif
+				// ----------------------------------------------------------- FORCE SENSOR -----------------------------------------------------------------/
+
+			#ifndef SIMULATION
+				firstRs->angle[8] -= 0.531117;
+			#endif
+
+				/*------------------------------------------------------------ Current Joint Angles --------------------------------------------------------*/
+				// 2) Set the desired robot state angles equal to the motion command angles, to avoid jump in the data or a discontinuity
+				// Set output angles to input angles
+				for (unsigned int i=0; i<DOF; ++i)	// 15 DoF
+				{
+					body->joint(i)->q 	= firstRs->angle[i];
+					mc->angle[i] 		= firstRs->angle[i];
+					CurAngles[i] 		= firstRs->angle[i]; // Set the local variables to this
+				}
+				int NUM_q0=3;
+				// And also set CurrentAngles -- private member variable -- to rs->angle
+				for (unsigned int i=0; i<6; ++i)
+					CurrentAngles[i]=firstRs->angle[NUM_q0 + i];
+//
+			#ifndef SIMULATION
+				mc->angle[8] += 0.531117;
+			#endif
+
+				// 3) Calculate the Fwd Kinematics=>Cartesian Positions
+				body->calcForwardKinematics();
+
+				/****************************************** PIVOT APPROACH SETUP ************************************************************/
+#ifdef PIVOTAPPROACH
+
+				// 4) Initialization routine:
+				// Compute the position vector and rotation matrix from base to the wrist the robot has moved to HOMING POSITION
+				// This routine behave's different according to user. Assign Desired Behavior.
+				// Kensuke: read position and force data for both arms.
+
+
+				//ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles); // Body object 15 DOF. Need link8 or RARM_JOINT5.
+
+				for(int i=0; i<6; i++)
+					rArm->raw_forces[i] = firstRs->force[0][i];
 				// Update the latest data angles and position
-				vector3 rpy(0);
-				rArm->set_OrgPosRot(CurXYZ,rpy);
-				rArm->m_path->calcInverseKinematics(CurXYZ,CurRot);
-				for (int i=0;i<6;i++)
-					CurrentAngles(i) = rArm->m_path->joint(i)->q;
 
-				cerr << "\n\nforceSensorPlugin::control()-Current time is:\t" << DT*double(rArm->get_Iteration()) << std::endl;
-				cerr << "forceSensorPlugin::control()-Current position is:\t" << CurXYZ << std::endl;
-				cerr << "forceSensorPlugin::control()-Current pose is:\t" << rpy << std::endl;
-				cerr << "forceSensorPlugin::control()-Current Angles (radians) are:\t" << CurrentAngles << std::endl;
-			}
-			// Change the flag
-			initControl=1;
+				ret = rArm->init(body->link(RARM_JOINT5)->p, body->link(RARM_JOINT5)->attitude(),CurAngles, deviation); // Body object 15 DOF. Need link8 or RARM_JOINT5.
+
+#endif
+
+
+				/****************************************** PIVOT APPROACH ************************************************************/
+#ifdef PIVOTAPPROACH
+				controlmode_nr = PivotApproach;
+				controlmode_r = PivotApproach;
+#endif
+
+#ifndef SIMULATION
+				firstRs->angle[8] += 0.531117;
+#endif
+
+				return;
 		}
+#endif // end of loopback
 
+		if(initControl==0)
+				{
+					// Initialize the iteration
+					rArm->m_time=0;
+
+					//loop init
+					proState = 1;
+
+					// Change the flag
+					initControl=1;
+				}
 		// Simulation test is used to skip code that is enclosed the if function.
 		if(SIMULATION_TEST)
 		{
@@ -644,7 +749,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			if(initFlag==false)
 			{
 				/*---------------------- Angle Update --------------------------*/
-
 				// For the first iteration make sure that output angles are the same as input angles for all 15 DOF.
 				for (unsigned int i = 0; i < DOF; ++i)
 				{
@@ -724,20 +828,21 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				/*-------------------------------------------------------------------------------------------- Gravity Compensaation ---------------------------------------------------------------------------------------*/
 
 			case GravityCompensation:
-				#ifdef DEBUG_PLUGIN
-								std::cout << "GravityCompensation" << std::endl;
-				#endif
+#ifdef DEBUG_PLUGIN
+				std::cout << "GravityCompensation" << std::endl;
+#endif
 
 				// Go to the Initial Position
 				// (A) LEFT ARM
-				if (!f_gravity_comp[0]){
+				if (!f_gravity_comp[0])
+				{
 					// Call gravity compsensation
 					int res_gc;
 					res_gc = lArm->gravity_comp();
 
-					#ifdef DEBUG_PLUGIN
-										std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
-					#endif
+#ifdef DEBUG_PLUGIN
+					std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
+#endif
 
 					// Success
 					if (res_gc == 1)
@@ -750,15 +855,17 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				}
 
 				// (B) RIGHT ARM
-				else if (!f_gravity_comp[1]){
+				else if (!f_gravity_comp[1])
+				{
 
 					// Call gravity compensation
 					int res_gc;
 					res_gc = rArm->gravity_comp();
 
-					#ifdef DEBUG_PLUGIN
-										std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
-					#endif
+			// There are eight control modes: NotControlled, GravityCompensation, ResetGravityCompensation, BirateralControl, DirectTeaching, Impedance Control, and Pivot Approach
+#ifdef DEBUG_PLUGIN
+					std::cout << "Gravity Compensation: res_gc = " << res_gc << std::endl;
+#endif
 
 					// Success
 					if (res_gc == 1)
@@ -899,7 +1006,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			case ResetGravityCompensation:
 
 #ifdef DEBUG_PLUGIN
-				std::cout << "ResetGravityCompensation" << std::endl;
+				std::cout << "ResetGravityCompensatiPivotApproachon" << std::endl;
 #endif
 
 				lArm->reset_gravity_comp();
@@ -1015,32 +1122,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					std::cout << "rW: " << rW << std::endl;
 #endif
 
-					/*//~ if(test < 200){
-		  //~ rdP(0) = 0.05;  rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;    rW(1) = 0.0;   rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<400){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.05; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;  rW(1) = 0.0;   rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<600){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0;  rdP(2) = 0.05;
-		  //~ rW(0) = 0.0;    rW(1) = 0.0;  rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<800){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.1;  rW(1) = 0.0;  rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<1000){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;    rW(1) = 0.1;  rW(2) = 0.0;
-		  //~ }
-		  //~ else if(test<1200){
-		  //~ rdP(0) = 0.0; rdP(1) = 0.0; rdP(2) = 0.0;
-		  //~ rW(0) = 0.0;    rW(1) = 0.0;  rW(2) = 0.1;
-		  //~ }
-		  //~ test++;*/
-
 					// for master
 					if (lArm->velocity_control(rdP, rW, f_new))
 						f_control[0] = true;
@@ -1142,60 +1223,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				f_control[1] = false;
 
 				break;
-				/*
-		case ReadyPosition:
-		dvector6 q_ready_l, q_ready_r;
-		q_ready_l(0) = 0.0; q_ready_l(1) = 0.0; q_ready_l(2) = -M_PI/2; q_ready_l(3) = -15.0*M_PI/180; q_ready_l(4) = 0.0; q_ready_l(5) = 0.0;
-		q_ready_r(0) = 0.0; q_ready_r(1) = 0.0; q_ready_r(2) = -M_PI/2; q_ready_r(3) = 15.0*M_PI/180; q_ready_r(4) = 0.0; q_ready_r(5) = 0.0;
-
-		int res;
-		res = lArm->moveto_q_goal(q_ready_l);
-		if(res == 0){
-		f_control[0] = true;
-		}
-		else f_control[0] = false;
-
-		res = rArm->moveto_q_goal(q_ready_r);
-		if(res == 0){
-		f_control[1] = true;
-		}
-		else f_control[1] = false;
-
-		break;
-				 */
-
-				/* 		case Playback:
-				if(controlmode_pre != controlmode_r){
-				//~ fv.close();
-				ifs.open("./velocity.dat");
-				if(!ifs.is_open()) std::cerr << "ERROR: can't open velocity.dat" << std::endl;
-				else std::cout << "open velocity.dat" << std::endl;
-				}
-				if(!ifs.eof()){
-				vector3 rdP, rW;//Playback};
-				for(int i=0; i<3; i++){
-				std::string res;
-				ifs >> res;
-				rdP[i] = atof(res.c_str());
-				}
-				for(int i=0; i<3; i++){
-				std::string res;
-				ifs >> res;
-				rW[i] = atof(res.c_str());
-				}
-				//std::cout << rdP << rW << std::endl;
-				//fprintf(fv,"%f %f %f %f %f %f\n",rdP[0],rdP[1],rdP[2],rW[0],rW[1],rW[2]);
-
-				// for master
-				if(lArm->velocity_control(rdP, rW)) f_control[0] = true;
-				// for slave
-				if(rArm->velocity_control(rdP, rW)) f_control[1] = true;
-				}
-				else{
-				ifs.close();
-				f_control[0] = false; f_control[1] = false;
-				}
-				break; */
 
 				/*---------------------------------------------------------------------------------------------- Impedance Controller -----------------------------------------------------------------------------------------*/
 				// By using case statements introduce your own code via  calling an external class.
@@ -1232,31 +1259,12 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// Select to work only on right arm
 				f_control[1] = true;
 
-
-				/*		#ifdef DEBUG_PLUGIN
-				std::cerr << "forceSensorPlugin::PivotApproach case - Getting force data" << std::endl;
-				#endif			
-
-
-				// Copy update forces into a local variable
-				#ifdef SIMULATION
-				for(int i=0;i<6;i++)
-				CurrentForces(i)    = rArm->raw_forces[i];
-
-				#else
-				 */
 				// Update the forces
 #ifdef SIMULATION
 				for(int i=0;i<6;i++)
 					CurrentForces(i) = rArm->raw_forces[i];
 #else
 				rArm->update_currforcedata();
-
-				/*	      for(int i=0;i<3;i++)
-		{
-		  CurrentForces(i)   = rArm->fsF_raw[i];
-		  CurrentForces(i+3) = rArm->fsM_raw[i];
-		  }*/
 
 				vector3 tmp_force;
 				vector3 tmp_moment;
@@ -1358,14 +1366,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				//~ dvector6 tmp;
 				dvector6 qref_l = lArm->get_qref();
-				/*//~ bool check = false;		 //~ for(int i=0; i<6; i++){		 //~ tmp[i] = fabs(qref_l[i]-rs->angle[9+i]);		 //~ if(fabs(tmp[i]) > (ang_limit[9+i][2]*DT*2)){		 //~ check = true;		 //~ std::cout << "ERROR: left[" << i << "]" << qref_l[i] << " " << rs->angle[9+i] << std::endl;
-		  //~ }		 //~ }		 //~ fprintf(fv_L,"%f %f %f %f %f %f\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);		 //~ if(!check){*/
 
 				// MC Angles 9-14 belong to the left arm
 				for (int i = 0; i < 6; i++)
 					mc->angle[9 + i] = qref_l[i];
 
-				/*1~ fprintf(fv_L,"%f %f %f %f %f %f\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);		   ~ }		 else{ for(int i=0; i<6; i++){ mc->angle[9+i]=rs->angle[9+i];} }		 */
 #ifdef DEBUG_PLUGIN
 				std::cout << "q_ref to mc: ";
 				for(int i=0; i<6; i++) std::cout << mc->angle[9+i] << ", ";
@@ -1384,7 +1389,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				for (int i=0; i < ARM_DOF; i++)
 					mc->angle[i+3] = qref_r[i];
 
-				mc->angle[0]=0; mc->angle[1]=0; mc->angle[2]=0;	// Alway set the chest, pan, tilt angles to zero.
+				// Bug happens here.
+				mc->angle[0]=0; mc->angle[1]=0; mc->angle[2]=0;	// Alway sset the chest, pan, tilt angles to zero.
 			}
 
 #ifdef DEBUG_PLUGIN
@@ -1484,7 +1490,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 	ostr_worldforce << std::endl;
 #endif
 }
-
+//`````````````````````````````````````````````````````````````````````````````````````````````````````````````
 /************************* CleanUp *********************************/
 bool forceSensorPlugin_impl::cleanup(RobotState *rs, RobotState *mc)
 {
@@ -1536,131 +1542,6 @@ matrix33 forceSensorPlugin_impl::get_rot33(int dir, double rad)
 	return rot_temp;
 }
 
-//~ void forceSensorPlugin_impl::calRotMatrix(){
-//~ /*
-//~ LA.rPh = body->joint(14)->p;
-//~ LA.rRh = body->joint(14)->R;
-//~ for(int i=0; i<6; ++i)  LA.q[i]=body->joint(9+i)->q;
-//~ */
-//~ }
-
-///////////////////////////////////////////////////////////////
-//
-//  Get position teaching enable matrix
-//
-////////////////////////////////////////////////////////////////
-/*
-  matrix33 forceSensorPlugin_impl::getPositionEnableMatrix()
-  {
-  matrix33 ASMPo;
-  unsigned long DioState= distate >> 32;
-
-  ASMPo(0,0)=0;   ASMPo(0,1)=0;   ASMPo(0,2)=0;
-  ASMPo(1,0)=0;   ASMPo(1,1)=0;   ASMPo(1,2)=0;
-  ASMPo(2,0)=0;   ASMPo(2,1)=0;   ASMPo(2,2)=0;
-
-  if(DioState&MSSL){
-  if(DioState&ASSL) ASMPo(0,0)=1;               // enable x
-  else if(DioState&ASSR) ASMPo(2,2)=1;          // enable z
-  else ASMPo(1,1)=1;                            // enable y
-  }
-  else if(DioState&MSSR){
-  ASMPo(0,0)=0; ASMPo(1,1)=0; ASMPo(2,2)=0;
-  }
-  else {
-  if(DioState&ASSR){
-  ASMPo(0,0)=0; ASMPo(1,1)=0; ASMPo(2,2)=0;
-  }
-  else {ASMPo(0,0)=1; ASMPo(1,1)=1; ASMPo(2,2)=1;
-  }
-  }
-
-  return ASMPo;
-  }*/
-
-///////////////////////////////////////////////////////////////
-//
-//  Get rotation teaching enable matrix
-//
-////////////////////////////////////////////////////////////////
-/*
-  matrix33 forceSensorPlugin_impl::getRotationEnableMatrix()
-  {
-  matrix33 ASMRo;
-  unsigned long DioState= distate >> 32;
-
-  ASMRo(0,0)=0;   ASMRo(0,1)=0;   ASMRo(0,2)=0;
-  ASMRo(1,0)=0;   ASMRo(1,1)=0;   ASMRo(1,2)=0;
-  ASMRo(2,0)=0;   ASMRo(2,1)=0;   ASMRo(2,2)=0;
-
-  if(DioState&MSSR){
-  if(DioState&ASSL) ASMRo(0,0)=1;                // enable roll
-  else if(DioState&ASSR) ASMRo(2,2)=1;           // enable yaw
-  else ASMRo(1,1)=1;                             // enable phich
-  }
-  else if(DioState&MSSL){
-  ASMRo(0,0)=0; ASMRo(1,1)=0; ASMRo(2,2)=0;
-  }
-  else {
-  if(DioState&ASSL){
-  ASMRo(0,0)=0; ASMRo(1,1)=0; ASMRo(2,2)=0;
-  }
-  else{
-  ASMRo(0,0)=1; ASMRo(1,1)=1; ASMRo(2,2)=1;
-  }
-  }
-
-  return ASMRo;
-  }
- */
-
-/////////////////////////////////////////////////////////////////
-//
-//                       CORBA IDL
-//
-//////////////////////////////////////////////////////////////////
-/////////// Get force and moments  ///////////////
-//~ ::CORBA::Long forceSensorPlugin_impl::getForces(::CORBA::Float& x, ::CORBA::Float& y, ::CORBA::Float& z,
-//~ ::CORBA::Float& r, ::CORBA::Float& p, ::CORBA::Float& w)
-//~ {
-//~ vector3 Fout;
-//~ vector3 Nout;
-//~ //   calForces();
-//~ Fout=LA.fsF;
-//~ Nout=LA.fsN;
-//~ // x=abs(det_value1);    y=abs(det_value);  z=Fout(1);
-//~ // r= LA.realP(1);
-//~ x = Fout(0);      y = Fout(1);      z = Fout(2);
-//~ r = Nout(0);      p = Nout(1);      w = Nout(2);
-//~ if(ikRet)
-//~ return 1;
-//~ return 0;
-//~ }
-//~ /////////// Get pos./rot. of left hand  ///////////////
-//~ ::CORBA::Long forceSensorPlugin_impl::getLArmMatrixP_DT(OpenHRP::DblArray9 rotMatrix, OpenHRP::DblArray3 offset)
-//~ {
-//~ int k=0;
-//~ for(int i=0; i<3; ++i) offset[i] = LA.rPh(i);
-//~ for(int i=0; i<3; ++i)
-//~ for(int j=0; j<3; ++j) {rotMatrix[k]=LA.rRh(i,j); k++; }
-//~ return 0;
-//~ }
-//~ /////////// Get pos./rot. of left joint 5  ///////////////
-//~ ::CORBA::Long forceSensorPlugin_impl::getLArmMatrixJ5(OpenHRP::DblArray9 rotMatrix, OpenHRP::DblArray3 offset)
-//~ {
-//~ int k=0;
-//~ for(int i=0; i<3; ++i) offset[i] = LA.rPj5(i);
-//~ for(int i=0; i<3; ++i)
-//~ for(int j=0; j<3; ++j) {rotMatrix[k]=LA.rRj5(i,j); k++; }
-//~ return 0;
-//~ }
-//~ /////////// Set r,p,w of a pose sensor  ////////////////////
-//~ ::CORBA::Long forceSensorPlugin_impl::setRPWbySensor(::CORBA::Float r,::CORBA::Float p, ::CORBA::Float w) {
-//~ LA.senRPW[0]=r*deg2radC;
-//~ LA.senRPW[1]=p*deg2radC;
-//~ LA.senRPW[2]=w*deg2radC;
-//~ return 0;
-//~ }
 /*********************************************************************/
 // Set Direct teaching method type
 /*********************************************************************/
@@ -2110,4 +1991,34 @@ unsigned long long get_tick()
 	unsigned int l=0, h=0;
 	__asm__ __volatile__("rdtsc": "=a" (l), "=d"(h) );
 	return (unsigned long long)h<<32;
+}
+
+bool forceSensorPlugin_impl::loopback_condition()
+{
+	cur_time=DT*double(rArm->get_Iteration());
+	std::cout<<cur_time<<std::endl;
+	return cur_time > 11 && proState == 1;
+}
+
+void forceSensorPlugin_impl::loopback_collectData()
+{
+	char commend[256];
+	sprintf(commend, "%s %s/%s/ %s", mkdir, dataCollectHomePath, deviation_toString(), "-p");// $: mkdir ~/home/of/data/resetTime/
+	system (commend);
+	sprintf(commend, "%s %s %s/%s/", mv, "./data/Results/*", dataCollectHomePath, deviation_toString());// $: mv ./data/Results/* ~/home/of/data/resetTime
+	system (commend);
+}
+
+
+char* forceSensorPlugin_impl::deviation_toString ()
+{
+	sprintf(deviation_name, "LoopbackTest%cx%f%cy%f%cz%f%cxR%f%cyR%f%czR%f", //LoopbackTest+x0.00+y0.00+z0.00+xRoll0.00+yRoll0.00+zRoll0.00
+			(deviation[0]>=0)?'+':'-',(deviation[0]>=0)?deviation[0]:(-deviation[0]),
+			(deviation[1]>=0)?'+':'-',(deviation[1]>=0)?deviation[1]:(-deviation[1]),
+			(deviation[2]>=0)?'+':'-',(deviation[2]>=0)?deviation[2]:(-deviation[2]),
+			(deviation[3]>=0)?'+':'-',(deviation[3]>=0)?deviation[3]:(-deviation[3]),
+			(deviation[4]>=0)?'+':'-',(deviation[4]>=0)?deviation[4]:(-deviation[4]),
+			(deviation[5]>=0)?'+':'-',(deviation[5]>=0)?deviation[5]:(-deviation[5])
+			);
+	return deviation_name;
 }

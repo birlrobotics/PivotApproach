@@ -292,6 +292,9 @@ class AssemblyStrategy {
   // Filtering
   bool 			flagFiltering;
   dvector6 		avgSig;													// contains filtered/moving average result signal
+
+  // Deviation
+  double deviation[6];
   /**************************************************************************** Methods **********************************************************************************/
 
   int StateMachine(TestAxis 		axis,																		// Used exclusively for AssemblyStrategy::manipulatorTest
@@ -361,7 +364,7 @@ class AssemblyStrategy {
   // Other
   int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN],
 		  	  	  	vector3 pos, matrix33 rot, double CurAngles[15],
-		            int strategyType, int controlMethodType);
+		            int strategyType, int controlMethodType, double* d=0);
 
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);

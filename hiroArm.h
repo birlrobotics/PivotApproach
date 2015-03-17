@@ -133,7 +133,7 @@ class hiroArm
   virtual ~hiroArm();
 
   void init();
-  int init(vector3 pos, matrix33 rot, double CurAngles[15]);	// Initialize
+  int init(vector3 pos, matrix33 rot, double CurAngles[15], double* deviation=0);	// Initialize
   virtual void savedata();									// Save Data
 
   // Data retrieval methods
