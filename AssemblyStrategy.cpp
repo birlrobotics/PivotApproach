@@ -19,18 +19,11 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-<<<<<<< HEAD
-#define PATH_DEVIATION_MAGNITUDE_X   0.0105		// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
-#define PATH_DEVIATION_MAGNITUDE_Y   0.0		// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
-#define ANGLE_DEVIATION_MAGNITUDE  0.4363		// YawDir 0.08725, 0.1745, 0.2618, 0.3490, 0.4363, 0.5235
-
-=======
 #define PATH_DEVIATION_MAGNITUDE   0.0
 #define ANGLE_DEVIATION_MAGNITDUE  0.0
 											// xDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075 // Parameter used to study Failure Characterization.
 											// yDir (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1)0.0075
 											// RollDir 0.08725, 0.1745, 0.2618, 0.3490, 0.4363, 0.5235
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -55,13 +48,7 @@
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-<<<<<<< HEAD
 
-
-=======
-
-
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Default Constructor
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -241,44 +228,6 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	}
 	else
 		for(int i=0; i<6; i++) DesIKin(i)=0.0;
-<<<<<<< HEAD
-
-	for(int i=0; i<6; i++)
-	{
-		CurCartPos(i)		= 0.0;
-		DesCartPos(i)		= 0.0;
-		contactPos(i)		= 0.0;
-		CurJointAngles(i)	= 0.0;
-		JointAngleUpdate(i)	= 0.0;
-	}
-
-	// Control Basis
-	c1 						= 0;
-	c2 						= 0;
-	c3 						= 0;
-	ft 						= 0;
-
-	// Kinematics
-	IKinTestFlag  			= 0;
-	zerothJoint 			= NUM_q0;
-	transWrist2CamXEff		= ePh;					// wrist2endeffecter
-	ContactWristAngle		= 0.0, -1.5708, 0.0;
-	for(int i=0; i<6; i++) avgSig = 0.0;
-
-	#ifdef DEBUG_PLUGIN3
-		std::cerr << "AssemblyStrategy(): Converting rot2rpy and position transformation." << std::endl;
-	#endif
-
-	// Motion: true end-effector position and rotation
-	EndEff_r_org 			= rpyFromRot(base2endEffectorRot);
-	wrist_r = EndEff_r_org;
-
-	EndEff_p_org			= base2endEffectorPos;
-	wrist_p = EndEff_p_org;
-
-	divPoint(0) = 0;
-
-=======
 
 	for(int i=0; i<6; i++)
 	{
@@ -315,7 +264,7 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 
 	// Deviation setup
 	for(int i=0;i < 6; i++) deviation[i] = 0;
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
+
 	#ifdef DEBUG_PLUGIN3
 		std::cerr << "The EndEffector position during the constructor is: " << wrist_p(0) << "\t" << wrist_p(1) << "\t" << wrist_p(2) << "\t" << wrist_r(0) << "\t" << wrist_r(1) << "\t" << wrist_r(2) << std::endl;
 	#endif
@@ -368,11 +317,7 @@ AssemblyStrategy::~AssemblyStrategy()
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char AnglesDir[STR_LEN], char CartPosDir[STR_LEN], char StateDir[STR_LEN], char ForcesDir[STR_LEN],
 									 vector3 pos, matrix33 rot, double CurAngles[15],
-<<<<<<< HEAD
-									 int strategyType, int controlMethodType)
-=======
 									 int strategyType, int controlMethodType, double* d)
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 {
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;
@@ -412,15 +357,9 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
   // Here we read the desired trajectory file for state 1 and save the data in local variables for position and orientation
 #ifdef DEBUG_PLUGIN3
-<<<<<<< HEAD
-  std::cerr << "\nAssemblyStrategy::Initialize - extract information from waypoint file: " << strTrajState1 << std::endl;
-#endif
-
-=======
   std::cerr << "\nAssemblyStrategy::Initialize - extract information from waypoint file: " << strTrajState1 << std::endl;	
 #endif	
-		
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
+
   //--------------------------------------------------------------------------------------------------------------------------------
   // 3) Reassign original end effector position and rotation
   //--------------------------------------------------------------------------------------------------------------------------------
@@ -494,18 +433,6 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
 	  // Assign appropriate values to the divPoint array which will modify waypoint values.
 	  /** Failure Case Characterization Vector **/
-<<<<<<< HEAD
-	  // Will only write values into x,y,roll,and yaw since these will not greatly affect the motion of the robot.
-
-	  // Keep the z-axis, the pitch, and yaw at zero
-	  divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
-
-	  divPoint(0) 						= PATH_DEVIATION_MAGNITUDE_X;			// x-axis
-	  divPoint(1) 						= PATH_DEVIATION_MAGNITUDE_Y; 			// y-axis
-	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;								// Change z-axis
-	  else		  		   divPoint(2) 	= 0.000;								// If there is deviation in the x-axis, then we need to add a deviation in the z-axis with value of -0.005 such that there is contact after moving forward.
-	  divPoint(3) 						= ANGLE_DEVIATION_MAGNITUDE;			// Yaw ANGLE_DEVIATION_MAGNITUDE
-=======
 	  // Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
 
 	  // Keep the z-axis and the pitch at zero
@@ -518,7 +445,6 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 //	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
 //	  divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;			// Yall PATH_DEVIATION_MAGNITUDE
 
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
   }
 
   // For the first iteration they are both the same.
@@ -527,11 +453,8 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
   //--------------------------------------------------------------------------------------------------------------------------------
   // 5) Filter Class Allocation
   //--------------------------------------------------------------------------------------------------------------------------------
-<<<<<<< HEAD
-=======
   if (ft != NULL)
 	delete ft;
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
   ft = new FilterTools();
 
   //--------------------------------------------------------------------------------------------------------------------------------
@@ -1749,11 +1672,7 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   // If the time-stamp (from way-point file) is less than the accumulated time of our simulation, increase counter i.
   for(int j=0; j<T; j++)
   {
-<<<<<<< HEAD
-	  // Compare cur_time, which is the time recorded in code (every cycle of onExecute updates by 0.001) with the waypoint time slots (i.e. 4 secs, 7 secs, 10 secs).
-=======
 	  // Compare cur_time, which is the time recorded in code (every cycle of onExecute updates by 0.005) with the waypoint time slots (i.e. 4 secs, 7 secs, 10 secs).
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 	  if(ex_time[j] < cur_time)
 		  i++;						// Increments when new time stage arrives but it is never equal to the last one.
 	  // So, I can be 0,1, but it is not set to two.
@@ -1790,16 +1709,6 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //-------------------------------------------------------------------------------------------------------------------------------------------
   else if(i<T)
   {
-<<<<<<< HEAD
-	  coswt = coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-	  EndEff_p = x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-			  	 y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
-			  	 z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
-
-	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+divPoint(3)-roll_angle[i-1])  * coswt,
-			  	 pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
-			  	 yaw_angle[i-1]   + (   yaw_angle[i]+divPoint(5)-yaw_angle[i-1])   * coswt;
-=======
 	  coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
 	  EndEff_p = x_pos[i-1] + (x_pos[i]+deviation[0]-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
 			  	 y_pos[i-1] + (y_pos[i]+deviation[3]-y_pos[i-1]) * coswt,
@@ -1810,7 +1719,7 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 			  	 yaw_angle[i-1]   + (   yaw_angle[i]+deviation[5]-yaw_angle[i-1])   * coswt;
 
 	  std::cout<<"IF    "<<deviation[0] <<" "<<deviation[1] <<" "<<deviation[2] <<" "<<deviation[3] <<" "<<deviation[4] <<" "<<deviation[5] <<std::endl;
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
+
 	  //		 hand[0] = 	l_hand[i-1] + (l_hand[i] - l_hand[i-1]) * coswt;
 	  //		 hand[1] = 	r_hand[i-1] + (r_hand[i] - r_hand[i-1]) * coswt;
   }
@@ -1819,14 +1728,6 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //---------------	----------------------------------------------------------------------------------------------------------------------------
   else
     {
-<<<<<<< HEAD
-      EndEff_p = x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
-    		  	 y_pos[i-1]			+divPoint(1),
-    		  	 z_pos[i-1]			+divPoint(2);
-      EndEff_r = roll_angle[i-1]	+divPoint(3),
-    		     pitch_angle[i-1]	+divPoint(4),
-    		     yaw_angle[i-1]		+divPoint(5);
-=======
       EndEff_p = x_pos[i-1]			+deviation[0], 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
     		  	 y_pos[i-1]			+deviation[1],
     		  	 z_pos[i-1]			+deviation[2];
@@ -1835,7 +1736,6 @@ bool AssemblyStrategy::moveRobot(double cur_time)
     		     yaw_angle[i-1]		+deviation[5];
       std::cout<<"ELSE    "<<deviation[0] <<" "<<deviation[1] <<" "<<deviation[2] <<" "<<deviation[3] <<" "<<deviation[4] <<" "<<deviation[5] <<std::endl;
 
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
       //		hand[0] = 	l_hand[i-1];
       //		hand[1] = 	r_hand[i-1];
       ret = false;
@@ -2269,17 +2169,11 @@ void AssemblyStrategy::OpenFiles()
       ostr_angles.close();
   ostr_angles.open(strAngles);			// "Angles.dat");
   if (!ostr_angles.is_open())
-<<<<<<< HEAD
-    std::cerr << strAngles << " was not opened." << std::endl;
-
-  /*************************************** EndEffector Cart Positions (World Coordinates) ***************************************/
-=======
       std::cerr << strAngles << " was not opened." << std::endl;
 
   /*************************************** EndEffector Cart Positions (World Coordinates) ***************************************/
   if (ostr_cartPos.is_open())
         ostr_cartPos.close();
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
   ostr_cartPos.open(strCartPos); 		// "CartPos.dat");
   if (!ostr_cartPos.is_open())
     std::cerr << strCartPos << " was not  opened." << std::endl;
@@ -2295,31 +2189,22 @@ void AssemblyStrategy::OpenFiles()
   ostr_state << "0.0" << endl;;
 
   /*************************************** Joint Torque Data in World Coordinates ***************************************/
-<<<<<<< HEAD
-=======
   if (ostr_Forces.is_open())
         ostr_Forces.close();
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
   ostr_Forces.open(strForces);			// "Torques.dat");
   if (!ostr_Forces.is_open())
     std::cerr << strForces << " was not opened." << std::endl;
 
   /*************************************** Desired Joint Torque Data in Local Coordinates ***************************************/
-<<<<<<< HEAD
-=======
   if (ostr_des.is_open())
         ostr_des.close();
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
   ostr_des.open("TorquesLocal.dat");
   if(!ostr_des.is_open())
     std::cerr << "TorquesLocal.dat was not opened." << std::endl;
 
   /*************************************** Actual Joint Torque Data in World Coordinates ***************************************/
-<<<<<<< HEAD
-=======
   if (ostr_cur.is_open())
         ostr_cur.close();
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
   ostr_cur.open("AnglesLocal.dat");
   if(!ostr_cur.is_open())
     std::cerr << "AnglesLocal.dat was not opened." << std::endl;

@@ -60,11 +60,7 @@ using std::ceil;
 #define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-<<<<<<< HEAD
-#define STRAIGHT_LINE_APPROACH 1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
-=======
 #define STRAIGHT_LINE_APPROACH  1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
 #define PIVOT_APPROACH 			2
 #define SIDE_APPROACH			3
 #define FAILURE_CHARAC 			4
@@ -305,12 +301,7 @@ int hiroArm::init(vector3 pos, matrix33 rot, double CurAngles[15], double* devia
   // 4) Declare and Allocate Filtering Object (consider using a static object instead for faster real-time performance).
   ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, 			// Data Directories
 		  	  	  	 pos, rot, CurAngles,											// Homing Data
-<<<<<<< HEAD
-		  	  	  	 APPROACH_TYPE, CONTROL_TYPE);									// Assembly Strategy and Control Method Used
-=======
 		  	  	  	 APPROACH_TYPE, CONTROL_TYPE, deviation);									// Assembly Strategy and Control Method Used
->>>>>>> 4bd44e0c2412da3bf5eae24d721af52a50f8612d
-
 #endif
 
   // Compute the current position vector and rotation matrix from base to end effector and current joint angles.
