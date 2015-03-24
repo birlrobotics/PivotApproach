@@ -336,8 +336,8 @@ momentsOfInertia [0.03473180 0.00000578 -0.00003341 0.00000578 0.03474816 0.0000
 	  DEF CHEST_JOINT0 Joint {
 	     jointType "rotate"
 	     jointId  0
-	     #translation 0 0 0.237
-	     translation 0 0 0
+	     #translation 0 0 0.05
+	     translation 0 0 0  
 	     
 	     gearRatio	273
 	     rotorInertia	1.5e-6
@@ -379,7 +379,8 @@ momentsOfInertia [0.06395752 -0.00022833 0.00011172 -0.00022833 0.03108451 0.000
 		   jointType "rotate"
 		   jointId 1
 		   jointAxis "Z"
-		   translation 0.0 0 0.4855
+                   #translation 0 0 0.5355
+		   translation 0.0 0 0.4855    #true
 		   rotation 0 0 1 0
 		   #dh [0 0 0 0] # not used
 		   llimit [-0.785398163]  #-45
@@ -404,7 +405,8 @@ momentsOfInertia [0.00027682 0.00000003 -0.00000033 0.00000003 0.00013009 -0.000
 			 jointType "rotate"
 			 jointId 2
 			 jointAxis "Y"
-			 translation 0 0 0
+                         #translation 0 0 0.05
+			 translation 0 0 0   
 			 rotation 0 1 0 0
 			 #dh [0 0 0 0] # not used
 			 llimit [-0.523598775]  #-30
@@ -438,7 +440,8 @@ momentsOfInertia [0.00008070 -0.00000003 -0.00000000 -0.00000003 0.00003025 -0.0
 		   jointAxis "Z"
 		   jointId    3
 		   
-		   translation 0.00 -0.150 0.3550
+                   #translation 0 -0.25 0.3
+		   translation 0.00 -0.150 0.3550  
 		   rotation   1 0 0  0.261799
 		   
 		   gearRatio	273
@@ -495,7 +498,9 @@ momentsOfInertia [0.00207537 -0.00011276 0.00008927 -0.00011276 0.00240295 0.000
 			 jointType "rotate"
 			 jointAxis "Y"
 			 jointId 4
-			 translation  0.0 0.0 0.0
+
+                         #translation 0 -0.05 0
+			 translation  0.0 0.0 0.0     
 			 
 			 gearRatio	200
 			 rotorInertia	4.2e-6
@@ -549,7 +554,8 @@ momentsOfInertia [0.01541678 -0.00000097 0.00000352 -0.00000098 0.01471175 -0.00
 			       jointId 5
 			       jointAxis   "Y"
 			       
-			       translation 0 -0.080 -0.250
+                               #translation 0 -0.08 -0.350
+			       translation 0 -0.080 -0.250  
 			       
 			       gearRatio		200
 			       rotorInertia	1.5e-6
@@ -602,6 +608,7 @@ momentsOfInertia [0.00143966 0.00000030 0.00000120 0.00000030 0.00141763 0.00007
 				     jointType "rotate"
 				     jointId 6
 				     jointAxis "Z"
+                                     #translation    -0.02 0 -0.05
 				     translation     -0.02 0.0 0.0
 				     
 				     gearRatio		100
@@ -654,6 +661,7 @@ momentsOfInertia [0.00069205 -0.00000003 0.00000052 -0.00000003 0.00068903 0.000
 					   jointType "rotate"
 					   jointId 7
 					   jointAxis "Y"
+                                           #translation  0 0 -0.28
 					   translation   0 0.0 -0.230
 
 					   gearRatio	200
@@ -703,75 +711,105 @@ momentsOfInertia [0.00052016 -0.00000169 0.00000790 -0.00000169 0.00050569 0.000
 
 					      } # Segment RARM_LINK4
 					      
-					      DEF RARM_JOINT5 Joint {
-						 jointType "rotate"
-						 jointId 8
-						 jointAxis "X"
-
-						 translation  -0.0486  0.0 -0.092										              #translation  -0.0396  0.0 -0.092						
-						 #rotation 1 0 0 -0.531117
-						 
-						 gearRatio		200
-						 rotorInertia	1.890e-7
-						 encoderPulse	512
-						 torqueConst	0.469
-						 rotorResistor	78.8
-
-						 children [
-						    DEF RARM_LINK5 Segment {
-						    #rwr
-						    centerOfMass -0.04847597 0.00000320 -0.03889875
-						    mass 1.05156000
-						    momentsOfInertia [0.00194072 -0.00000011 -0.00042482 -0.00000011 0.00209392 -0.00000012 -0.00042482 -0.00000012 0.00035788]
+#					      DEF RARM_JOINT5 Joint {
+#						 jointType "rotate"
+#						 jointId 8
+#						 jointAxis "X"
+#
+#						 translation  -0.0486  0.0 -0.092   
+#       				         #translation  -0.1396  0 -0.092						
+#						 #rotation 1 0 0 -0.531117
+#						 
+#						 gearRatio		200
+#						 rotorInertia	1.890e-7
+#						 encoderPulse	512
+#						 torqueConst	0.469
+#						 rotorResistor	78.8
+#
+#						 children [
+#						    DEF RARM_LINK5 Segment {
+#						    #rwr
+#						    centerOfMass -0.04847597 0.00000320 -0.03889875
+#						    mass 1.05156000
+#						    momentsOfInertia [0.00194072 -0.00000011 -0.00042482 -0.00000011 0.00209392 -0.00000012 -0.00042482 -0.00000012 0.00035788]
 						    						       
-						       children [ 
-
-							DEF lfsensor ForceSensor {
-                               				    	     	translation 0 0 0.0
-                                  						rotation 1 0 0 0
-				  				sensorId 0
-                                					 }
-							  # RARM_END Effecter
-							  Transform { 
-							     translation 0.009  0.0 0.0
-							     #translation -0.0396  0.0 -0.092
-							     children Shape {
-								appearance Appearance {
-								   material Material {
-								      diffuseColor 1.0 1.0 1.0
-								   }
-								}
-								geometry Sphere {
-								   radius 0.0075
-								}
-							     }
-							  }
-
-							 #Inline { url "RWR.wrl" } 
-							 #Inline { url "HandA.wrl" }
-							 Inline {url "male_camera_Xeff.wrl" }
-
+#						       children [ 
+#
+#							DEF lfsensor ForceSensor {
+#                               				    	     	translation 0 0 0.0
+#                                  						rotation 1 0 0 0
+#				  				sensorId 0
+#                                					 }
+#							  # RARM_END Effecter
+#							  Transform { 
+#							     translation 0.009  0.0 0.0
+#							     #translation -0.0396  0.0 -0.092
+#							     children Shape {
+#								appearance Appearance {
+#								   material Material {
+#								      diffuseColor 1.0 1.0 1.0
+#								   }
+#								}
+#								geometry Sphere {
+#								   radius 0.0075
+#								}
+#							     }
+#							  }
+#
+#							 #Inline { url "RWR.wrl" } 
+#							 #Inline { url "HandA.wrl" }
+#							 Inline {url "male_camera_Xeff.wrl" }
+#
 							 ##### CAMERA ####
-							  Transform { 
-							     children Shape {
-								appearance Appearance {
-								   material Material {
-								      diffuseColor 1.0 1.0 1.0
-								   }
-								}
-								geometry Sphere {
-								   radius 0.0075
-								}
-							     }
-							  }
-
-							 Inline {url "upper_vrml97_10000_point.wrl" }
-							 									     	     
-						          ] # End children
-						    } # End of Segment RARM_LINK5
-                                                                                       ]
-
-					      } # Joint RARM_JOINT5
+#							  Transform { 
+#							     children Shape {
+#								appearance Appearance {
+#								   material Material {
+#								      diffuseColor 1.0 1.0 1.0
+#								   }
+#								}
+#								geometry Sphere {
+#								   radius 0.0075
+#								}
+#							     }
+#							  }
+#                                                          #The position of the end-effector in the code 
+#                                                          Transform {
+#                                                             translation -0.051 0.002 -0.0225
+#                                                             children Shape {
+#                                                               appearance Appearance {
+#                                                                  material Material {
+#                                                                    diffuseColor 1.0 0 0
+#                                                                  }
+#                                                                }
+#                                                               geometry Sphere {
+#                                                                 radius 0.001
+#                                                              }
+#                                                            }   
+#                                                          }
+#                                                          #The positon of the fs in the code
+#                                                          Transform {
+#                                                            translation 0.02775 0.002 -0.0225
+#                                                            children Shape {
+#                                                              appearance Appearance {
+#                                                                material Material {
+#                                                                  diffuseColor 1 1 0
+#                                                                }
+#                                                             }
+#                                                              geometry Sphere {
+#                                                               radius 0.005
+#                                                              }
+#                                                           }
+#                                                         }
+#                                                         
+#
+#							 Inline {url "upper_vrml97_10000_point.wrl" }
+#							 									     	     
+#						          ] # End children
+#						    } # End of Segment RARM_LINK5
+#                                                                                       ]
+#
+#					      } # Joint RARM_JOINT5
 					      
 					   ]
 					} # Joint RARM_JOINT4
@@ -794,8 +832,8 @@ momentsOfInertia [0.00052016 -0.00000169 0.00000790 -0.00000169 0.00050569 0.000
 		   jointType "rotate"
 		   jointAxis "Z"
 		   jointId    9
-		   
-		   translation 0.0 0.150 0.355
+		   #translation 0 0.25 0.3
+		   translation 0.0 0.150 0.355 
 		   rotation   1 0 0  -0.261799
 
 		   gearRatio	273
@@ -851,8 +889,8 @@ momentsOfInertia [0.00207537 0.00011276 0.00008927 0.00011276 0.00240295 -0.0000
 			 jointType "rotate"
 			 jointAxis "Y"
 			 jointId 10
-			 translation  0.0 0.0 0.0
-
+			 translation  0.0 0.0 0.0 
+                         #translation 0 0.05 0
 			 gearRatio	200
 			 rotorInertia	4.2e-6
 			 encoderPulse	512
@@ -906,7 +944,8 @@ momentsOfInertia [0.01541678 0.00000097 0.00000352 0.00000098 0.01471175 0.00213
 			       jointId 11
 			       jointAxis   "Y"
 
-			       translation 0 0.080 -0.250
+			       translation 0 0.080 -0.250 
+                               #translation 0 0.08 -0.350
 
 			       gearRatio		200
 			       rotorInertia	1.5e-6
@@ -959,6 +998,8 @@ momentsOfInertia [0.00143966 -0.00000030 0.00000120 -0.00000030 0.00141763 -0.00
 				     jointType "rotate"
 				     jointId 12
 				     jointAxis "Z"
+
+                                     #translation    -0.02 0 -0.05
 				     translation     -0.02 0.0 0.0
 				     
 				     gearRatio		100
@@ -1011,7 +1052,9 @@ momentsOfInertia [0.00069205 0.00000003 0.00000052 0.00000003 0.00068903 -0.0000
 					   jointType "rotate"
 					   jointId 13
 					   jointAxis "Y"
+
 					   translation   0 0.0 -0.230
+                                           #translation 0 0 -0.28
 
 					   gearRatio	200
 					   rotorInertia	3.74e-7
@@ -1191,7 +1234,7 @@ momentsOfInertia [0.00194072 0.00000011 -0.00042482 0.00000011 0.00209392 0.0000
     USE RARM_JOINT2,
     USE RARM_JOINT3,
     USE RARM_JOINT4,
-    USE RARM_JOINT5,
+ #   USE RARM_JOINT5,
     
     USE LARM_JOINT0,
     USE LARM_JOINT1,
@@ -1215,7 +1258,7 @@ momentsOfInertia [0.00194072 0.00000011 -0.00042482 0.00000011 0.00209392 0.0000
     USE RARM_LINK2,
     USE RARM_LINK3,
     USE RARM_LINK4,
-    USE RARM_LINK5,
+ #   USE RARM_LINK5,
 
     USE LARM_LINK0,
     USE LARM_LINK1,

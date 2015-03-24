@@ -536,7 +536,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 										dmatrix 		Jacobian,			/*in*/
 										dmatrix 		PseudoJacobian) 	/*in*/
 {
-	/*----------------------------- Local variables ----------------------------------------*/
+	/*----------------------------- Local variables ----------------------------------------*/     //Gray
 	//float 		MaxErrNorm = 0.0;
 	int 		ret = 0;
 
@@ -916,7 +916,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		}
 	}
 
-	// ==== Diro ======
+	// =====Diro=========
 	else if(approach==TwoArm_HSA)
 	{
 		switch(State)
@@ -1065,6 +1065,155 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	else if(approach == Left_Arm_Hold)
 	{
 		std::cerr<<"LEFT ARM HOLD"<<std::endl;
+	}
+
+
+	//====Gray=====
+	else if(approach==L_TwoArm_HSA)
+	{
+		switch(State)
+		{
+
+		// ------------------------ Approach --------------------------
+		case twoArm_hsaApproach:
+		{
+			//Initialize
+			if(ctrlInitFlag)
+			{
+				// ensure that the original end-effector position and orientation are set correctly.
+				EndEff_r_org = rpyFromRot(rot);
+				wrist_r	=	EndEff_r_org;
+
+				EndEff_p_org = pos;
+				wrist_p = EndEff_p_org;
+
+				nextState = false;
+				ctrlInitFlag = false;
+
+				std::cerr << "Diro :: on the Approach state, now: " << cur_time << std::endl;
+			}
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}
+		break;
+		// ------------------- Rotation ---------------------------
+		case twoArm_hsaRotation:
+		{
+		    /* Gray
+			if(ctrlInitFlag)
+			{
+				nextState = false;
+				ctrlInitFlag = false;
+
+				// set up a new trajectory file with current information
+				ProcessTrajFile(strTrajState2, State, pos, CurRPY, cur_time);
+				EndEff_p_org = pos;
+				EndEff_r_org = CurRPY;
+
+				std::cerr << "Diro :: on the Rotation state, now: " << cur_time << std::endl;
+			}
+
+#ifdef SIMULATION
+			/*------------------------ WORLD COORDINATES -------------------------------*/
+			// +X: Downwards
+			// +Y: Moves right
+			// +Z: Moves forward (and a bit left)
+//			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;  //10
+			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
+//			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE; //4
+//			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+/* Gray			DesForce(FWD_AXIS) 	=	-13.85;//-32.000*TRANSVERSE_FORCE;
+			DesForce(UP_AXIS)	=	-7.18;//-0.5*VERTICAL_FORCE;
+			DesForce(SIDE_AXIS)	=	6.5;//1.0*HORIZONTAL_FORCE;
+
+			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+#else
+			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
+			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
+			DesForce(FWD_AXIS) 	= -20*TRANSVERSE_FORCE;
+			DesMoment(1) 		= 2.100*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach,
+//					MomentForceComposition,  DesMoment,DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+Gray	*/	}
+		break;
+
+		// ----------------------- Insertion Controller ------------------
+		case twoArm_hsaInsertion:   /* Gray
+		{
+			// Initialize
+			if(ctrlInitFlag)
+			{
+				nextState 		= false;
+				ctrlInitFlag 	= false;
+
+				std::cerr << "Diro :: on the Insertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+
+//			DesForce(0)  → +X(on global, left)		#define SIDE_AXIS			0		//+ left after transform
+//			DesForce(1)  → +Y(on global, down)		#define UP_AXIS				1		//+ down after transform
+//			DesForce(2)  → +Z(on global, forward)	#define FWD_AXIS			2		//+ forward after transform
+
+//			DesForce(UP_AXIS)		=	1.300*VERTICAL_FORCE;		//13.0
+//			DesForce(SIDE_AXIS)		=	2.000*HORIZONTAL_FORCE;		//0.60
+//			DesForce(FWD_AXIS)		= -13.000*TRANSVERSE_FORCE;		//-3.25
+
+			DesForce(FWD_AXIS) 	=	-13.85;
+			DesForce(UP_AXIS)	=	-7.00;
+			DesForce(SIDE_AXIS)	=	6.5;
+
+			DesMoment(1)			=	3.750*ROTATIONAL_FORCE;
+#endif
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}    Gray */
+		break;
+
+		case twoArm_hsaSubInsertion:    /* Gray
+		{
+			if(ctrlInitFlag)
+			{
+				nextState	=	false;
+				ctrlInitFlag	=	false;
+
+				std::cerr << "Diro :: on the SubInsertion state, now: " << cur_time << std::endl;
+			}
+#ifdef SIMULATION
+//			DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
+			DesForce(UP_AXIS)	=	-5.90;
+			DesForce(SIDE_AXIS) =	11.50;
+			DesForce(FWD_AXIS) 	=	-12.10;
+			DesMoment(1)			=	4.00*ROTATIONAL_FORCE;
+#endif
+
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+
+			ret = StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+		}    Gray */
+		break;
+
+		case twoArm_hsaMating:
+		{
+
+			std::cerr << "Diro :: on the Mating state, now: " << cur_time << std::endl;
+			avgSig = avgSig * exp(-cur_time/2.5);
+		}
+		break;
+
+		case twoArm_hsaFinish:
+		{
+//			std::cout << "twoArm_hsaFinish" << endl;
+		}
+		break;
+		}
 	}
 	else
 		return -1;
@@ -1803,7 +1952,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 		  } // End Switch
 	} // End if == SideApproach
 	/*---------------------------------------------------------------------------------TWO ARM SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
-	else if(approach==TwoArm_HSA)
+	else if(approach==TwoArm_HSA)        //Gray
 	{
 		Vector3 position(0), attitude(0);
 		position = pos;
@@ -1930,6 +2079,7 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   bool 	ret			= true;									// Return flag
   int  	i 			= 0;									// Counter
   int  	T 			= ex_time.size();						// Read the number of waypoints contained in motion.dat
+
   double 	m_pi 	= 3.141592;								// Pi
   double 	coswt	= 0.0;									// Scaling function between waypoints
 

@@ -70,7 +70,7 @@ unsigned long long distate; // Digital state parameter. Holds bit values.
 double size;
 
 //Left Arm Enable
-#define LEFT_ARM  0 	//Used to enable the left Arm
+#define LEFT_ARM  1 	//Used to enable the left Arm
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -268,7 +268,7 @@ void forceSensorPlugin_impl::init(void)
 
 	// Position and Rotation Variables
 	//ePh = -0.052, 0.0, 0.0;
-	ePh = -0.0915, 0.00, -0.0255; // -0.051, 0.0020, -0.0225; //0.0715, 0.0, 0.0;										// Wrist to EndEffector translation
+	ePh = -0.0915, 0.00, -0.0255;//-0.0595, 0.00, -0.0255; // -0.051, 0.0020, -0.0225; //0.0715, 0.0, 0.0;										// Wrist to EndEffector translation
 	eRh = 1.0, 0.0, 0.0,
 			0.0, 1.0, 0.0,
 			0.0, 0.0, 1.0;									// Wrist to EndEffector rotation
@@ -298,7 +298,7 @@ void forceSensorPlugin_impl::init(void)
 #ifdef PIVOTAPPROACH
 
 	// Position and Rotation Variables in local wrist coordinates. rot mat={0 0 -1 0 1 0 1 0 0}
-	ePh = -0.0785, 0.0020, -0.0245;  //-0.051, 0.0020, -0.0225;//0.025, 0.0, -0.063; // -0.063, 0.0, -0.025;	// -0.127, 0.025, 0.0;	//-0.127, -0.03, -0.005;	// Wrist to EndEffector (TCP) translation.
+	ePh =  -0.0785, 0.0020, -0.0245;  //-0.051 , 0.0020 , -0.0225; //-0.0785, 0.0020, -0.0245;  //-0.051, 0.0020, -0.0225;//0.025, 0.0, -0.063; // -0.063, 0.0, -0.025;	// -0.127, 0.025, 0.0;	//-0.127, -0.03, -0.005;	// Wrist to EndEffector (TCP) translation.
 	// This accounts for the end-effector that holds the camera molds in the pivot approach.
 	// -0.127=height,0.025=frontal, 0.0=horizontal
 	eRh = 1.0, 0.0, 0.0,
@@ -377,8 +377,8 @@ void forceSensorPlugin_impl::init(void)
 	controlmode_r     = NotControlled;
 
 #ifdef PIVOTAPPROACH		// set the controlmode_nr and controlmode_r parameters to PivotApproach to implement this control mode in ::control
-	controlmode_nr = PivotApproach; // Set the enumeration to both controlmode_nr and r
-	controlmode_r = PivotApproach;
+	controlmode_nr = GravityCompensation; // Set the enumeration to both controlmode_nr and r
+	controlmode_r = GravityCompensation;
 #elif IMPEDANCE			// set the controlmode_nr and controlmode_r parameters to ImpedanceControl to implement this control mode
 	//	controlmode_nr = ImpedanceControl;
 	//      controlmode_r = ImpedanceControl;
@@ -561,8 +561,8 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 
 	/****************************************** PIVOT APPROACH ************************************************************/
 #ifdef PIVOTAPPROACH
-	controlmode_nr = PivotApproach;
-	controlmode_r = PivotApproach;
+	controlmode_nr = GravityCompensation;
+	controlmode_r = GravityCompensation;
 #endif
 
 
@@ -611,6 +611,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 	// Local variable
 	int ret = 0;
 
+
 #ifndef SIMULATION
 	rs->angle[8] -= 0.531117;
 #endif
@@ -635,14 +636,18 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #if LEFT_ARM
 
 				vector3 rpy2(0);
+				std::cout<<"Gray:Position of LW -- "<<L_CurXYZ<<std::endl;     //Gray:Output the first position of the wrist of the Left Arm
 				lArm->set_OrgPosRot(L_CurXYZ,rpy2);
+				std::cout<<"Gray:Orientation of LW -- "<<rpy2<<std::endl;     //Gray:Output the first orientation of the wrist of the Left Arm
 				lArm->m_path->calcInverseKinematics(L_CurXYZ,L_CurRot);
 				for(int i=0;i<6;i++)
 					L_CurrentAngles(i) = lArm->m_path->joint(i)->q;
 #endif
+				std::cout<<"Gray:Position of RW -- "<<CurXYZ<<std::endl;     //Gray:Output the first position of the wrist of right arm
 				// Update the latest data angles and position
 				vector3 rpy(0);
 				rArm->set_OrgPosRot(CurXYZ,rpy);
+				std::cout<<"Gray:Orientation of RW -- "<<rpy<<std::endl;     //Gray:Output the first orientation of the wrist of the right Arm
 				rArm->m_path->calcInverseKinematics(CurXYZ,CurRot);
 				for (int i=0;i<6;i++)
 					CurrentAngles(i) = rArm->m_path->joint(i)->q;
@@ -903,7 +908,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 					else if (num_test == 2000)
 					{
-						std::string f_name1 = "/home/hrpuser/yamanobe/data/fs.dat";
+						std::string f_name1 = "./data/Results/fs.dat";
 						if ((fp = fopen(f_name1.c_str(), "a")) == NULL) std::cerr << "file open error!!" << std::endl;
 
 						for (int i = 0; i < 2; i++)
@@ -1292,7 +1297,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #endif
 
 				/*---------------------------------------------------------------------------------------------- Pivot Approach -----------------------------------------------------------------------------------------*/
-			case PivotApproach:
+			case PivotApproach:                //Gray
 
 
 #ifdef DEBUG_PLUGIN

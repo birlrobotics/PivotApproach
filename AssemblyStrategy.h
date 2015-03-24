@@ -126,8 +126,10 @@ class AssemblyStrategy {
     SideApproach,
     FailureCharacerization,
     // ==== Diro ======
-    TwoArm_HSA
-    ,Left_Arm_Hold
+    TwoArm_HSA,
+    Left_Arm_Hold,
+    //Gray
+    L_TwoArm_HSA
   };
 
   enum TestAxis

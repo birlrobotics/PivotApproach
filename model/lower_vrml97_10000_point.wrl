@@ -5,12 +5,9 @@
 Transform {
     	      scale 0.001 0.001 0.001
     	      #rotation -1.5708 0 0 3.1416
-	      #rotation 1 1 0 3.1416
-	      rotation -0.5774 0.5774 -0.5774 2.0944 
-	      # translation -0.046000 -0.030000 -0.005000
-        translation -0.04600 0.0002 0.02050
-	      
-#translation 0.355 -0.1745 0.0085       	     # The TCP are offset by <0.045, 0, 0.13> 
+	      #translation 0.355 -0.1745 0.0085       	     # The TCP are offset by <0.045, 0, 0.13> 
+              rotation -0.5774 0.5774 -0.5774 2.0944     # obtained by trial and error
+              translation -0.046000 -0.030000 -0.005000
   children [
     Transform {
       rotation	0.000000 0.000000 1.000000 0.000000

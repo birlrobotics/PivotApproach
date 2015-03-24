@@ -1083,6 +1083,99 @@ momentsOfInertia [0.00052016 0.00000169 0.00000790 0.00000169 0.00050569 -0.0000
 
 					      } # Segment LARM_LINK4
 					      
+					      DEF LARM_JOINT5 Joint {
+						 jointType "rotate"
+						 jointId 14
+						 jointAxis "X"
+
+						 #translation  -0.030  0.0 -0.100
+						 translation  -0.019  0.0 -0.080
+						 
+						 gearRatio		200
+						 rotorInertia	1.890e-7
+						 encoderPulse	512
+						 torqueConst	0.469
+						 rotorResistor	78.8
+
+						 children [
+						    DEF LARM_LINK5 Segment {
+#lwr
+centerOfMass -0.04847597 -0.00000320 -0.03889875
+mass 1.05156000
+momentsOfInertia [0.00194072 0.00000011 -0.00042482 0.00000011 0.00209392 0.00000012 -0.00042482 0.00000012 0.00035788]
+						       
+						       children [ 
+							  # LARM_LINK5 Center of Mass
+							  Transform {
+							     translation -0.04847597 -0.00000320 -0.03889875
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 2.0 0.0 0.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.0075
+								}
+							     }
+							  }
+							  # LARM_LINK5 Center of Axis
+							  Transform {
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 2.0 2.0 0.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.005
+								}
+							     }
+							  }
+							  
+							  # 							    # LARM_PAYLOAD
+							  # 							    Transform { 
+							  # 							       #translation -0.061 0.0 -0.002
+							  # 							       translation -0.070 0.0 -0.080
+							  # 							       children Shape {
+							  # 								  appearance Appearance {
+							  # 								     material Material {
+							  # 									diffuseColor 0.0 2.0 2.0
+							  # 								     }
+							  # 								  }
+							  # 								  geometry Sphere {
+							  # 								     radius 0.0075
+							  # 								  }
+							  # 							       }
+							  # 							    }
+							  
+							  # LARM_CLAW
+							  Transform { 
+							     #translation -0.0225  0.010 -0.0301
+							     translation -0.0061  0.0 -0.002
+							     children Shape {
+								appearance Appearance {
+								   material Material {
+								      diffuseColor 1.0 1.0 1.0
+								   }
+								}
+								geometry Sphere {
+								   radius 0.0075
+								}
+							     }
+							  }
+
+							  #Inline { url "axis.wrl" }
+							  Inline { url "WR.wrl" } 
+							  #Inline { url "larm-clawL.wrl" } 
+							  #Inline { url "larm-clawR.wrl" }
+						       ]
+
+						    } # End of Segment LARM_LINK5
+						    
+						 ]
+					      } # Joint LARM_JOINT5
+					      
 					   ]
 					} # Joint LARM_JOINT4
 					
@@ -1121,12 +1214,14 @@ momentsOfInertia [0.00052016 0.00000169 0.00000790 0.00000169 0.00050569 -0.0000
     USE RARM_JOINT2,
     USE RARM_JOINT3,
     USE RARM_JOINT4,
+    USE RARM_JOINT5,
     
     USE LARM_JOINT0,
     USE LARM_JOINT1,
     USE LARM_JOINT2,
     USE LARM_JOINT3,
     USE LARM_JOINT4,
+    USE LARM_JOINT5,
    ]
 
    # List up all the segments' name you use
@@ -1143,11 +1238,13 @@ momentsOfInertia [0.00052016 0.00000169 0.00000790 0.00000169 0.00050569 -0.0000
     USE RARM_LINK2,
     USE RARM_LINK3,
     USE RARM_LINK4,
+    USE RARM_LINK5,
 
     USE LARM_LINK0,
     USE LARM_LINK1,
     USE LARM_LINK2,
     USE LARM_LINK3,
     USE LARM_LINK4,
+    USE LARM_LINK5,
    ]
 }
