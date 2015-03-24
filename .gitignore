@@ -1,0 +1,8 @@
+
+*.o
+*.dat
+*.common
+*.mak
+*.robot
+ifstrTest
+*.ai
