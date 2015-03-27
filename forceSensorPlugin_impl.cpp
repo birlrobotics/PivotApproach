@@ -611,7 +611,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 	// Local variable
 	int ret = 0;
 
-
+    //std::cout<< "rs->angle"<<rs->angle << std::endl;
 #ifndef SIMULATION
 	rs->angle[8] -= 0.531117;
 #endif
@@ -761,7 +761,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #ifdef DEBUG_PLUGIN
 			std::cerr << "Calculate Fwd Kins" << std::endl;
 #endif
-
+			for (unsigned int i = 0; i < DOF; ++i)
+			{
+				body->joint(i)->q 	= rs->angle[i];	// the body object is for the entire body 15 DoF
+				mc->angle[i] 		= rs->angle[i];
+			}
 			// Calculate cartesian positions
 			body->calcForwardKinematics();
 
@@ -844,17 +848,30 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					{
 						f_gravity_comp[1] = true;
 						num_test = 0;
+						std::cout<<"success"<<std::endl;
 					}
 					else if (res_gc == 0)
 						f_control[1] = true;
 				}
 
 				// Manual Algorithm
+				//else if(f_gravity_comp[0]&&f_gravity_comp[1]){   //Gray:testing
+				//	controlmode_r = NotControlled;
+				//}
 				else
 				{
+					//if(f_gravity_comp[0]&&f_gravity_comp[1]){   //Gray:testing
+						//					controlmode_r = NotControlled;
+							//				break;
+								//		}
 					// force sensor data　の　チェック
 					lArm->update_currforcedata();	//~ lArm->savedata();
 					rArm->update_currforcedata();	//~ rArm->savedata();
+
+					//if(f_gravity_comp[0]&&f_gravity_comp[1]){   //Gray:testing
+				    //		controlmode_r = NotControlled;
+					//	break;
+					//}
 
 					vector3 rF_gc[2], rM_gc[2];
 
@@ -864,6 +881,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 					if (num_test < 2000)
 					{
+						std::cout<<num_test<<std::endl;
 						if (num_test == 0)
 						{
 							// Initialize
@@ -1453,6 +1471,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				//~ dvector6 tmp;
 				dvector6 qref_l = lArm->get_qref();
+				//std::cout<<"Gray:mc---qref_l:--"<<qref_l<<std::endl;
 				/*//~ bool check = false;		 //~ for(int i=0; i<6; i++){		 //~ tmp[i] = fabs(qref_l[i]-rs->angle[9+i]);		 //~ if(fabs(tmp[i]) > (ang_limit[9+i][2]*DT*2)){		 //~ check = true;		 //~ std::cout << "ERROR: left[" << i << "]" << qref_l[i] << " " << rs->angle[9+i] << std::endl;
 		  //~ }		 //~ }		 //~ fprintf(fv_L,"%f %f %f %f %f %f\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);		 //~ if(!check){*/
 

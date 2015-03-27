@@ -152,8 +152,8 @@ using std::ceil;
 hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
   :f_moving(false), 	f_reached(false),		initFlag(false),	m_time(0),
    f_gc(false),     	f_gc_init(false),   	step_gc(0),			fp1(NULL),
-   mass(0.0),       	GACC(9.8),          	wait_step(200),		fp2(NULL),
-   /*fs(0),*/           step_fs(0),        	 	max_step_fs(500),	fp3(NULL),
+   mass(0.0),       	GACC(9.8),          	wait_step(20),		fp2(NULL),    //wait_step(200)
+   /*fs(0),*/           step_fs(0),        	 	max_step_fs(50),	fp3(NULL),    //max_step_fs(500)
    MAX_JVEL(0.5),   	TIME_LIMIT(100.0), 		MIN_PERIOD(1.0e-9), TOLERANCE(1.0e-6)
 {
 #ifdef DEBUG_PLUGIN2
@@ -439,7 +439,7 @@ void hiroArm::update_currposdata()
 	// Current joint angles
 	for(int i=0; i<ARM_DOF; i++)
 		q[i] = body->joint(NUM_q0 + i)->q;
-
+    //std::cout<<"update curr pos data"<<q<<std::endl;
 	wrist2EndEffXform(/*in*/rPe, /*in*/rRe, /*out*/rPh, /*out*/rRh);
 #ifdef DEBUG_PLUGIN2
 	cerr << "hiroArm::updated_currposdata - rPh is: " << rPh(0) << " " << rPh(1) << " " << rPh(2) << std::endl;
@@ -527,11 +527,19 @@ void hiroArm::update_currforcedata()
 	// update current force-moment data
 	//	if(fs != 0)
 	//	{
+	//std::cout<<"Gray===============updata_currforcedata===================:"<<std::endl;
 	double f_out[6];
+
 
 	// A) Read raw forces
 	//get_raw_forces(f_out); // Updated Aug 2012 for OldHiro
-	ifs_read_data(0,f_out);    //?Gray:what and where is the function ifs_read_data
+	//ifs_read_data(0,f_out);    //?Gray:what and where is the function ifs_read_data
+    for(int i=0 ; i<3 ; i++ ){
+    	fsF_raw[i] = raw_forces[i];
+    	fsM_raw[i] = raw_forces[i+3];
+    }
+
+	//return ;
 
 	// B) Separate them into force and moment
 	for(int i=0; i<3; i++)
@@ -1374,6 +1382,8 @@ int hiroArm::gravity_comp()    //ttt
 	      //~ if(ret){
 	      q_gc_ref[0] = q_ref_tmp;
 	      fsRr_gc[0]  = tvmet::trans(rRh_initial * calc_hRfs(q_ref_tmp));
+	      std::cout<<q_gc_ref[0]<<std::endl;
+
 
 #ifdef DEBUG_PLUGIN2
 	      std::cout << "hRfs" << calc_hRfs(q) << std::endl;
@@ -1409,6 +1419,7 @@ int hiroArm::gravity_comp()    //ttt
 	      if(calc_qref(rPh_initial, rRh_ref_tmp, q_ref_tmp)){
 		//~ if(ret){
 		q_gc_ref[i+1] = q_ref_tmp;
+		std::cout<<"This q_gc_ref"<<i+1<<"and this is "<<q_ref_tmp<<std::endl;
 
 #ifdef DEBUG_PLUGIN2
 		std::cout << "rRh_ref_tmp: " << rRh_ref_tmp << std::endl;
@@ -1431,7 +1442,7 @@ int hiroArm::gravity_comp()    //ttt
 	  fsPgc 		= 0.0, 0.0, 0.0;
 
 	  step_gc 	= 0;
-	  step_fs = 198 ;        //step_fs 	= 0;    //Gray
+	  step_fs = 0 ;        //step_fs 	= 0;    //Gray
 	  f_reached 	= false;
 	  f_moving 	= false;
 	  //f_gc_init = true;
@@ -1514,10 +1525,18 @@ int hiroArm::gravity_comp()    //ttt
       while(step_gc < 5)
 	{
 	  // Move to reference pos & ori
+      //std::cout<<"Gray:Present Step is-------"<<step_gc<<std::endl;
+	  //std::cout<<"Gray:Now we are moving to the right place"<<std::endl;
+	  //std::cout<<"q_gc_ref:"<<step_gc<<":--"<<q_gc_ref[step_gc]<<std::endl;
+	  //std::cout<<"q:"<<q<<std::endl;
 	  if(!f_reached)
 	    {
-	      if(moveto(q, q_gc_ref[step_gc]))
-		return ret_next;
+	      if(moveto(q, q_gc_ref[step_gc])){
+	    	  //std::cout<<"Gray:Now we are moving to the right place"<<std::endl;
+	    	  //std::cout<<"q_gc_ref:"<<q_gc_ref[step_gc]<<std::endl;
+	    	  //std::cout<<"q:"<<q<<std::endl;
+	    	  return ret_next;
+	      }
 	      else
 		return ret_err;
 	    }
@@ -1575,6 +1594,7 @@ int hiroArm::gravity_comp()    //ttt
       if(step_gc == 5)
 	{
 	  // move to initial pos & ori
+      // std::cerr << "Gray present state is step gc 5==========" << std::endl;
 	  if(!f_reached)
 	    {
 	      if(moveto(q, q_gc_ref[0])) return ret_next;
@@ -1595,6 +1615,7 @@ int hiroArm::gravity_comp()    //ttt
 	{
 	  //compute parameters of gravity
 	  //if(!calc_gravity_param_shimizu()){
+      std::cout<< "Gray present state is step gc 6==========\n\n\n\n\n\n\n\n\n\n\n\n\n\n" << std::endl;
 	  if(!calc_gravity_param())
 	    {
 	      std::cerr << "ERROR(gravity comp): Failed to calc gravity comp parameters." << std::endl;
@@ -1602,6 +1623,18 @@ int hiroArm::gravity_comp()    //ttt
 	    }
 	  else
 	    {
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
+
 	      f_gc = true;
 	      step_gc++;
 	      return ret_fin;
@@ -2011,8 +2044,16 @@ bool hiroArm::moveto(dvector6 q_start_in, dvector6 q_goal_in)
   if(!f_moving)
     {
       // Initialize path parameters
-      if(init_path_params(q_start_in, q_goal_in))
-	return true;
+      if(init_path_params(q_start_in, q_goal_in)){
+    	  std::cout<<"Gray:init_path_params:"<<std::endl;
+    	  std::cout<<"================================"<<std::endl;
+    	  std::cout<<"================================"<<std::endl;
+    	  std::cout<<"================================"<<std::endl;
+    	  std::cout<<"================================"<<std::endl;
+    	  std::cout<<"================================"<<std::endl;
+    	  std::cout<<"================================"<<std::endl;
+    	  return true;
+      }
       else
 	return false;
     }
@@ -2042,6 +2083,7 @@ bool hiroArm::moveto(dvector6 q_start_in, dvector6 q_goal_in)
 		{
 		  // Set the qref parameter
 		  q_ref = p_param.q_start + DEL_T * m_time * p_param.jvel;
+		  //std::cout<<"q_ref in the moveto function:"<<q_ref<<std::endl;
 
 #ifdef DEBUG_PLUGIN2
 		  std::cout << "q_ref in moveto: " << q_ref *180/M_PI << std::endl;
@@ -2097,8 +2139,10 @@ bool hiroArm::init_path_params(dvector6 q_start_in, dvector6 q_goal_in)
 	jvel_tmp = MAX_JVEL;
 
       // Calculate duration & joint velocities
-      if(!calc_duration_jvel(p_param.distance, jvel_tmp))
-	return false;
+      if(!calc_duration_jvel(p_param.distance, jvel_tmp)){
+    	  std::cout<<"**************************************"<<std::endl;
+    	  return false;
+      }
       else
 	{
 	  if(DEL_T == 0.0)
@@ -2141,6 +2185,14 @@ bool hiroArm::calc_duration_jvel(dvector6 distance_in, double max_jvel_in)
   int 	err_num = 0;	// Error count
   double  t_max = -1.0;	// Variable to hold the longest durations
 
+  std::cout<<"distance_in===========================3333333"<<std::endl;
+  std::cout<<distance_in(0)<<std::endl;
+  std::cout<<distance_in(1)<<std::endl;
+  std::cout<<distance_in(2)<<std::endl;
+  std::cout<<distance_in(3)<<std::endl;
+  std::cout<<distance_in(4)<<std::endl;
+  std::cout<<distance_in(5)<<std::endl;
+
   // Calc duration for each joint
   for(int i=0; i<ARM_DOF; i++)
     {
@@ -2168,8 +2220,10 @@ bool hiroArm::calc_duration_jvel(dvector6 distance_in, double max_jvel_in)
     }
 
   // If there is an error for each of the joints, then this can't be done.
-  if(err_num == ARM_DOF)
+  if(err_num == ARM_DOF){
+	  std::cout<<"222222222222222222222222222"<<std::endl;
     return false;
+  }
   else
     {
       // Save duration to protected member
