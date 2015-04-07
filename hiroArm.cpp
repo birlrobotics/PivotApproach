@@ -50,6 +50,7 @@ using std::ceil;
 #define R_FORCES_FILE				"/R_Torques.dat"							// Save Joint Torques for robot
 #define R_MANIP_TEST_FILE			"/R_manipulationTestAxis.dat"				// Used to test force and moment controllers behavior
 
+
 // For Left Arm
 #define L_ANGLES_FILE				"/L_Angles.dat"							// Save joint angles of robot
 #define L_CARTPOS_FILE				"/L_CartPos.dat"							// Save CartPos of End-Effector in world coordinates
@@ -261,6 +262,8 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 #ifdef DEBUG_PLUGIN2
   std::cerr << "hiroArm(): Retrieving the attitude." << std::endl;
 #endif
+
+
   //rot=m_path->joint(5)->attitude(); 		// used in linux simulation
   rot=m_path->joint(5)->segmentAttitude();    // Instead of RARM_JOINT5 I had a 5 before.
 #ifdef DEBUG_PLUGIN2
@@ -527,7 +530,6 @@ void hiroArm::update_currforcedata()
 	// update current force-moment data
 	//	if(fs != 0)
 	//	{
-	//std::cout<<"Gray===============updata_currforcedata===================:"<<std::endl;
 	double f_out[6];
 
 
@@ -542,11 +544,11 @@ void hiroArm::update_currforcedata()
 	//return ;
 
 	// B) Separate them into force and moment
-	for(int i=0; i<3; i++)
-	{
-		fsF_raw[i] = f_out[i];
-		fsM_raw[i] = f_out[i+3];
-	}
+	//for(int i=0; i<3; i++)
+	//{
+	//	fsF_raw[i] = f_out[i];
+	//	fsM_raw[i] = f_out[i+3];
+	//}
 
 	// If gravitational component flag is true
 	if(f_gc)     //?Gray:how do the following two functions work? And what are rFfs_gc, rMfs_gc, rFh_gc, rMh_gc
@@ -1089,6 +1091,7 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
   dmatrix Jac;
   dmatrix PseudoJac;
   ::AssemblyStrategy::TestAxis testAxis;
+
     
   // Timing    
   //timeval startTime, endTime, sJ, eJ;			// create variables
@@ -1442,10 +1445,12 @@ int hiroArm::gravity_comp()    //ttt
 	  fsPgc 		= 0.0, 0.0, 0.0;
 
 	  step_gc 	= 0;
-	  step_fs = 0 ;        //step_fs 	= 0;    //Gray
+	  step_fs = 0 ;
 	  f_reached 	= false;
 	  f_moving 	= false;
 	  //f_gc_init = true;
+
+	  tempcount = 0 ; //Gray
 
 	  f_gc_init = true;
 	  return ret_next;
@@ -1524,17 +1529,12 @@ int hiroArm::gravity_comp()    //ttt
     {
       while(step_gc < 5)
 	{
-	  // Move to reference pos & ori
-      //std::cout<<"Gray:Present Step is-------"<<step_gc<<std::endl;
-	  //std::cout<<"Gray:Now we are moving to the right place"<<std::endl;
-	  //std::cout<<"q_gc_ref:"<<step_gc<<":--"<<q_gc_ref[step_gc]<<std::endl;
-	  //std::cout<<"q:"<<q<<std::endl;
 	  if(!f_reached)
 	    {
 	      if(moveto(q, q_gc_ref[step_gc])){
-	    	  //std::cout<<"Gray:Now we are moving to the right place"<<std::endl;
-	    	  //std::cout<<"q_gc_ref:"<<q_gc_ref[step_gc]<<std::endl;
-	    	  //std::cout<<"q:"<<q<<std::endl;
+	    	  //Gray
+              tempcount++;
+              //std::cout<<tempcount<<std::endl;
 	    	  return ret_next;
 	      }
 	      else
@@ -1543,6 +1543,8 @@ int hiroArm::gravity_comp()    //ttt
 
 	  // get force-moment data
 	  else{
+
+		tempcount = 0;    //Gray
 	    // stay here
 	    if(step_fs < wait_step)
 	      {
@@ -1594,7 +1596,6 @@ int hiroArm::gravity_comp()    //ttt
       if(step_gc == 5)
 	{
 	  // move to initial pos & ori
-      // std::cerr << "Gray present state is step gc 5==========" << std::endl;
 	  if(!f_reached)
 	    {
 	      if(moveto(q, q_gc_ref[0])) return ret_next;
@@ -1615,7 +1616,6 @@ int hiroArm::gravity_comp()    //ttt
 	{
 	  //compute parameters of gravity
 	  //if(!calc_gravity_param_shimizu()){
-      std::cout<< "Gray present state is step gc 6==========\n\n\n\n\n\n\n\n\n\n\n\n\n\n" << std::endl;
 	  if(!calc_gravity_param())
 	    {
 	      std::cerr << "ERROR(gravity comp): Failed to calc gravity comp parameters." << std::endl;
@@ -1623,18 +1623,6 @@ int hiroArm::gravity_comp()    //ttt
 	    }
 	  else
 	    {
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-		  std::cerr << "finish to calc gravity comp parameters." << std::endl;
-
 	      f_gc = true;
 	      step_gc++;
 	      return ret_fin;
@@ -1931,6 +1919,13 @@ bool hiroArm::calc_gravity_param()
   std::cout << "fsF_offset =" << fsF_offset << std::endl;
   std::cout << "fsM_offset =" << fsM_offset << std::endl;
 #endif
+  //Gray
+  std::cout << "GravityComp parameters" << std::endl;
+  std::cout << "mass =" << mass << std::endl;
+  std::cout << "rG_vec =" << rG_vec << std::endl;
+  std::cout << "fsPgc =" << fsPgc << std::endl;
+  std::cout << "fsF_offset =" << fsF_offset << std::endl;
+  std::cout << "fsM_offset =" << fsM_offset << std::endl;
 
   return true;
 }
@@ -2000,10 +1995,14 @@ bool hiroArm::calc_gc_forces(vector3 &rFfs_gc_out, vector3 &rMfs_gc_out)
       vector3 oGC_pos;							//matrix33 oGC_pos_hat;
       oGC_pos = rRfs * fsPgc;						//oGC_pos_hat = OpenHRP::hat(oGC_pos);		//rM_grav = oGC_pos_hat * rF_grav;
       rM_grav = tvmet::cross(oGC_pos, rF_grav);
-
       // Offset
-      rFfs_gc_out = (rRfs * (fsF_raw - fsF_offset)) - rF_grav;
-      rMfs_gc_out = (rRfs * (fsM_raw - fsM_offset)) - rM_grav;
+      //Gray
+      matrix33 rRfs_inv;
+      rRfs_inv = OpenHRP::inverse(rRfs);
+      //rFfs_gc_out = (rRfs * (fsF_raw - fsF_offset)) - rF_grav;
+      //rMfs_gc_out = (rRfs * (fsM_raw - fsM_offset)) - rM_grav;
+      rFfs_gc_out = rRfs_inv * ((rRfs * (fsF_raw - fsF_offset)) - rF_grav);
+      rMfs_gc_out = rRfs_inv * ((rRfs * (fsM_raw - fsM_offset)) - rM_grav);
 
 #ifdef DEBUG_PLUGIN2
       std::cout << "calc_gc_forces: " << std::endl;
@@ -2045,13 +2044,6 @@ bool hiroArm::moveto(dvector6 q_start_in, dvector6 q_goal_in)
     {
       // Initialize path parameters
       if(init_path_params(q_start_in, q_goal_in)){
-    	  std::cout<<"Gray:init_path_params:"<<std::endl;
-    	  std::cout<<"================================"<<std::endl;
-    	  std::cout<<"================================"<<std::endl;
-    	  std::cout<<"================================"<<std::endl;
-    	  std::cout<<"================================"<<std::endl;
-    	  std::cout<<"================================"<<std::endl;
-    	  std::cout<<"================================"<<std::endl;
     	  return true;
       }
       else
@@ -2184,14 +2176,6 @@ bool hiroArm::calc_duration_jvel(dvector6 distance_in, double max_jvel_in)
 {
   int 	err_num = 0;	// Error count
   double  t_max = -1.0;	// Variable to hold the longest durations
-
-  std::cout<<"distance_in===========================3333333"<<std::endl;
-  std::cout<<distance_in(0)<<std::endl;
-  std::cout<<distance_in(1)<<std::endl;
-  std::cout<<distance_in(2)<<std::endl;
-  std::cout<<distance_in(3)<<std::endl;
-  std::cout<<distance_in(4)<<std::endl;
-  std::cout<<distance_in(5)<<std::endl;
 
   // Calc duration for each joint
   for(int i=0; i<ARM_DOF; i++)
@@ -2540,6 +2524,7 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	  strcpy(CartPos,		WRITE_DIR);
 	  strcpy(State,	    	WRITE_DIR);
 	  strcpy(Forces,	    WRITE_DIR);
+	  strcpy(Forces_gc,     WRITE_DIR);
 
 	  // Concatenate with appropriate endings
 	  strcat(TrajState1,	MOTION_FILE);							// Desired Trajectory
@@ -2549,6 +2534,7 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	  strcat(CartPos,		R_CARTPOS_FILE);							// Cartesian Positions
 	  strcat(State,			R_STATE_FILE);							// New States Time Occurrence
 	  strcat(Forces,		R_FORCES_FILE);							// Robot Forces/Moments
+      strcat(Forces_gc,     R_FORCES_GC_FILE);                 //Gray
 
 	  // Initialize AssemblyStrategy Class:
 	  // 1) Open files associated with the directories to read/write data

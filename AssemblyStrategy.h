@@ -243,6 +243,7 @@ class AssemblyStrategy {
 	  DoNotIncreaseStateNum				// Does not increase state number but writes entry into state vector file
   };
 
+
   /*--------------------------------------------------- Strategy --------------------------------------------------------*/
   int		approachType;				// What kind of assembly strategy will we use?
   int 		controlType;				// What kind of control method will we use?
