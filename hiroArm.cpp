@@ -50,6 +50,10 @@ using std::ceil;
 #define R_FORCES_FILE				"/R_Torques.dat"							// Save Joint Torques for robot
 #define R_MANIP_TEST_FILE			"/R_manipulationTestAxis.dat"				// Used to test force and moment controllers behavior
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 // For Left Arm
 #define L_ANGLES_FILE				"/L_Angles.dat"							// Save joint angles of robot
 #define L_CARTPOS_FILE				"/L_CartPos.dat"							// Save CartPos of End-Effector in world coordinates
@@ -64,7 +68,11 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // TEST MODE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
 #define TEST    				1			// If true, a test is activated to see the response of the force/moment controllers. Reads an int from file to know which axis to activate.
+=======
+#define TEST    				0			// If true, a test is activated to see the response of the force/moment controllers. Reads an int from file to know which axis to activate.
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // CONTROL METHODS
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -143,12 +151,22 @@ using std::ceil;
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Constructor Definition : Variable Initialisation List
+//
+// Gray:hiroArm(Constructor)
+// Initial the name ,body ,joint limits of the hiro
+// Set up the link of the arm
+// Contain the AssemblyStrategy class
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
   :f_moving(false), 	f_reached(false),		initFlag(false),	m_time(0),
    f_gc(false),     	f_gc_init(false),   	step_gc(0),			fp1(NULL),
+<<<<<<< HEAD
    mass(0.0),       	GACC(9.8),          	wait_step(200),		fp2(NULL),
    /*fs(0),*/           step_fs(0),        	 	max_step_fs(500),	fp3(NULL),
+=======
+   mass(0.0),       	GACC(9.8),          	wait_step(20),		fp2(NULL),    //wait_step(200)
+   /*fs(0),*/           step_fs(0),        	 	max_step_fs(50),	fp3(NULL),    //max_step_fs(500)
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
    MAX_JVEL(0.5),   	TIME_LIMIT(100.0), 		MIN_PERIOD(1.0e-9), TOLERANCE(1.0e-6)
 {
 #ifdef DEBUG_PLUGIN2
@@ -211,7 +229,7 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 #if 0
   m_path->setMaxIKIter(200);					// Maximum limit of iterations to numerically compute the inverse kinematics
 #endif
-  // Inverse Kinematics gains for
+  // Inverse Kinematics gains for        //?Gray:what are the paramters of the inverse kinematics gains for
   ikGains[0] 	= 0.3;
   ikGains[1] 	= 0.6;
   ikGains[2] 	= 0.7;
@@ -228,7 +246,11 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
   ikTrans[3] 	= 1e-10;
 
   // Program Design Parameters
+<<<<<<< HEAD
   p_param.method 	= CONSTANT_VELOCITY;				// Interpolation Method: Velocity
+=======
+  p_param.method 	= CONSTANT_VELOCITY;				// Interpolation Method: Velocity     //?Gray
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
   p_param.max_jvel 	= MAX_JVEL;							// With MAX_JVEL as maximum joint velocity limit = 0.5
   controlmode 		= NOCONTROL;						// One of six control modes. No control.
 
@@ -256,6 +278,8 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 #ifdef DEBUG_PLUGIN2
   std::cerr << "hiroArm(): Retrieving the attitude." << std::endl;
 #endif
+
+
   //rot=m_path->joint(5)->attitude(); 		// used in linux simulation
   rot=m_path->joint(5)->segmentAttitude();    // Instead of RARM_JOINT5 I had a 5 before.
 #ifdef DEBUG_PLUGIN2
@@ -290,6 +314,10 @@ hiroArm::~hiroArm()
 
 /*************************************************************************************************************/
 // Init()
+//
+// Gray:init
+// Get the value of rRe, rPe, rRh, rPh and the q
+// Set the value of rPh_ref , rRh_ref and q_ref to be rPh, rRh and q
 /*************************************************************************************************************/
 void hiroArm::init()
 {
@@ -370,10 +398,22 @@ void hiroArm::init()
 //#ifdef DEBUG_PLUGIN2
 //  std::cerr << "\nhiroArm::init - exited" << std::endl;
 //#endif
+<<<<<<< HEAD
+
+//  return ret;
+//}
+=======
 
 //  return ret;
 //}
 
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
+
+//-------------------------------------------------------------
+// Gray: savedata
+// Save the hand gravigy compensation terms for force and moment into fp1
+// Save the position and rotation translation and the rotation matrix from base 2 EE into fp2
+//-----------------------------------------------------------------
 void hiroArm::savedata()
 {
   // Initialization
@@ -407,6 +447,9 @@ std::string hiroArm::get_name() { return name; }
  * 	The current joint angles of the body
  * Second, by computing the:
  * 	base2EndEffectorPosition
+ *
+ * 	Gray:update_currposdata
+ * 	Get the lastest rPe, rRe, q, rPh and rRh
  *********************************************************************************/
 void hiroArm::update_currposdata()
 {
@@ -421,7 +464,11 @@ void hiroArm::update_currposdata()
 	// Current joint angles
 	for(int i=0; i<ARM_DOF; i++)
 		q[i] = body->joint(NUM_q0 + i)->q;
+<<<<<<< HEAD
 
+=======
+    //std::cout<<"update curr pos data"<<q<<std::endl;
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 	wrist2EndEffXform(/*in*/rPe, /*in*/rRe, /*out*/rPh, /*out*/rRh);
 #ifdef DEBUG_PLUGIN2
 	cerr << "hiroArm::updated_currposdata - rPh is: " << rPh(0) << " " << rPh(1) << " " << rPh(2) << std::endl;
@@ -432,6 +479,9 @@ void hiroArm::update_currposdata()
  * wrist2EndEffXform()
  * Takes the base2wrist position and rotation and transforms them to base2endeff
  * position and orientation
+ *
+ * Gray:wrist2EndEffXform
+ * Compute the rRh and rPh
  *********************************************************************************/
 void hiroArm::wrist2EndEffXform(/*in*/vector3 rPe, /*in*/matrix33 rRe, /*out*/vector3& rPh, /*out*/matrix33& rRh)
 {
@@ -447,6 +497,9 @@ void hiroArm::wrist2EndEffXform(/*in*/vector3 rPe, /*in*/matrix33 rRe, /*out*/ve
  * wrist2EndEffXform()
  * Takes the base2wrist position and rotation and transforms them to base2endeff
  * position and orientation
+ *
+ * Gray:EndEff2wristXfrom
+ * ?Gray
  *********************************************************************************/
 void hiroArm::EndEff2wristXform(/*in*/vector3 rPh, /*in*/matrix33 rRh, /*out*/vector3& rPe)
 {
@@ -459,6 +512,10 @@ void hiroArm::EndEff2wristXform(/*in*/vector3 rPh, /*in*/matrix33 rRh, /*out*/ve
 /*******************************************************************************************************
  // get_qref()
  // Retrieve reference joint angle in degrees
+
+    Gray:get_qref
+    just return the q_ref
+    ?Gray:what is relation between q and q_ref
  *******************************************************************************************************/
 dvector6 hiroArm::get_qref()
 {
@@ -472,6 +529,9 @@ dvector6 hiroArm::get_qref()
 /*******************************************************************************************************
  // get_qcur()
  // Retrieve currentjoint angle in degrees
+  *
+  * Gray:get_qcur
+  * just return the q
  *******************************************************************************************************/
 dvector6 hiroArm::get_qcur()
 {
@@ -486,6 +546,10 @@ dvector6 hiroArm::get_qcur()
  // update_currforcedata()
  // Return latest force and moment data.
  // If gravitational compensation is consider, it uses that information to compute the latest values
+  *
+  *
+  * Gray:update_currforcedata
+  * Set the lastest fsF_raw ,fsM_raw and get the lastest force and moment of the wrist and EE after gc
  *******************************************************************************************************/
 void hiroArm::update_currforcedata()
 {
@@ -493,6 +557,7 @@ void hiroArm::update_currforcedata()
 	//	if(fs != 0)
 	//	{
 	double f_out[6];
+<<<<<<< HEAD
 
 	// A) Read raw forces
 	//get_raw_forces(f_out); // Updated Aug 2012 for OldHiro
@@ -507,15 +572,42 @@ void hiroArm::update_currforcedata()
 
 	// If gravitational component flag is true
 	if(f_gc)
+=======
+
+
+	// A) Read raw forces
+	//get_raw_forces(f_out); // Updated Aug 2012 for OldHiro
+	//ifs_read_data(0,f_out);    //?Gray:what and where is the function ifs_read_data
+    for(int i=0 ; i<3 ; i++ ){
+    	fsF_raw[i] = raw_forces[i];
+    	fsM_raw[i] = raw_forces[i+3];
+    }
+
+	//return ;
+
+	// B) Separate them into force and moment
+	//for(int i=0; i<3; i++)
+	//{
+	//	fsF_raw[i] = f_out[i];
+	//	fsM_raw[i] = f_out[i+3];
+	//}
+
+	// If gravitational component flag is true
+	if(f_gc)     //?Gray:how do the following two functions work? And what are rFfs_gc, rMfs_gc, rFh_gc, rMh_gc
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 	{
 		// Calculate the hand's gravitational force and moment
 		calc_gc_forces(rFfs_gc, rMfs_gc);			// Arm's force and moment
 		calc_gc_forces_at_hand(rFh_gc, rMh_gc);		// Hand's force and moment
+<<<<<<< HEAD
 	}
+=======
+	}    //?Gray: what is the difference between the fs and h
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 	//	}
 }
 
-#if 0
+#if 0                        //?Gray
 /******************************************************************************************************/
 // set_FSptr()
 // Set the Force Sensor pointer from the niitaFs class. Give an identifier for left and right arms.
@@ -531,6 +623,9 @@ void hiroArm::set_FSptr(nittaFS *fs_in, int NO_fs_in)
 /*******************************************************************************************************
  // get_forces()
  // Retrieve the HAND's gravity compensation terms for force and moment
+  *
+  * Gray:get_forces:
+  * just return the rFh_gc, rMh_gc if f_gc is true
  *******************************************************************************************************/
 bool hiroArm::get_forces(vector3 &rFh_gc_out, vector3 &rMh_gc_out)
 {
@@ -546,6 +641,9 @@ bool hiroArm::get_forces(vector3 &rFh_gc_out, vector3 &rMh_gc_out)
 /*******************************************************************************************************
  // get_curr_handpos()
  // Retrieve the HAND's position translation vector and rotation matrix from base to end-effecter
+  *
+  * Gray:get_curr_handpos
+  * return the rPh and rRh
  *******************************************************************************************************/
 void hiroArm::get_curr_handpos(vector3 &rPh_out, matrix33 &rRh_out){
 
@@ -595,6 +693,8 @@ void hiroArm::set_Iteration()
  // velocity_control()
  // Used in Bilateral control.
  // Takes in rdP, rate of change in position; rW, rate of change in orientation.
+  *
+  * ?Gray:Skip it
  *******************************************************************************************************/
 bool hiroArm::velocity_control(vector3 rdP, vector3 rW, bool f_new)
 {
@@ -771,6 +871,10 @@ bool hiroArm::velocity_control(vector3 rdP, vector3 rW, bool f_new)
  // Impedance Control
  // Mapping from generalized velocities to generalized forces
  ** Sets the damping and inertia coefficient values
+ **
+ **
+ ** Gray
+ ** ?Gray:Skip it
  ****************************************************************************************************/
 bool hiroArm::impedance_control()
 // DSRG's direct teaching function
@@ -1034,6 +1138,7 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
   dmatrix Jac;
   dmatrix PseudoJac;
   ::AssemblyStrategy::TestAxis testAxis;
+
     
   // Timing    
   //timeval startTime, endTime, sJ, eJ;			// create variables
@@ -1196,6 +1301,9 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 }
 
 // Copy the latest position and rpy data into the original EndEff position and rpy
+// Gray:set_OrgPosRost
+// set the PA->EndEff_p_org, PA->EndEff_r_org
+// Make the PA->  PA->wrist_p = PA->EndEff_p_org; PA->wrist_r = PA->EndEff_r_org;
 void hiroArm::set_OrgPosRot(vector3& pos, vector3& RPY)
 {
 
@@ -1227,6 +1335,9 @@ void hiroArm::set_OrgPosRot(vector3& pos, vector3& RPY)
 // moveto_q_goal
 // moves hiro to the goal position and returns 0, or else return an error -1.
 // If the robot is at positino, returns 1.
+//
+// Gray:moveto_q_goal
+// move to goal by the q
 /**************************************************************************/
 int hiroArm::moveto_q_goal(dvector6 q_goal_in)
 {
@@ -1273,6 +1384,9 @@ void hiroArm::reset_gravity_comp()
 // return 1: gravity compensation is finished
 // return 0: continued
 // return minus values: error ocurrs
+//
+// Gray : gravity_comp
+// ?Gray  What is the threoy
 /**************************************************************************/
 int hiroArm::gravity_comp()    //ttt
 {
@@ -1318,6 +1432,8 @@ int hiroArm::gravity_comp()    //ttt
 	      //~ if(ret){
 	      q_gc_ref[0] = q_ref_tmp;
 	      fsRr_gc[0]  = tvmet::trans(rRh_initial * calc_hRfs(q_ref_tmp));
+	      std::cout<<q_gc_ref[0]<<std::endl;
+
 
 #ifdef DEBUG_PLUGIN2
 	      std::cout << "hRfs" << calc_hRfs(q) << std::endl;
@@ -1353,6 +1469,7 @@ int hiroArm::gravity_comp()    //ttt
 	      if(calc_qref(rPh_initial, rRh_ref_tmp, q_ref_tmp)){
 		//~ if(ret){
 		q_gc_ref[i+1] = q_ref_tmp;
+		std::cout<<"This q_gc_ref"<<i+1<<"and this is "<<q_ref_tmp<<std::endl;
 
 #ifdef DEBUG_PLUGIN2
 		std::cout << "rRh_ref_tmp: " << rRh_ref_tmp << std::endl;
@@ -1375,10 +1492,12 @@ int hiroArm::gravity_comp()    //ttt
 	  fsPgc 		= 0.0, 0.0, 0.0;
 
 	  step_gc 	= 0;
-	  step_fs 	= 0;
+	  step_fs = 0 ;
 	  f_reached 	= false;
 	  f_moving 	= false;
 	  //f_gc_init = true;
+
+	  tempcount = 0 ; //Gray
 
 	  f_gc_init = true;
 	  return ret_next;
@@ -1451,23 +1570,28 @@ int hiroArm::gravity_comp()    //ttt
 	  else return ret_err;
 	}
     }
-#if 0
+#if 1
 
   else
     {
       while(step_gc < 5)
 	{
-	  // Move to reference pos & ori
 	  if(!f_reached)
 	    {
-	      if(moveto(q, q_gc_ref[step_gc]))
-		return ret_next;
+	      if(moveto(q, q_gc_ref[step_gc])){
+	    	  //Gray
+              tempcount++;
+              //std::cout<<tempcount<<std::endl;
+	    	  return ret_next;
+	      }
 	      else
 		return ret_err;
 	    }
 
 	  // get force-moment data
 	  else{
+
+		tempcount = 0;    //Gray
 	    // stay here
 	    if(step_fs < wait_step)
 	      {
@@ -1555,11 +1679,11 @@ int hiroArm::gravity_comp()    //ttt
     }
 }
 #endif
- else{
-   std::cout << "ERROR(gravity comp): The arm has no force sensor." << std::endl;
-   return ret_err;
- }
-}
+ //else{     //Gray
+ //  std::cout << "ERROR(gravity comp): The arm has no force sensor." << std::endl;
+ //  return ret_err;
+ //}
+//}
 
 /**********************************************************************************************************************/
 // protected functions
@@ -1570,16 +1694,16 @@ bool hiroArm::calc_qref(vector3 rPe_ref_in, matrix33 rRe_ref_in, dvector6 &q_out
   std::cout << "[cacl_qref]" << rPe_ref_in << rRe_ref_in << std::endl;
 #endif
   bool ikRet;
-#if 0
-  for(int j=0; j<4; j++) {
-    m_path->setIkGain(ikGains[j]);
-    m_path->setMaxIKErrorRot(ikRot[j]);
-    m_path->setMaxIKErrorTrans(ikTrans[j]);
+#if 1
+//  for(int j=0; j<4; j++) {
+//    m_path->setIkGain(ikGains[j]);
+//    m_path->setMaxIKErrorRot(ikRot[j]);
+//    m_path->setMaxIKErrorTrans(ikTrans[j]);
     ikRet = m_path->calcInverseKinematics(rPe_ref_in,rRe_ref_in);
 
-    if(!ikRet)
-      break;
-  }
+ //   if(!ikRet)
+ //     break;
+ // }
 #endif
 #ifdef DEBUG_PLUGIN2
   std::cout << "q_ref: " ;
@@ -1588,6 +1712,8 @@ bool hiroArm::calc_qref(vector3 rPe_ref_in, matrix33 rRe_ref_in, dvector6 &q_out
   std::cout << std::endl;
 #endif
 
+
+  ikRet = true;     //Gray
   if(ikRet){
     for(int i=0; i<ARM_DOF; i++)	q_out[i] = body->joint(NUM_q0 + i)->q;
     return true;
@@ -1840,6 +1966,13 @@ bool hiroArm::calc_gravity_param()
   std::cout << "fsF_offset =" << fsF_offset << std::endl;
   std::cout << "fsM_offset =" << fsM_offset << std::endl;
 #endif
+  //Gray
+  std::cout << "GravityComp parameters" << std::endl;
+  std::cout << "mass =" << mass << std::endl;
+  std::cout << "rG_vec =" << rG_vec << std::endl;
+  std::cout << "fsPgc =" << fsPgc << std::endl;
+  std::cout << "fsF_offset =" << fsF_offset << std::endl;
+  std::cout << "fsM_offset =" << fsM_offset << std::endl;
 
   return true;
 }
@@ -1903,16 +2036,20 @@ bool hiroArm::calc_gc_forces(vector3 &rFfs_gc_out, vector3 &rMfs_gc_out)
       rRfs = rRh * hRfs;
 
       // Gravity Vector - Force
-      rF_grav = mass*GACC*rG_vec;					// mg*\hat_g
+      rF_grav = mass*GACC*rG_vec;					// mg*\hat_g   //ttt
 
       // Gravity Vector - Moment
       vector3 oGC_pos;							//matrix33 oGC_pos_hat;
       oGC_pos = rRfs * fsPgc;						//oGC_pos_hat = OpenHRP::hat(oGC_pos);		//rM_grav = oGC_pos_hat * rF_grav;
       rM_grav = tvmet::cross(oGC_pos, rF_grav);
-
       // Offset
-      rFfs_gc_out = (rRfs * (fsF_raw - fsF_offset)) - rF_grav;
-      rMfs_gc_out = (rRfs * (fsM_raw - fsM_offset)) - rM_grav;
+      //Gray
+      matrix33 rRfs_inv;
+      rRfs_inv = OpenHRP::inverse(rRfs);
+      //rFfs_gc_out = (rRfs * (fsF_raw - fsF_offset)) - rF_grav;
+      //rMfs_gc_out = (rRfs * (fsM_raw - fsM_offset)) - rM_grav;
+      rFfs_gc_out = rRfs_inv * ((rRfs * (fsF_raw - fsF_offset)) - rF_grav);
+      rMfs_gc_out = rRfs_inv * ((rRfs * (fsM_raw - fsM_offset)) - rM_grav);
 
 #ifdef DEBUG_PLUGIN2
       std::cout << "calc_gc_forces: " << std::endl;
@@ -1953,8 +2090,9 @@ bool hiroArm::moveto(dvector6 q_start_in, dvector6 q_goal_in)
   if(!f_moving)
     {
       // Initialize path parameters
-      if(init_path_params(q_start_in, q_goal_in))
-	return true;
+      if(init_path_params(q_start_in, q_goal_in)){
+    	  return true;
+      }
       else
 	return false;
     }
@@ -1984,6 +2122,7 @@ bool hiroArm::moveto(dvector6 q_start_in, dvector6 q_goal_in)
 		{
 		  // Set the qref parameter
 		  q_ref = p_param.q_start + DEL_T * m_time * p_param.jvel;
+		  //std::cout<<"q_ref in the moveto function:"<<q_ref<<std::endl;
 
 #ifdef DEBUG_PLUGIN2
 		  std::cout << "q_ref in moveto: " << q_ref *180/M_PI << std::endl;
@@ -2039,8 +2178,10 @@ bool hiroArm::init_path_params(dvector6 q_start_in, dvector6 q_goal_in)
 	jvel_tmp = MAX_JVEL;
 
       // Calculate duration & joint velocities
-      if(!calc_duration_jvel(p_param.distance, jvel_tmp))
-	return false;
+      if(!calc_duration_jvel(p_param.distance, jvel_tmp)){
+    	  std::cout<<"**************************************"<<std::endl;
+    	  return false;
+      }
       else
 	{
 	  if(DEL_T == 0.0)
@@ -2110,8 +2251,10 @@ bool hiroArm::calc_duration_jvel(dvector6 distance_in, double max_jvel_in)
     }
 
   // If there is an error for each of the joints, then this can't be done.
-  if(err_num == ARM_DOF)
+  if(err_num == ARM_DOF){
+	  std::cout<<"222222222222222222222222222"<<std::endl;
     return false;
+  }
   else
     {
       // Save duration to protected member
@@ -2428,6 +2571,10 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	  strcpy(CartPos,		WRITE_DIR);
 	  strcpy(State,	    	WRITE_DIR);
 	  strcpy(Forces,	    WRITE_DIR);
+<<<<<<< HEAD
+=======
+	  strcpy(Forces_gc,     WRITE_DIR);
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 
 	  // Concatenate with appropriate endings
 	  strcat(TrajState1,	MOTION_FILE);							// Desired Trajectory
@@ -2437,6 +2584,10 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	  strcat(CartPos,		R_CARTPOS_FILE);							// Cartesian Positions
 	  strcat(State,			R_STATE_FILE);							// New States Time Occurrence
 	  strcat(Forces,		R_FORCES_FILE);							// Robot Forces/Moments
+<<<<<<< HEAD
+=======
+      strcat(Forces_gc,     R_FORCES_GC_FILE);                 //Gray
+>>>>>>> 4b0602858ac371813d3de018c6213fdeac45bbe4
 
 	  // Initialize AssemblyStrategy Class:
 	  // 1) Open files associated with the directories to read/write data

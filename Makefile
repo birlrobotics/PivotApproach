@@ -16,7 +16,7 @@ include $(TOP)Controller/IOserver/plugin/Make.rules
 #CXX_FLAGS += -g -Wall -O1										# Compilation Flags
 CXX_FLAGS:=$(CXX_FLAGS) -I/usr/include/qdbm
 CXX_FLAGS += -fno-schedule-insns -fno-schedule-insns2 -fno-strict-aliasing
-#CXX_FLAGS += -DDEBUG_PLUGIN -DDEBUG_PLUGIN2 -DDEBUG_PLUGIN3			 			# Flag DEBUG_PLUGIN is used in forceSensorPlugin.cpp,...PLUGIN_2 in hiroArm, ...PLUGIN3, in  AssemblyStrat.
+CXX_FLAGS += -DDEBUG_PLUGIN -DDEBUG_PLUGIN2 -DDEBUG_PLUGIN3			 			# Flag DEBUG_PLUGIN is used in forceSensorPlugin.cpp,...PLUGIN_2 in hiroArm, ...PLUGIN3, in  AssemblyStrat.
 CXX_FLAGS += -DPIVOTAPPROACH #-DIMPEDANCE 
 CXX_FLAGS += -DSIMULATION
 #CXX_FLAGS += -DWRITELOG

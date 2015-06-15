@@ -1,5 +1,6 @@
 # Data
 /data/Results
+./metadata/*
 
 # Python stuff
 *.py[cod]
@@ -114,3 +115,7 @@ Ogre.log
 
 # Octave core dumps
 octave-core
+
+# Other
+ifstrTest
+*.ai

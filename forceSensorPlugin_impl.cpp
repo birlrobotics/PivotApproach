@@ -70,7 +70,7 @@ unsigned long long distate; // Digital state parameter. Holds bit values.
 double size;
 
 //Left Arm Enable
-#define LEFT_ARM  0 	//Used to enable the left Arm
+#define LEFT_ARM  1 	//Used to enable the left Arm
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -159,6 +159,12 @@ forceSensorPlugin_impl::forceSensorPlugin_impl(istringstream &strm)
 forceSensorPlugin_impl::~forceSensorPlugin_impl()
 {
 	close_ifs();
+	if(ofgc.is_open())     //Gray
+	    ofgc.close();
+	ofgc.clear();
+	if(lofgc.is_open())
+		lofgc.close();
+	lofgc.clear();
 
 #ifdef WRITELOG
 	if(ostr_astate.is_open())
@@ -377,8 +383,8 @@ void forceSensorPlugin_impl::init(void)
 	controlmode_r     = NotControlled;
 
 #ifdef PIVOTAPPROACH		// set the controlmode_nr and controlmode_r parameters to PivotApproach to implement this control mode in ::control
-	controlmode_nr = PivotApproach; // Set the enumeration to both controlmode_nr and r
-	controlmode_r = PivotApproach;
+	controlmode_nr = GravityCompensation; // Set the enumeration to both controlmode_nr and r
+	controlmode_r = GravityCompensation;
 #elif IMPEDANCE			// set the controlmode_nr and controlmode_r parameters to ImpedanceControl to implement this control mode
 	//	controlmode_nr = ImpedanceControl;
 	//      controlmode_r = ImpedanceControl;
@@ -561,8 +567,11 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 
 	/****************************************** PIVOT APPROACH ************************************************************/
 #ifdef PIVOTAPPROACH
-	controlmode_nr = PivotApproach;
-	controlmode_r = PivotApproach;
+	//controlmode_nr = PivotApproach;    //Gray
+	controlmode_nr = GravityCompensation;
+	//controlmode_r = PivotApproach;
+	controlmode_r = GravityCompensation;
+
 #endif
 
 
@@ -611,7 +620,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 	// Local variable
 	int ret = 0;
 
-
+    //std::cout<< "rs->angle"<<rs->angle << std::endl;
 #ifndef SIMULATION
 	rs->angle[8] -= 0.531117;
 #endif
@@ -636,18 +645,24 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #if LEFT_ARM
 
 				vector3 rpy2(0);
-				std::cout<<"Gray:Position of LW -- "<<L_CurXYZ<<std::endl;     //Gray:Output the first position of the wrist of the Left Arm
 				lArm->set_OrgPosRot(L_CurXYZ,rpy2);
+
+				//Gray Debug
+				std::cout<<"Gray:Position of LW -- "<<L_CurXYZ<<std::endl;     //Gray:Output the first position of the wrist of the Left Arm
 				std::cout<<"Gray:Orientation of LW -- "<<rpy2<<std::endl;     //Gray:Output the first orientation of the wrist of the Left Arm
+
 				lArm->m_path->calcInverseKinematics(L_CurXYZ,L_CurRot);
 				for(int i=0;i<6;i++)
 					L_CurrentAngles(i) = lArm->m_path->joint(i)->q;
 #endif
-				std::cout<<"Gray:Position of RW -- "<<CurXYZ<<std::endl;     //Gray:Output the first position of the wrist of right arm
 				// Update the latest data angles and position
 				vector3 rpy(0);
 				rArm->set_OrgPosRot(CurXYZ,rpy);
+
+				//Gray Debug
+				std::cout<<"Gray:Position of RW -- "<<CurXYZ<<std::endl;     //Gray:Output the first position of the wrist of right arm
 				std::cout<<"Gray:Orientation of RW -- "<<rpy<<std::endl;     //Gray:Output the first orientation of the wrist of the right Arm
+
 				rArm->m_path->calcInverseKinematics(CurXYZ,CurRot);
 				for (int i=0;i<6;i++)
 					CurrentAngles(i) = rArm->m_path->joint(i)->q;
@@ -696,6 +711,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				lArm->raw_forces[i] = rs->force[1][i];
 #endif
 			}
+
 #else
 
 #if 0
@@ -741,6 +757,15 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 						"\n/------------------------------------------------------------------------------------------------------------\n" << std::endl;
 #endif
 
+				//Gray: Open the forces_gc file
+				ofgc.open("./data/Results/fgc.dat");
+				if (!ofgc.is_open())
+				    std::cerr << ofgc << " was not opened." << std::endl;
+
+			    lofgc.open("./data/Results/lfgc.dat");
+			    if(!lofgc.is_open())
+			    	std::cerr << lofgc << " was not opened." << std::endl;
+
 				// Timing
 				if(DB_TIME)
 				{
@@ -761,7 +786,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #ifdef DEBUG_PLUGIN
 			std::cerr << "Calculate Fwd Kins" << std::endl;
 #endif
-
+			for (unsigned int i = 0; i < DOF; ++i)
+			{
+				body->joint(i)->q 	= rs->angle[i];	// the body object is for the entire body 15 DoF
+				mc->angle[i] 		= rs->angle[i];
+			}
 			// Calculate cartesian positions
 			body->calcForwardKinematics();
 
@@ -844,17 +873,30 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					{
 						f_gravity_comp[1] = true;
 						num_test = 0;
+						std::cout<<"success"<<std::endl;
 					}
 					else if (res_gc == 0)
 						f_control[1] = true;
 				}
 
 				// Manual Algorithm
+				//else if(f_gravity_comp[0]&&f_gravity_comp[1]){   //Gray:testing
+				//	controlmode_r = NotControlled;
+				//}
 				else
 				{
+					//if(f_gravity_comp[0]&&f_gravity_comp[1]){   //Gray:testing
+						//					controlmode_r = NotControlled;
+							//				break;
+								//		}
 					// force sensor data　の　チェック
 					lArm->update_currforcedata();	//~ lArm->savedata();
 					rArm->update_currforcedata();	//~ rArm->savedata();
+
+					//if(f_gravity_comp[0]&&f_gravity_comp[1]){   //Gray:testing
+				    //		controlmode_r = NotControlled;
+					//	break;
+					//}
 
 					vector3 rF_gc[2], rM_gc[2];
 
@@ -864,6 +906,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 					if (num_test < 2000)
 					{
+						//std::cout<<num_test<<std::endl;   //Gray
 						if (num_test == 0)
 						{
 							// Initialize
@@ -908,7 +951,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 					else if (num_test == 2000)
 					{
-						std::string f_name1 = "/home/hrpuser/yamanobe/data/fs.dat";
+						std::string f_name1 = "./data/Results/fs.dat";
 						if ((fp = fopen(f_name1.c_str(), "a")) == NULL) std::cerr << "file open error!!" << std::endl;
 
 						for (int i = 0; i < 2; i++)
@@ -969,6 +1012,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 						fclose(fp);
 						num_test++;
+						controlmode_r = PivotApproach;
 					}
 				}
 				break;
@@ -1304,6 +1348,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				std::cerr << "forceSensorPlugin::PivotApproach case - Entering" << std::endl;
 #endif	
 
+
+
 				/*** Get the latest angles/positions/forces through the Arm class ***/
 				//vector3 gc_handForce(0);
 				//vector3 gc_handMoment(0);
@@ -1405,6 +1451,38 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 #if LEFT_ARM
 				lArm->set_Iteration();
 #endif
+
+				//Gray
+				lArm->update_currforcedata();	//~ lArm->savedata();
+				rArm->update_currforcedata();	//~ rArm->savedata();
+
+				vector3 rF_gc[2], rM_gc[2];
+
+				rArm->get_forces(rF_gc[1], rM_gc[1]);
+				  ofgc << cur_time << "\t";
+				  for(int i=0; i<3; i++)
+				    ofgc<< rF_gc[1][i] << " \t";
+				  for(int i=0; i<3; i++)
+				 	ofgc<< rM_gc[1][i] << " \t";
+				  ofgc << std::endl;
+
+				lArm->get_forces(rF_gc[0], rM_gc[0]);
+				  lofgc << cur_time << "\t";
+				  for(int i=0; i<3; i++)
+				    lofgc<< CurrentForces(i) << " \t";
+				  for(int i=0; i<3; i++)
+				 	lofgc<< CurrentForces(i+3) << " \t";
+				  lofgc << std::endl;
+
+				  vector3 diffForces;
+				  vector3 diffMoment;
+
+				  for( int i = 0 ; i < 3 ; i++ ){
+				  	  CurrentForces(i) = rF_gc[1][i];
+				  	  CurrentForces(3+i) = rM_gc[1][i];
+				  }
+
+
 #if 0
 				// Perofrm necessary procedures to run the inverse kinematic computations later
 				for(int j=0; j<4; j++)
@@ -1453,6 +1531,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				//~ dvector6 tmp;
 				dvector6 qref_l = lArm->get_qref();
+				//std::cout<<"Gray:mc---qref_l:--"<<qref_l<<std::endl;
 				/*//~ bool check = false;		 //~ for(int i=0; i<6; i++){		 //~ tmp[i] = fabs(qref_l[i]-rs->angle[9+i]);		 //~ if(fabs(tmp[i]) > (ang_limit[9+i][2]*DT*2)){		 //~ check = true;		 //~ std::cout << "ERROR: left[" << i << "]" << qref_l[i] << " " << rs->angle[9+i] << std::endl;
 		  //~ }		 //~ }		 //~ fprintf(fv_L,"%f %f %f %f %f %f\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);		 //~ if(!check){*/
 

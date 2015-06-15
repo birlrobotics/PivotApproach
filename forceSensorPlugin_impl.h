@@ -121,6 +121,8 @@ class forceSensorPlugin_impl : public plugin,
   // Streams
   FILE *fv_L, *fv_R; 				// Left and Right arm velocities
   FILE *fp, *fv;
+  ofstream ofgc;          //Gray
+  ofstream lofgc;         //Gray
 
   // Flags
   int initControl; // used to look at the first iteration of control

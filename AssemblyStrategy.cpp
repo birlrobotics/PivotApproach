@@ -175,6 +175,8 @@ AssemblyStrategy::AssemblyStrategy()
   // Control Basis
   momentGainFactor 		= 1.0;
 
+
+
 #ifdef DEBUG_PLUGIN3
   std::cerr << "AssemblyStrategy(): Exiting Constructor" << std::endl;
 #endif
@@ -559,6 +561,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	if(DB_TIME)
 		gettimeofday(&startTime,NULL); 		// Start computing cycle time for the control function
 
+
+
 	/************************************************* LOW PASS FILTERING *************************************************************/
 	if(flagFiltering)	// Copy force/torque data into a double array to be used by the Low-Pass Filter
 	{
@@ -573,6 +577,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 		for(int i=0;i<6;i++)
 			avgSig(i) = filteredSig[i];
 		//ft->LowPassFilter(currForces,avgSig);
+		//std::cout<<avgSig(Fx)<<std::endl;
 	}
 	else
 		avgSig = currForces;
@@ -944,6 +949,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
 		}
 		break;
+
+
 		// ------------------- Rotation ---------------------------
 		case twoArm_hsaRotation:
 		{
@@ -977,7 +984,9 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			DesForce(UP_AXIS)	=	-7.18;//-0.5*VERTICAL_FORCE;
 			DesForce(SIDE_AXIS)	=	6.5;//1.0*HORIZONTAL_FORCE;
 
+
 			DesMoment(1) 		=  	3.0*ROTATIONAL_FORCE;
+
 #else
 			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
 			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
@@ -1013,10 +1022,11 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 //			DesForce(FWD_AXIS)		= -13.000*TRANSVERSE_FORCE;		//-3.25
 
 			DesForce(FWD_AXIS) 	=	-13.85;
-			DesForce(UP_AXIS)	=	-7.00;
+			DesForce(UP_AXIS)	=	-7.00 ;
 			DesForce(SIDE_AXIS)	=	6.5;
 
 			DesMoment(1)			=	3.750*ROTATIONAL_FORCE;
+
 #endif
 			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
 			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
@@ -1038,6 +1048,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			DesForce(SIDE_AXIS) =	11.50;
 			DesForce(FWD_AXIS) 	=	-12.10;
 			DesMoment(1)			=	4.00*ROTATIONAL_FORCE;
+
 #endif
 
 //			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
@@ -1094,6 +1105,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			}
 			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
 			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+
 		}
 		break;
 		// ------------------- Rotation ---------------------------
@@ -1964,8 +1976,8 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				float endApproachTime = ex_time[1];
 				if(cur_time > (endApproachTime*0.80))
 				{
-//					std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << std::endl;
-					if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx)
+					//std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << std::endl;
+					if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx) //(avgSig(Fx) < -TwoArm_SA_App2Rot_Fx)   //
 					{
 						NextStateActions(cur_time,hsaHIROTransitionExepction);
 						std::cerr << "Diro :: avgSig(Fx) : "<< avgSig(Fx) << " :change to Rotation state" << std::endl;
