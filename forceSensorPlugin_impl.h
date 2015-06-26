@@ -6,11 +6,21 @@
 #ifndef FORCE_SENSOR_PLUGIN_IMPL_H
 #define FORCE_SENSOR_PLUGIN_IMPL_H
 //----------------------------------------------------------------------------------------------------------------------------------
+// Time
+#include <ctime>				// compute cycle time
+#include <sys/time.h>
 #include <cstddef>
-#include <cstdlib>
+#include <cstdlib>				// generic algs stod
 #include <cmath>
 #include <cerrno>
+
+// Input/Output
+#include <iostream>
 #include <fstream>
+#include <sstream>
+
+// String
+#include <cstring>
 #include <string>
 //----------------------------------------------------------------------------------------------------------------------------------
 extern "C" {
@@ -66,9 +76,9 @@ class forceSensorPlugin_impl : public plugin,
   BodyPtr body;
 		
   //-----------------------------------------------------------------------------------------------------------------------------------------------
-  // n-yamanobe
-  //-----------------------------------------------------------------------------------------------------------------------------------------------
   // Enumerations
+  //-----------------------------------------------------------------------------------------------------------------------------------------------
+
   // Axis Selection
   enum 		// Used to indiate in which direction rotatations should take place.
   { X, Y,Z };
@@ -105,8 +115,12 @@ class forceSensorPlugin_impl : public plugin,
   vector3  dP_sum,   dRPY_sum;
   vector3  GainP[3], GainR[3];
 
+  // Transforms: from wrist-to-endeffector for different end-effectors
+  vector3 maleCam_4snaps_right_ePh;					// Used in Snap Assemblies with HIRO with single and dual arms.
+  vector3 femaleCam_4snaps_left_ePh;
+
   // Force and Moment Variables
-  vector3 F_ave[2], 	  M_ave[2];
+  vector3 F_ave[2],   M_ave[2];
   vector3 F_sd[2],	  M_sd[2];
   vector3 F_err_max[2], M_err_max[2];
   double F_zero_lim[2], M_zero_lim[2];
@@ -121,8 +135,9 @@ class forceSensorPlugin_impl : public plugin,
   // Streams
   FILE *fv_L, *fv_R; 				// Left and Right arm velocities
   FILE *fp, *fv;
-  ofstream ofgc;          			// Right arm Gravity Compensated Torques File
-  ofstream lofgc;         			// Left arm Gravity Compensated Torques File
+  ofstream ostr_gcWrenchR;          // Right arm Gravity Compensated Torques File
+  ofstream ostr_gcWrenchL;         	// Left arm Gravity Compensated Torques File
+  ofstream ostr_gravCompParam;		// Contains Parameters used to compute GravityCompensation
 
   // Flags
   int initControl; // used to look at the first iteration of control
@@ -131,10 +146,11 @@ class forceSensorPlugin_impl : public plugin,
 
   // Pivot Approach
   double cur_time;
-  vector3 CurXYZ, L_CurXYZ;
-  matrix33 CurRot, L_CurRot;
-  dvector6 CurrentForces, L_CurrentForces;
-  dvector6 CurrentAngles, JointAngleUpdate, L_CurrentAngles, L_JointAngleUpdate;
+  vector3  CurXYZ, 			L_CurXYZ;
+  matrix33 CurRot, 			L_CurRot;
+  dvector6 CurrentForces, 	L_CurrentForces;
+  dvector6 CurrentAngles, 	L_CurrentAngles;
+  dvector6 JointAngleUpdate,L_JointAngleUpdate;
 
   // Flags
   bool initFlag;
@@ -145,11 +161,13 @@ class forceSensorPlugin_impl : public plugin,
   void 	 init(void);
   void 	 readInitialFile(const char *filename);
   void 	 readGainFile(const char *filename);
+  bool  readGravCompParams(const char *filename);
+  bool  extract_SingleItem(ifstream& in, Vector3* first, Vector3* second, int size);
+  //bool  extract_SingleItem(ifstream& in, double* first, double* second, int size);
   matrix33 get_rot33(int dir, double rad );
 
  public:
   forceSensorPlugin_impl(istringstream &strm);
-  //forceSensorPlugin_impl();
   ~forceSensorPlugin_impl();
 
   /**************************************** CORBA Interface ************************************************************/

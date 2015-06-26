@@ -30,7 +30,7 @@ using namespace std;
 // TypeDefs
 
 // Debugging flags
-#define DEBUG 1			// Turn on if you want to disable debug printouts and maximize efficiency in boost libraries.
+// #define DEBUG 1			// Turn on if you want to disable debug printouts and maximize efficiency in boost libraries.
 
 // Ublas
 // Bounded 6 element or 7 element vectors and matrices
@@ -111,7 +111,7 @@ class ControlBasis {
   bool 	ctrlInitFlag;				// Flag to initialize ctrl primitives
   boost::numeric::ublas::bounded_matrix<double, 8, 3, boost::numeric::ublas::column_major>	 dataHist;					// Holds filter/general data history in a buffer. Matrix dims given in MovingAverage function.
 
-  Vector3 stateVar;
+  vector3 stateVar;
   /*************************************************************** Methods ***************************************************************/
 
   // Generate a vector update based on a dominant controller and a subordinate controller
