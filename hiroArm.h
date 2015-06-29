@@ -16,7 +16,6 @@
 //#include <sys/syspage.h>
 #include <sys/time.h>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <string.h>
 #include <stdio.h>
@@ -58,7 +57,6 @@ extern "C" {
 extern "C" {
 	#include <stdio.h>
 }
-
 
 /********************************** Namespaces *******************************************/
 using OpenHRP::matrix33;
@@ -262,11 +260,11 @@ class hiroArm
   vector3  rPe_ref;							// Desired position (Translation from base to wrist)
   matrix33 rRe_ref;							// Desired Rotation (Rotation from base to wrist)
 
-  dvector6 q_ref;								// Desired joint angle(rad)
+  dvector6 q_ref;							// Desired joint angle(rad)
 
   // Arm motion
   bool f_moving, f_reached;					// Motion flag variables: is moving? has reached goal?
-  unsigned long m_time;						// amount of time that motion has taken place
+  unsigned long m_time;					// Amount of time that the motion has taken place
   path_params p_param;						// structure containing info about the motion composed of: interpolation method, Max. Angular Joint Vel, starting goal joint position, ending goal joint position, Distance, and duration.
 
   const double MAX_JVEL;					// Maximum limit for joint velocity, i.e. 0.5 (rad/s)??
@@ -275,23 +273,23 @@ class hiroArm
   const double TOLERANCE;					// Tolerance
 
   // Impedance control
-  matrix33 Mt, Mr, Dt, Dr;					//
+  matrix33 Mt, Mr, Dt, Dr;						//
   vector3 rXd,rdXd,rddXd;						// Desired pos, dpos, ddpos
   vector3 rRd,rdRd,rddRd;						// Desired rot, drot, ddrot
 
   // Gravity compensation
-  bool		 f_gc, f_gc_init;				// f_gc: ; f_gc_init: have we initialize grav. comp. variables?
-  int 		 step_gc, step_fs;				// step_gc: has gravity compensation been executed
+  bool		 	 f_gc, f_gc_init;				// f_gc: ; f_gc_init: have we initialize grav. comp. variables?
+  int 			 step_gc, step_fs;				// step_gc: has gravity compensation been executed
   double 		 mass;
-  const int 	 max_step_fs, wait_step;			// Max = 500, Wait=200
-  const double GACC;						// Gravity acceleration (9.8 m/s^2)
+  const int 	 max_step_fs, wait_step;		// Max = 500, Wait=200
+  const double GACC;							// Gravity acceleration (9.8 m/s^2)
 
-  vector3  rG_vec;						// Unit gravity vector in global frame (robot frame)
-  vector3  fsPgc;							// Centroid in hand frame
+  vector3  rG_vec;								// Unit gravity vector in global frame (robot frame)
+  vector3  fsPgc;								// Centroid in hand frame
   vector3  fsF_offset, fsM_offset;				// Force offset in force sensor frame
-  vector3  fsF_tmp[5], fsM_tmp[5];
+  vector3  fsF_tmp[5], fsM_tmp[5];				// Holds vector data for 5 poses during grav. comp. calibration
   dvector6 q_gc_ref[5];
-  matrix33 fsRr_gc[5];
+  matrix33 fsRr_gc[5];							// Rotational Transformations for 5 poses during grav. comp. calibration
 
   // Others
   vector3  rPh_initial;
@@ -345,14 +343,10 @@ class hiroArmMas : public hiroArm
 {
  public:
   hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in);
-  //~ void savedata();
-
   int init(vector3 pos, matrix33 rot, double CurAngles[15]);
 
  protected:
   matrix33 calc_hRfs(dvector6 q_in);
-
-
 };
 
 // Slave Class. Associated with the Right Arm. Follows the master arm.
@@ -360,17 +354,11 @@ class hiroArmSla : public hiroArm
 {
  public:
   hiroArmSla(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in, matrix33 hRfs_in);
-  //~ void update_currforcedata();
-  //~ bool get_forces(vector3 &rF_gc_out, vector3 &rM_gc_out);
-  //~ void savedata();
   int init(vector3 pos, matrix33 rot, double CurAngles[15]);
 
  protected:
   matrix33 hRfs;
-  //~ vector3 rFh_gc, rMh_gc;
-
   matrix33 calc_hRfs(dvector6 q_in);
-  //~ void calc_forces_at_hand(vector3 &rFh_out, vector3 &rMh_out);
 };
 
 #endif

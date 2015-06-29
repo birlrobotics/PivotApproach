@@ -27,16 +27,13 @@ using std::ceil;
 #define WRITE_DIR 				"./data/Results"
 
 // To Read Data
-#define SL_APPROACH_FILE 		"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
-#define PIVOT_APPROACH_FILE 	"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in PivotApproach for the PA10 Robot
-#define SIDE_APPROACH_FILE 		"/HIRO/R_sideApproachState.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
-#define FAILURE_CHARAC_FILE 	"/FC/failureCaseYDir.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseXRoll.dat
-#define TWOARM_HSA_FILE			"/HIRO/R_sideApproachState.dat"
-
-//** the two arm data file by Gray **
-//#define TWOARM_RHSA_FILE       "HIRO/R_sideApproachState1.dat"
-//#define TWOARM_LHSA_FILE       "HIRO/L_sideApproachState1.dat"
-
+#define SL_APPROACH_FILE 			"/PA10/pivotApproachState1.dat"			// Waypoints for State1 in StraightLineApproach for the PA10 Robot
+#define PIVOT_APPROACH_FILE 		"/PA10/PA10_pivotApproachState1.dat"	// Waypoints for State1 in PivotApproach for the PA10 Robot
+#define SIDE_APPROACH_FILE 			"/HIRO/R_sideApproachState.dat"			// Waypoints for State1 in SideApproach for the HIRO Robot
+#define FAILURE_CHARAC_FILE 		"/FC/failureCaseYDir.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseXRoll.dat
+#define TWOARM_HSA_FILE				"/HIRO/R_sideApproachState.dat"
+#define R_2ARM_HSA_APP_FILE    		"/HIRO/R_sideApproachState1.dat"
+#define L_2ARM_HSA_APP_FILE    		"/HIRO/L_sideApproachState1.dat" 		// "HIRO/L_sideApproachState.dat"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
@@ -55,10 +52,14 @@ using std::ceil;
 #define L_FORCES_FILE				"/L_Torques.dat"					// Save Joint Torques for robot
 #define L_MANIP_TEST_FILE			"/L_manipulationTestAxis.dat"		// Used to test force and moment controllers behavior
 
+// Gravity Compensation Parameters
+#define GRAV_COMP_FILE 				"./data/GravComp/gravCompParams.dat" // Saves grav comp parameters
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define DB_TIME 				0			// Used to print timing duration of functions
+#define DEBUG					1			// Used to print temporary cerr statements
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // TEST MODE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,21 +77,16 @@ using std::ceil;
 #define PIVOT_APPROACH_FLAG		0			// Pivot approach. 								If true, STRAIGHT_LINE_FLAG=0,SIDE_APPROACH_FLAG=0, FAILURE_CHARAC_FLAG=0.
 #define SIDE_APPROACH_FLAG		0			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
 #define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
-// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
-#define TWOARM_HSA_FLAG			1			// If used, for the two arms' strategy.
-
-// ***** Gray ******
-//#define TWOARM_HSA1_FLAG       0
+											// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
+#define TWOARM_HSA_FLAG			1			// Perform SideApproach with Dual Arms. 		If true, set others to zero.
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_APPROACH 1 			// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
 #define PIVOT_APPROACH 			2
 #define SIDE_APPROACH			3
 #define FAILURE_CHARAC 			4
-// ==== Diro ======
 #define TWOARM_HSA				5
-#define LEFT_ARM_HOLD			6
-// ==== Gray ======
+#define LEFT_ARM_HOLD			6 // juan, this may need to be deleted... created by diro. ignores left arm.
 #define L_TWOARM_HSA           7
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSIGN VARIABLES TO BE USED WITH PA->INITIALIZE(...)
@@ -98,44 +94,46 @@ using std::ceil;
 #if(USE_MOTION_DAT==0) 						//I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
 
 // (A) Define the Control Strategy
-#define CONTROL_TYPE CONTROL_BASIS
+#define CONTROL_TYPE  CONTROL_BASIS
 
-// (B) Define the Assembly Strategy
+// (B) Define the Assembly Strategy: used in AssemblyStrategy::StateMachine
 #if(STRAIGHT_LINE_FLAG)
-#define MOTION_FILE 	SL_APPROACH_FILE
-#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+	#define MOTION_FILE 	SL_APPROACH_FILE
+	#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+
 #elif(PIVOT_APPROACH_FLAG)
-#define MOTION_FILE 	PIVOT_APPROACH_FILE
-#define APPROACH_TYPE 	PIVOT_APPROACH
+	#define MOTION_FILE 	PIVOT_APPROACH_FILE
+	#define APPROACH_TYPE 	PIVOT_APPROACH
+
 #elif(SIDE_APPROACH_FLAG)
-#define MOTION_FILE 	SIDE_APPROACH_FILE
-#define APPROACH_TYPE 	SIDE_APPROACH
-// ==== Diro ======
+	#define MOTION_FILE 	SIDE_APPROACH_FILE
+	#define APPROACH_TYPE 	SIDE_APPROACH
+
 #elif(TWOARM_HSA_FLAG)
-#define MOTION_FILE		TWOARM_HSA_FILE
-//#define L_MOTION_FILE  TWOARM_LHSA_FILE           //Gray
-//#define R_MOTION_FILE  TWOARM_RHSA_FILE           //Gray
-#define APPROACH_TYPE	TWOARM_HSA
-#define L_APPROACH_TYPE L_TWOARM_HSA               //Gray
+	#define MOTION_FILE			TWOARM_HSA_FILE
+	#define APPROACH_TYPE		TWOARM_HSA
+	#define L_APPROACH_TYPE 	L_TWOARM_HSA
+
 #elif(FAILURE_CHARAC_FLAG)
-#define MOTION_FILE 	FAILURE_CHARAC_FILE
-#define APPROACH_TYPE 	FAILURE_CHARAC
+	#define MOTION_FILE 	FAILURE_CHARAC_FILE
+	#define APPROACH_TYPE 	FAILURE_CHARAC
 #endif
+
 #else
-#define CONTROL_TYPE USE_MOTION_DAT
-#if(STRAIGHT_LINE_FLAG)
-#define MOTION_FILE 	SL_APPROACH_FILE
-#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
-#elif(PIVOT_APPROACH_FLAG)
-#define MOTION_FILE 	PIVOT_APPROACH_FILE
-#define APPROACH_TYPE 	PIVOT_APPROACH
-#elif(SIDE_APPROACH_FLAG)
-#define MOTION_FILE 	SIDE_APPROACH_FILE
-#define APPROACH_TYPE 	SIDE_APPROACH
-#elif(FAILURE_CHARAC_FLAG)
-#define MOTION_FILE 	FAILURE_CHARAC_FILE
-#define APPROACH_TYPE 	FAILURE_CHARAC
-#endif
+	#define CONTROL_TYPE USE_MOTION_DAT
+	#if(STRAIGHT_LINE_FLAG)
+		#define MOTION_FILE 	SL_APPROACH_FILE
+		#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+	#elif(PIVOT_APPROACH_FLAG)
+		#define MOTION_FILE 	PIVOT_APPROACH_FILE
+		#define APPROACH_TYPE 	PIVOT_APPROACH
+	#elif(SIDE_APPROACH_FLAG)
+		#define MOTION_FILE 	SIDE_APPROACH_FILE
+		#define APPROACH_TYPE 	SIDE_APPROACH
+	#elif(FAILURE_CHARAC_FLAG)
+		#define MOTION_FILE 	FAILURE_CHARAC_FILE
+		#define APPROACH_TYPE 	FAILURE_CHARAC
+	#endif
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Constructor Definition : Variable Initialisation List
@@ -148,13 +146,12 @@ using std::ceil;
 hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5], vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
 :f_moving(false), 	f_reached(false),		initFlag(false),	m_time(0),
  f_gc(false),     	f_gc_init(false),   	step_gc(0),			fp1(NULL),
- mass(0.0),       	GACC(9.8),          	wait_step(20),		fp2(NULL),    //wait_step(200)
- /*fs(0),*/           step_fs(0),        	 	max_step_fs(50),	fp3(NULL),    //max_step_fs(500)
- MAX_JVEL(0.5),   	TIME_LIMIT(100.0), 		MIN_PERIOD(1.0e-9), TOLERANCE(1.0e-6)
+ mass(0.0),       	GACC(9.8),          	wait_step(20),		fp2(NULL),    		//wait_step(200)
+ /*fs(0),*/         step_fs(0),        	 	max_step_fs(50),	fp3(NULL),    		//max_step_fs(500)
+ MAX_JVEL(0.5),   	TIME_LIMIT(100.0), 		MIN_PERIOD(1.0e-9), TOLERANCE(1.0e-6),
+ NO_fs(1)
 {
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Entering hiroArm constructor" << std::endl;
-#endif
+	if(DEBUG) std::cerr << "hiroArm(): Entering hiroArm constructor" << std::endl;
 
 	// Save to local members
 	name 		= name_in;										// Right or left arm
@@ -172,41 +169,34 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 	eRh 	= eRh_in;											// Equivalent Rotation matrix. Set to the identity matrix.
 	hPfs 	= hPfs_in;											//
 
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Setting body links." << std::endl;
-#endif
+	if(DEBUG) std::cerr << "hiroArm(): Setting body links." << std::endl;
 
-	// Set Body linksOB
-	//Link* S0 = body->link(CHEST_JOINT);						// SO link starts at the chest joint. It's the first link, then two for the head, then six for the right arm, then six for the left arm
-	Link* S0 = body->joint(CHEST_JOINT0);
+	// Set Body joint object
+	Link* S0 = body->joint(CHEST_JOINT0);				// SO link starts at the chest joint. It's the first joint. There are two more joitns for the head,
+														// There are also six joints for each of the arms. Right first.
+														// Link* S0 = body->link(CHEST_JOINT);
 
-	//Link* W6 = body->joint(NUM_q0 + ARM_DOF - 1);			// The wrist occurs six links later (i.e.start+6-1).
 	Link* W6;
 	if(NUM_q0 == RARM_JOINT0)
 		W6 = body->joint(RARM_JOINT5); // Is it joint or link?
 	else
 		W6 = body->joint(LARM_JOINT5); // Is it joint or link?
 
-	if(!S0)
-		std::cerr << "S0 is null\n";
+	if(!S0)	std::cerr << "S0 is null\n";
+	if(!W6)	std::cerr << "W6 is null\n";
 
-	if(!W6)
-		std::cerr << "W6 is null\n";
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Getting the joint path." << std::endl;
-#endif
-
+	if(DEBUG) std::cerr << "hiroArm(): Getting the joint path." << std::endl;
 	m_path = body->getJointPath(S0,W6);				// Base to Wrist Path
 
-#ifdef DEBUG_PLUGIN2
-	cout << "Joint path:" << m_path->numJoints() << std::endl;
-	cerr << m_path->joint(0)->name << std::endl;
-	cerr << m_path->joint(1)->name << std::endl;
-	cerr << m_path->joint(2)->name << std::endl;
-	cerr << m_path->joint(3)->name << std::endl;
-	cerr << m_path->joint(4)->name << std::endl;
-	cerr << m_path->joint(5)->name << std::endl;
-#endif
+	if(DEBUG) {
+	std::cerr << "Joint path:" << m_path->numJoints() << std::endl;
+	std::cerr << m_path->joint(0)->name << std::endl;
+	std::cerr << m_path->joint(1)->name << std::endl;
+	std::cerr << m_path->joint(2)->name << std::endl;
+	std::cerr << m_path->joint(3)->name << std::endl;
+	std::cerr << m_path->joint(4)->name << std::endl;
+	std::cerr << m_path->joint(5)->name << std::endl;
+	}
 
 
 #if 0
@@ -239,48 +229,20 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 	matrix33 rot;//x(0);
 	double momentGainFactor = 10.0;	// Used to scale the gain for the control basis for the moment.
 
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Getting current position and attitude values" << std::endl;
-#endif
-
-
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Retrieving the position" << std::endl;
-#endif
 	// HOMING Position and rotation matrix for right arm's WRSIT
 	// Right arm's last joint is joint 8 (index starts at 0, chest pan tilt...)
 	pos=m_path->joint(5)->p; // instead of RARM_JOINT5 i had 5 before.
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Position retrieved" << std::endl;
-#endif
+	if(DEBUG)  std::cerr << "hiroArm(): Position: " << pos << std::endl;
 
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Retrieving the attitude." << std::endl;
-#endif
-
-
-	//rot=m_path->joint(5)->attitude(); 		// used in linux simulation
+	// Orientation
 	rot=m_path->joint(5)->segmentAttitude();    // Instead of RARM_JOINT5 I had a 5 before.
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Attitude retrieved." << std::endl;
-#endif
-
-
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Allocating AssemblyStrategy" << std::endl;
-#endif
+	if(DEBUG) std::cerr << "hiroArm(): Orientation: " << rot << std::endl;
 
 	// Pivot Approach variables
+	if(DEBUG) std::cerr << "hiroArm(): Allocating AssemblyStrategy" << std::endl;
 	PA = new AssemblyStrategy(NUM_q0,pos,rot,ePh,momentGainFactor);	// Wrist position, Wrist Rotation Matrix, Wrist2EndEffXform
 
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "hiroArm(): Finished allocating AssemblyStrategy" << std::endl;
-#endif
-
-
-#ifdef DEBUG_PLUGIN2
-	std::cout << "hiroArm: exit constructor"  << std::endl;
-#endif
+	if(DEBUG) std::cout << "hiroArm: exit constructor"  << std::endl;
 }
 
 // Destructor
@@ -382,7 +344,7 @@ void hiroArm::init()
 //}
 
 //-------------------------------------------------------------
-// Gray: savedata
+// savedata
 // Save the hand gravigy compensation terms for force and moment into fp1
 // Save the position and rotation translation and the rotation matrix from base 2 EE into fp2
 //-----------------------------------------------------------------
@@ -425,100 +387,68 @@ std::string hiroArm::get_name() { return name; }
  *********************************************************************************/
 void hiroArm::update_currposdata()
 {
-	// base2wrist position. Homing pos: <0.3019, -0.1724, 0.064>
+	// 1. base2wrist Position. Homing pos: <0.3019, -0.1724, 0.064>
 	rPe = body->joint(NUM_q0 + ARM_DOF -1)->p;
-#ifdef DEBUG_PLUGIN2
-	cerr << "hiroArm::updated_currposdata - rPe is: " << rPe(0) << " " << rPe(1) << " " << rPe(2) << std::endl;
-#endif
-	// base2wrist rotation matrix
+
+	if(DEBUG) std::cerr << "hiroArm::updated_currposdata - rPe is: " << rPe << std::endl;
+
+	// 2. base2wrist Orientation (Rotation Matrix)
 	rRe = body->joint(NUM_q0 + ARM_DOF -1)->segmentAttitude();
 
-	// Current joint angles
-	for(int i=0; i<ARM_DOF; i++)
-		q[i] = body->joint(NUM_q0 + i)->q;
+	// 3. Current joint angles
+	for(int i=0; i<ARM_DOF; i++)	q[i] = body->joint(NUM_q0 + i)->q;
 	//std::cout<<"update curr pos data"<<q<<std::endl;
 
+	// 4. base2hand pose
 	wrist2EndEffXform(/*in*/rPe, /*in*/rRe, /*out*/rPh, /*out*/rRh);
-#ifdef DEBUG_PLUGIN2
-	cerr << "hiroArm::updated_currposdata - rPh is: " << rPh(0) << " " << rPh(1) << " " << rPh(2) << std::endl;
-#endif
+	if(DEBUG) std::cerr << "hiroArm::updated_currposdata - rPh is: " << rPh << std::endl;
 }
 
 /********************************************************************************
  * wrist2EndEffXform()
  * Takes the base2wrist position and rotation and transforms them to base2endeff
- * position and orientation
- *
- * Gray:wrist2EndEffXform
- * Compute the rRh and rPh
+ * position and orientation returning: rRh and rPh
  *********************************************************************************/
 void hiroArm::wrist2EndEffXform(/*in*/vector3 rPe, /*in*/matrix33 rRe, /*out*/vector3& rPh, /*out*/matrix33& rRh)
 {
-	// base2EndEffector
-	// Caculation rPh & rRh from rPe & rRe
 	rRh = rRe * eRh;						// base2EndEffRot=base2wristRot*wrist2EndEffRot
 	rPh = rPe + rRe * ePh;					// base2EndEffPos=base2wristPos + transformed wrist2EndEffPos
-	//rRh = rRe;
-	//rPh = rPe;
 }
 
 /********************************************************************************
  * wrist2EndEffXform()
- * Takes the base2wrist position and rotation and transforms them to base2endeff
- * position and orientation
- *
- * Gray:EndEff2wristXfrom
- * ?Gray
+ * Transform the base2wrist position and rotation to base2endeff position and orientation
  *********************************************************************************/
 void hiroArm::EndEff2wristXform(/*in*/vector3 rPh, /*in*/matrix33 rRh, /*out*/vector3& rPe)
 {
-	// base2EndEffector
-	// Caculation rPh & rRh from rPe & rRe
 	rPe = rPh - rRe * ePh;					// base2EndEffPos=base2wristPos + transformed wrist2EndEffPos
-	//rPe = rPh;
 }
 
 /*******************************************************************************************************
  // get_qref()
  // Retrieve reference joint angle in degrees
-
-    Gray:get_qref
-    just return the q_ref
-    ?Gray:what is relation between q and q_ref
  *******************************************************************************************************/
 dvector6 hiroArm::get_qref()
 {
-#ifdef DEBUG_PLUGIN2
-	std::cout << "q_ref in hiroArm::get_qref: " << q_ref*180/M_PI << std::endl;
-#endif
+	if(DEBUG) std::cout << "q_ref in hiroArm::get_qref: " << q_ref*180/M_PI << std::endl;
 
 	return q_ref;
 }
 
 /*******************************************************************************************************
  // get_qcur()
- // Retrieve currentjoint angle in degrees
- *
- * Gray:get_qcur
- * just return the q
+ // Retrieve currentjoint angles in degrees
  *******************************************************************************************************/
 dvector6 hiroArm::get_qcur()
 {
-#ifdef DEBUG_PLUGIN2
-	std::cout << "q_ref in get_qref: " << q_ref*180/M_PI << std::endl;
-#endif
-
+	if(DEBUG) std::cout << "q_ref in get_qref: " << q_ref*180/M_PI << std::endl;
 	return q;
 }
 
 /*******************************************************************************************************
  // update_currforcedata()
  // Return latest force and moment data.
- // If gravitational compensation is consider, it uses that information to compute the latest values
- *
- *
- * Gray:update_currforcedata
- * Set the lastest fsF_raw ,fsM_raw and get the lastest force and moment of the wrist and EE after gc
+ // If gravitational compensation true, then set the fsF_raw ,fsM_raw with lastest force/moment wrist & EE after gc
  *******************************************************************************************************/
 void hiroArm::update_currforcedata()
 {
@@ -531,17 +461,18 @@ void hiroArm::update_currforcedata()
 	// ifs_read_data(0,f_out);    //?Gray:what and where is the function ifs_read_data
 
 	// B) Separate them into force and moment
+	if(!f_gc) // No gravity compensation
 	for(int i=0 ; i<3 ; i++ ){
 		fsF_raw[i] = raw_forces[i];		// fsF_raw[i] = f_out[i];
 		fsM_raw[i] = raw_forces[i+3];	// fsM_raw[i] = f_out[i+3];
 	}
 
 	// If gravitational component flag is true
-	if(f_gc)     //?Gray:how do the following two functions work? And what are rFfs_gc, rMfs_gc, rFh_gc, rMh_gc
+	if(f_gc)
 	{
 		// Calculate the hand's gravitational force and moment
-		calc_gc_forces(rFfs_gc, rMfs_gc);			// fs (wrist) force and moment
-		calc_gc_forces_at_hand(rFh_gc, rMh_gc);		// Hand (EndEffector) force and moment
+		calc_gc_forces(rFfs_gc, rMfs_gc);			// Compensated Gravity Wrench at Wrist.
+		calc_gc_forces_at_hand(rFh_gc, rMh_gc);		// Compensated Gravity Wrench at Hand
 	}
 }
 
@@ -781,7 +712,7 @@ bool hiroArm::velocity_control(vector3 rdP, vector3 rW, bool f_new)
 
 	// joint limit avoidance	// double LAUpLimit[6]={84,114,-1,249,94,124};	// double LALoLimit[6]={-84,-174,-154,-60,-94,-124};
 	//~ fprintf(fp3,"%f %f %f %f %f %f:: %f %d %d %d:: %f %f %f %f %f %f:: %f %f %f %f %f %f\n",rdP(0),rdP(1),rdP(2),rW(0),rW(1),rW(2), suprate,jlimit,lim_tmp,mability,q(0),q(1),q(2),q(3),q(4),q(5),q_ref(0),q_ref(1),q_ref(2),q_ref(3),q_ref(4),q_ref(5));
-	fprintf(fp3,"%f %f %f %f %f %f %f %f %f %f %f %f %f %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	std::fprintf(fp3,"%f %f %f %f %f %f %f %f %f %f %f %f %f %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
 			rdP(0),rdP(1),rdP(2),																			// Position
 			rW(0),rW(1),rW(2), 																			// Orientation
 			dx(0),dx(1),dx(2),																			// Lin Vel
@@ -1049,27 +980,27 @@ bool hiroArm::impedance_control2()
 
 //------------------------------------------------------------------------------------------
 // PivotApproach(...)
-// Two modes. 
+// Three modes.
 // (1) A test mode that allows you test the force controller as part of the control 
 // basis for a desired axis. That axis is indicated by a file found in data/PivotApproach/manipulationTestAxis.dat
 //
-// (2) Actual Pivot Approach. 
-// 	There are three modes (other than testing) thus far: 
+// (2) Actual Pivot Approach: can be implemented for left or right arms.
+// 	There are a number of sub-modes (other than testing) thus far:
 // 		1. StraightLineApproach, originally implemented with the PA10.
-// 		2. PivotApproach: implemented by HIRO on a two snap cantilever snap.
-// 		3. SideApproach: implemented by HIRO on a four snap cantilever snap.
+// 		2. PivotApproach: 			implemented on HIRO on a two snap cantilever snap:   App|Rot|Align|Insert|Mating
+// 		3. SideApproach: 			implemented on HIRO on a four snap cantilever snap:  App|Rot|Insert|Mating
+// 		4. FailureCharacterization 	implemented on HIRO on a four snap cantilever snap with deviationsin the path.
+// 		5. TwoArm					implemented on HIRO with two arms for SideApproach adapted to this pose.
 // Save the updated value of CurrAngles into the private member q_ref for the appropriate HIRO arm.
 //------------------------------------------------------------------------------------------
 int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
-		vector3      pos,				/*in*/	// end effector position
-		matrix33 	rot,				/*in*/	// end effector rotation
-		dvector6 	currForces,			/*in*/
-		dvector6& 	JointAngleUpdate,	/*out*/
-		dvector6& 	CurrAngles)			/*out*/
+							  vector3      	pos,				/*in*/	// end effector position
+							  matrix33 		rot,				/*in*/	// end effector rotation
+							  dvector6 		currForces,			/*in*/
+							  dvector6& 	JointAngleUpdate,	/*out*/
+							  dvector6& 	CurrAngles)			/*out*/
 {
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "Entering hiroArm::PivotApproach" << std::endl;
-#endif		
+	if(DEBUG) std::cerr << "Entering hiroArm::PivotApproach" << std::endl;
 
 	// Local variables
 	int		ret = 0;
@@ -1077,10 +1008,10 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 	dmatrix PseudoJac;
 	::AssemblyStrategy::TestAxis testAxis;
 
-
 	// Timing
+	#if 0
+
 	//timeval startTime, endTime, sJ, eJ;			// create variables
-#if 0
 	unsigned long long sJ,eJ,endTick;
 	double duration = 0.0;
 	double dJ = 0.0;
@@ -1094,13 +1025,12 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 		//gettimeofday(&sJ,NULL);					// start time for jacobian computations
 		sJ = get_tick();
 	}
-#endif    
+
 	// Compute Jacobian and PseudoJac
 	m_path->calcJacobian(Jac);							// Calculate the Jacobian based on the base-2-wrist path segment we have assigned. This is a JointPathPtr type
 	//OpenHRP::calcPseudoInverse(Jac,PseudoJac);		// Not used with HIRO
 
 	// Finalize jacobian time computations
-#if 0
 	if(DB_TIME)
 	{
 		//gettimeofday(&eJ,NULL);
@@ -1113,9 +1043,15 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 		// Print out the duration of the function
 		std::cerr << "Duration of Jacobian Computations in hiroArm::PivotApproach() is: " << dJ << "ms." << std::endl;
 	}
-#endif	
+	#endif
 
-	// Run test or actual pivot approach strategy
+	// Compute Jacobian and PseudoJac
+	m_path->calcJacobian(Jac);							// Calculate the Jacobian based on the base-2-wrist path segment we have assigned. This is a JointPathPtr type
+
+	//----------------------------------- Run State Machine --------------------------------------/
+	// (A) Force Control Test
+	// (B) Left Arm Control
+	// (C) Right Arm Control
 	if(TEST)
 	{
 		// Run tests individually. Proceed to the next state when the completionFlag is true.
@@ -1132,7 +1068,7 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 		mT.close();
 
 		// Axis selection
-		if(axis==0)			testAxis = PA->posFx;
+		if(axis==0)				testAxis = PA->posFx;
 		else if(axis==1)		testAxis = PA->negFx;
 		else if(axis==2)		testAxis = PA->posFy;
 		else if(axis==3)		testAxis = PA->negFy;
@@ -1151,57 +1087,43 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 		PA->StateMachine(testAxis,PA->ManipulationTest,m_path,body,cur_time,pos,rot,currForces,JointAngleUpdate,CurrAngles,Jac,PseudoJac);
 	}
 
-	else    //Gray
+	// (B) Launch Left Arm StateMachine to run the pivot approach using the control basis
+	else
 	{
-		// ==== Gray ======
-		if(name=="left")    //Left Arm StateMachine
+		if(name=="left")
 		{
 			// Invoke the state machine to run the pivot approach using the control basis
-			ret = PA->StateMachine( PA->none,										// Use all axis to run test. Not applicable here since the flag test is off.
-					(AssemblyStrategy::CtrlStrategy)L_APPROACH_TYPE,				// Type of approach. Can choose between the straight line approach and the pivot approach
-					m_path,											// Pointer containing Arm Path (joints and links)
-					body,											// Pointer containting whole body (joints and links)
-					cur_time,										// Current internal clock time (not synced to GrxUI Simulation clock)
-					pos,											// Current wrist position in Cartesian Coordinates
-					rot,											// Rotation state of wrist
-					currForces,										// Current Torques and Moments at the wrist
-					JointAngleUpdate,								// Joint Angle Update produced by control basis
-					CurrAngles,										// Current Arm Joint Angles
-					Jac,											// Jacobian
-					PseudoJac);										// JPseudo Jacobian
-		}
-		else   //Right Arm StateMachine
-		{
-			// Invoke the state machine to run the pivot approach using the control basis
-			ret = PA->StateMachine( PA->none,										// Use all axis to run test. Not applicable here since the flag test is off.
-					(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,				// Type of approach. Can choose between the straight line approach and the pivot approach
-					m_path,											// Pointer containing Arm Path (joints and links)
-					body,											// Pointer containting whole body (joints and links)
-					cur_time,										// Current internal clock time (not synced to GrxUI Simulation clock)
-					pos,											// Current wrist position in Cartesian Coordinates
-					rot,											// Rotation state of wrist
-					currForces,										// Current Torques and Moments at the wrist
-					JointAngleUpdate,								// Joint Angle Update produced by control basis
-					CurrAngles,										// Current Arm Joint Angles
-					Jac,											// Jacobian
-					PseudoJac);										// JPseudo Jacobian
+			ret = PA->StateMachine( PA->none,								// Use all axis to run test. Not applicable here since the flag test is off.
+					(AssemblyStrategy::CtrlStrategy)L_APPROACH_TYPE,		// Type of approach. Can choose between the straight line approach and the pivot approach
+					m_path,													// Pointer containing Arm Path (joints and links)
+					body,													// Pointer containting whole body (joints and links)
+					cur_time,												// Current internal clock time (not synced to GrxUI Simulation clock)
+					pos,													// Current wrist position in Cartesian Coordinates
+					rot,													// Rotation state of wrist
+					currForces,												// Current Torques and Moments at the wrist
+					JointAngleUpdate,										// Joint Angle Update produced by control basis
+					CurrAngles,												// Current Arm Joint Angles
+					Jac,													// Jacobian
+					PseudoJac);												// JPseudo Jacobian
 		}
 
-		/*
-		// Invoke the state machine to run the pivot approach using the control basis
-		ret = PA->StateMachine( PA->none,										// Use all axis to run test. Not applicable here since the flag test is off.
-								(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,				// Type of approach. Can choose between the straight line approach and the pivot approach
-								m_path,											// Pointer containing Arm Path (joints and links)
-								body,											// Pointer containting whole body (joints and links)
-								cur_time,										// Current internal clock time (not synced to GrxUI Simulation clock)
-								pos,											// Current wrist position in Cartesian Coordinates
-								rot,											// Rotation state of wrist
-								currForces,										// Current Torques and Moments at the wrist
-								JointAngleUpdate,								// Joint Angle Update produced by control basis
-								CurrAngles,										// Current Arm Joint Angles
-								Jac,											// Jacobian
-								PseudoJac);										// JPseudo Jacobian
-		 */
+		// (C) Launch Right Arm StateMachine to run the pivot approach using the control basis
+		else
+		{
+			// Invoke the state machine to run the pivot approach using the control basis
+			ret = PA->StateMachine( PA->none,								// Use all axis to run test. Not applicable here since the flag test is off.
+					(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,			// Type of approach. Can choose between the straight line approach and the pivot approach
+					m_path,													// Pointer containing Arm Path (joints and links)
+					body,													// Pointer containting whole body (joints and links)
+					cur_time,												// Current internal clock time (not synced to GrxUI Simulation clock)
+					pos,													// Current wrist position in Cartesian Coordinates
+					rot,													// Rotation state of wrist
+					currForces,												// Current Torques and Moments at the wrist
+					JointAngleUpdate,										// Joint Angle Update produced by control basis
+					CurrAngles,												// Current Arm Joint Angles
+					Jac,													// Jacobian
+					PseudoJac);												// JPseudo Jacobian
+		}
 	}
 
 	// Copy CurrAngles to qref if kinematics did not fail
@@ -1330,9 +1252,8 @@ int hiroArm::gravity_comp()    //ttt
 	int ret_next = 0;
 	int ret_fin = 1;
 
-#ifdef DEBUG_PLUGIN2
-	std::cout << "step_gc = " << step_gc << std::endl;
-#endif
+	if(DEBUG)
+		std::cout << "step_gc = " << step_gc << std::endl;
 
 	// If we have a good force pointer, continue
 	// if(fs != 0) {
@@ -1351,27 +1272,17 @@ int hiroArm::gravity_comp()    //ttt
 			rPh_initial = rPe;
 			rRh_initial = rRe;
 
-			// 目標手先位置・姿勢の計算 (rPh_ref, rRh_ref --> rPe_ref, rRe_ref --> q_ref)
-			//~ calc_rPe_rRe(rPh_initial, rRh_initial, rPe_tmp, rRe_tmp);
-			//~ #ifdef DEBUG_PLUGIN2
-			//~ std::cout << "rPe: " << rPe << std::endl;
-			//~ std::cout << "rRe: " << rRe << std::endl;
-			//~ std::cout << "rPh: " << rPh_initial << std::endl;
-			//~ std::cout << "rRh: " << rRh_initial << std::endl;
-			//~ #endif
-			//~ ret = calc_qref(rPe_tmp, rRe_tmp, q_ref_tmp);
 			// Compute the reference joint angles you desire
 			if(calc_qref(rPh_initial, rRh_initial, q_ref_tmp))
 			{
-				//~ if(ret){
 				q_gc_ref[0] = q_ref_tmp;
 				fsRr_gc[0]  = tvmet::trans(rRh_initial * calc_hRfs(q_ref_tmp));
 				std::cout<<q_gc_ref[0]<<std::endl;
 
-#ifdef DEBUG_PLUGIN2
+				#ifdef DEBUG_PLUGIN2
 				std::cout << "hRfs" 	<< calc_hRfs(q) << std::endl;
 				std::cout << "fsRr_gc" << fsRr_gc[0]   << std::endl;
-#endif
+				#endif
 			}
 
 			else
@@ -1397,19 +1308,16 @@ int hiroArm::gravity_comp()    //ttt
 			for(int i=0; i<4; i++)
 			{
 				rRh_ref_tmp = rRh_initial * hRh_ref[i];
-				//~ calc_rPe_rRe(rPh_initial, rRh_ref_tmp, rPe_tmp, rRe_tmp);
-				//~ ret = calc_qref(rPe_tmp, rRe_tmp, q_ref_tmp);
 
 				if(calc_qref(rPh_initial, rRh_ref_tmp, q_ref_tmp))
 				{
-					//~ if(ret){
 					q_gc_ref[i+1] = q_ref_tmp;
 					std::cout<<"This q_gc_ref"<<i+1<<"and this is "<<q_ref_tmp<<std::endl;
 
-#ifdef DEBUG_PLUGIN2
+					#ifdef DEBUG_PLUGIN2
 					std::cout << "rRh_ref_tmp: " << rRh_ref_tmp << std::endl;
 					std::cout << "q_ref_tmp: " << q_ref_tmp << std::endl;
-#endif
+					#endif
 				}
 
 				else
@@ -1422,17 +1330,18 @@ int hiroArm::gravity_comp()    //ttt
 			// Clear parameters for gravity compensation
 			mass 			= 0.0;
 			fsF_offset  	= 0.0, 0.0, 0.0;
-			fsM_offset 	= 0.0, 0.0, 0.0;
-			rG_vec 		= 0.0, 0.0, 0.0;
-			fsPgc 		= 0.0, 0.0, 0.0;
+			fsM_offset 		= 0.0, 0.0, 0.0;
+			rG_vec 			= 0.0, 0.0, 0.0;
+			fsPgc 			= 0.0, 0.0, 0.0;
 
 			step_gc 		= 0;
 			step_fs 		= 0 ;
-			f_reached 	= false;
+			f_reached 		= false;
 			f_moving 		= false;
 			//f_gc_init = true;
 
-			tempcount = 0; //Gray
+			// Counter
+			tempcount = 0;
 
 			f_gc_init = true;
 			return ret_next;
@@ -1456,10 +1365,11 @@ int hiroArm::gravity_comp()    //ttt
 					fsM_tmp[step_gc] = 0.0,0.0,0.0;
 					fsRr_gc[step_gc] = tvmet::trans(rRh * calc_hRfs(q));
 
-#ifdef DEBUG_PLUGIN2
-					std::cout << "hRfs" << calc_hRfs(q) << std::endl;
-					std::cout << "fsRr_gc" << fsRr_gc[step_gc] << std::endl;
-#endif
+					if(DEBUG)
+					{
+						std::cout << "hRfs" << calc_hRfs(q) << std::endl;
+						std::cout << "fsRr_gc" << fsRr_gc[step_gc] << std::endl;
+					}
 				}
 
 				double f_out[6];
@@ -1471,9 +1381,8 @@ int hiroArm::gravity_comp()    //ttt
 					fsM_tmp[step_gc][i] += f_out[i+3];
 				}
 
-#ifdef DEBUG_PLUGIN2
-				std::cout << "[" << step_fs << "]"<< "fsF_tmp = " << fsF_tmp[step_gc] << std::endl;
-#endif
+				if(DEBUG)
+					std::cout << "[" << step_fs << "]"<< "fsF_tmp = " << fsF_tmp[step_gc] << std::endl;
 
 				step_fs++;
 				return ret_next;
@@ -1490,9 +1399,8 @@ int hiroArm::gravity_comp()    //ttt
 				fsM_tmp[step_gc] = (1.0/max_step_fs) * fsM_tmp[step_gc];
 				//}
 
-#ifdef DEBUG_PLUGIN2
-				std::cout << "[" << step_fs << "]" << "fsF_tmp = " << fsF_tmp[step_gc] << std::endl;
-#endif
+				if(DEBUG)
+					std::cout << "[" << step_fs << "]" << "fsF_tmp = " << fsF_tmp[step_gc] << std::endl;
 
 				step_gc++;
 				step_fs 	= 0;
@@ -1505,28 +1413,25 @@ int hiroArm::gravity_comp()    //ttt
 			else return ret_err;
 		}
 	}
-#if 1
 
 	else
 	{
 		while(step_gc < 5)
 		{
-			if(!f_reached)
-			{
+			if(!f_reached){
 				if(moveto(q, q_gc_ref[step_gc])){
-					//Gray
 					tempcount++;
-					//std::cout<<tempcount<<std::endl;
+					if(DEBUG) std::cout << tempcount << std::endl;
 					return ret_next;
 				}
 				else
 					return ret_err;
 			}
 
-			// get force-moment data
+			// Get force-moment data
 			else{
 
-				tempcount = 0;    //Gray
+				tempcount = 0;
 				// stay here
 				if(step_fs < wait_step)
 				{
@@ -1561,9 +1466,8 @@ int hiroArm::gravity_comp()    //ttt
 					fsF_tmp[step_gc] = (1.0/max_step_fs) * fsF_tmp[step_gc];
 					fsM_tmp[step_gc] = (1.0/max_step_fs) * fsM_tmp[step_gc];
 
-#ifdef DEBUG_PLUGIN2
-					std::cout <<  "[" << step_fs << "]" << "fsF_tmp = " << fsF_tmp[step_gc] << std::endl;
-#endif
+					if(DEBUG)
+						std::cout <<  "[" << step_fs << "]" << "fsF_tmp = " << fsF_tmp[step_gc] << std::endl;
 
 					step_gc++;
 					step_fs = 0;
@@ -1613,12 +1517,6 @@ int hiroArm::gravity_comp()    //ttt
 		else return ret_err;
 	}
 }
-#endif
-//else{     //Gray
-//  std::cout << "ERROR(gravity comp): The arm has no force sensor." << std::endl;
-//  return ret_err;
-//}
-//}
 
 /**********************************************************************************************************************/
 // protected functions
@@ -1683,9 +1581,8 @@ void hiroArm::calc_rPe_rRe(vector3 rPh_in, matrix33 rRh_in, vector3 &rPe_out, ma
 }
 
 
-bool hiroArm::calc_gravity_param_shimizu(){
-
-	//TODO
+bool hiroArm::calc_gravity_param_shimizu()
+{
 	int i;
 	vector3 f1, f2, m1, m2;
 	matrix33 dfsRr1, dfsRr2;
@@ -1791,51 +1688,99 @@ bool hiroArm::calc_gravity_param_shimizu(){
 	return true;
 }
 
+//------------------------------------------------------------------------------------------------
+// Calculate Gravity Parameters
+//
+// Hierarcy of class happens as follows;
+// 1. hiroArm::gravity_comp()
+// 2. hiroArm::calc_gravity_param()
+// 3. hiroArm::update_currforcedata()
+// 4. hiroArm::calc_gc_forces()
+//
+// hiroArm::gravity_comp() is called by forceSensorPlugin_impl::control.case GravityCompensation()
+// and ouputs the following parameters:
+// 		rG_vec
+//		fsF_tmp[5]			fsPc
+//		fsM_tmp[5]			fsRr_gc[5]
+// and computes a number of parameters used here, namely:
+// 		<fsF_offset, fsM_offset>
+//
+// At the end, this function computes which are used by update_currforcedata().
+//
+// Calibration Routine:
+// Starting with the right arm, the end-effector is rotated to 4 different locations: up/down,
+// backwards/forwards. At each location we measure the regular gravity vector wrt to the word, and
+// also the force/moment vectors in local coordinates.
+//
+// From here, we set an equation where on the LHS the gravity vector is transformed by the rRfs
+// and on the RHS it is set to the force vector.
+//
+// The gravity compensated force is the addition of the regular force vector with the gravity comp
+// ie. in hiroArm:calc_gc_forces
+//------------------------------------------------------------------------------------------------
 bool hiroArm::calc_gravity_param()
 {
-	//  dvector dF(12), dM(12);
-	dmatrix dF(12,1), dM(12,1);
-	dmatrix dR(12,3), dF_hat(12,3);
-	//double dR[12][3], dF_hat[12][3];
+	//  Matrices and Vectors have 12 entries: 4 sets of 3D vectors and matrices.
+	// The 4 sets correspond to 4 positions used by the gravitation parameter computation calibration routine.
+	dmatrix dF(12,1), dM(12,1);			// Force n Moment
+	dmatrix dR(12,3), dF_hat(12,3);		// Rotation and Forces skew symmetric matrix (used to compute cross product)
 
-	for(int i=0; i<4; i++){
+	for(int i=0; i<4; i++)
+	{
 		vector3 tmp;
 		matrix33 tmp_dF_hat;
+
+		// dF finds the force difference between original location and 4 planned positions in the calibration routine (total of 4)
 		vector3 tmp_dF(fsF_tmp[i+1] - fsF_tmp[0]);
 
+		// dF_hat: Compute the cross-product matrix of -1 difference.
 		tmp = -1 * tmp_dF;
 		tmp_dF_hat = OpenHRP::hat(tmp);
-#ifdef DEBUG_PLUGIN2
-		std::cout << "tmp_dF" << tmp_dF << std::endl;
-		std::cout << "tmp_dF_hat" << tmp_dF_hat << std::endl;
-#endif
 
-		for(int j=0; j<3; j++){
+		if(DEBUG)
+		{
+			std::cout << "tmp_dF" 		<< tmp_dF 		<< std::endl;
+			std::cout << "tmp_dF_hat" 	<< tmp_dF_hat 	<< std::endl;
+		}
+
+		// Compute all of our main components: dF, dM, dR, and dF_hat
+		for(int j=0; j<3; j++)
+		{
+			// dF represents difference for force vectors betwen 4 planned positions and origin.
 			dF(i*3+j,0) = tmp_dF[j];
+
+			// dM is the same for moment
 			dM(i*3+j,0) = fsM_tmp[i+1][j] - fsM_tmp[0][j];
-			for(int k=0; k<3; k++){
+
+			// dR holds the difference for rotation matrices between 4 planned positions and origin. Just as above.
+			for(int k=0; k<3; k++)
+			{
 				dR(i*3+j,k) = fsRr_gc[i+1](j,k) - fsRr_gc[0](j,k);
+
+				// dF_hat represents Fgc: Negative cross-product of force differences.
 				dF_hat(i*3+j,k) = tmp_dF_hat(j,k);
 			}
 		}
 	}
 
-#ifdef DEBUG_PLUGIN2
-	for(int i=0; i<5; i++)
+	if(DEBUG)
 	{
-		std::cout << "fsRr_gc" << fsRr_gc[i] << std::endl;
+		// For each of the 4 planned positions:
+		std::cout << "fsRr_gc" 	<< fsRr_gc   	 << std::endl;
+		std::cout << "dF" 		<< dF 			 << std::endl;
+		std::cout << "dF_hat" 	<< dF_hat 		 << std::endl;
+		std::cout << "dM"		<< dM 			 << std::endl;
+		std::cout << "dR" 		<< dR 			 << std::endl;
 	}
-	std::cout << "dF" << dF << std::endl;
-	std::cout << "dF_hat" << dF_hat << std::endl;
-	std::cout << "dM" << dM << std::endl;
-	std::cout << "dR" << dR << std::endl;
-#endif
 
-	// pseudo inverse matrixの計算
+	// Pseudo inverse matrixの計算
 	dmatrix dR_inv(3,12), dF_hat_inv(3,12);
 	int ret;
+
+	// dR_inv: compute reverse directions
 	ret = OpenHRP::calcPseudoInverse(dR, dR_inv,1.0e-18);
-	if(ret !=0){
+	if(ret !=0)
+	{
 		std::cout << "ERROR(gravity_comp): calcPseudoInverse ret = " << ret << std::endl;
 		return false;
 	}
@@ -1845,111 +1790,131 @@ bool hiroArm::calc_gravity_param()
 		return false;
 	}
 
-#ifdef DEBUG_PLUGIN2
-	std::cout << "dR_inv" << dR_inv << std::endl;
-	std::cout << "dR_inv * dR" << prod(dR_inv, dR) << std::endl;
-	std::cout << "dF_hat_inv" << dF_hat_inv << std::endl;
-	std::cout << "dF_hat_inv * dF_hat" << prod(dF_hat_inv,dF_hat) << std::endl;
-#endif
-
-	dmatrix tmp1(3,1), tmp2(3,1);
-	tmp1 = prod(dR_inv,dF);
-	tmp2 = prod(dF_hat_inv,dM);
-	for(int i =0; i<3; i++){
-		rG_vec[i]  = tmp1(i,0);
-		fsPgc[i]= tmp2(i,0);
+	if(DEBUG)
+	{
+		std::cout << "dR_inv" 		<< dR_inv 			<< std::endl;
+		std::cout << "dR_inv * dR" 	<< prod(dR_inv, dR) << std::endl;
+		std::cout << "dF_hat_inv" 	<< dF_hat_inv 		<< std::endl;
+		std::cout << "dF_hat_inv * dF_hat" 		  		<< prod(dF_hat_inv,dF_hat) << std::endl;
 	}
-#ifdef DEBUG_PLUGIN2
-	std::cout << "tmp1" << tmp1 << std::endl;
-	std::cout << "tmp2" << tmp2 << std::endl;
-	std::cout << "rG_vec" << rG_vec << std::endl;
-	std::cout << "fsPgc" << fsPgc << std::endl;
-#endif
 
+	// Transform the force and moment
+	dmatrix tmp1(3,1), tmp2(3,1);
+	tmp1 = prod(dR_inv,    dF);
+	tmp2 = prod(dF_hat_inv,dM);
+
+	// Copy transformations for rG_vec fsPgc
+	for(int i =0; i<3; i++)
+	{
+		rG_vec[i]  	= tmp1(i,0);			// Gravity force vector = mass*gravity.
+		fsPgc[i]	= tmp2(i,0);
+	}
+
+	if(DEBUG)
+	{
+		std::cout << "tmp1" 	<< tmp1 	<< std::endl;
+		std::cout << "tmp2" 	<< tmp2 	<< std::endl;
+		std::cout << "rG_vec" 	<< rG_vec 	<< std::endl;
+		std::cout << "fsPgc" 	<< fsPgc 	<< std::endl;
+	}
+
+	// Extract mass by using g_vec=mg
 	mass = tvmet::norm2(rG_vec)/GACC;
-#ifdef DEBUG_PLUGIN2
-	std::cout << "mass =" << mass << std::endl;
-	double mass2 = sqrt((rG_vec[0] * rG_vec[0]) + (rG_vec[1] * rG_vec[1]) + (rG_vec[2] * rG_vec[2]))/GACC;
 
-	vector3 rG_vec2;
-	rG_vec2 = (1/(mass2*GACC)) *rG_vec;
-	std::cout << "mass2 =" << mass2 << std::endl;
-	std::cout << "rG_vec2 =" << rG_vec2 << std::endl;
-#endif
+	if(DEBUG) {
+		std::cout << "mass =" << mass << std::endl;
+
+		// Mass squared
+		double mass2 = sqrt((rG_vec[0] * rG_vec[0]) + (rG_vec[1] * rG_vec[1]) + (rG_vec[2] * rG_vec[2]))/GACC;
+
+		// ...
+		vector3 rG_vec2;
+		rG_vec2 = (1/(mass2*GACC)) *rG_vec;
+		std::cout << "mass2 =" 		<< mass2 	<< std::endl;
+		std::cout << "rG_vec2 =" 	<< rG_vec2 	<< std::endl;
+	}
+
+	// Normalize gravity vector
 	rG_vec = tvmet::normalize(rG_vec);
 
-	//offsetの計算
+	// Offset Calculation
 	fsF_offset = 0.0, 0.0, 0.0;
 	fsM_offset = 0.0, 0.0, 0.0;
-	for(int i=0; i<5; i++){
-		vector3 fsF_grav, fsM_grav;
-		fsF_grav = fsRr_gc[i]*(mass*GACC*rG_vec);
-		//fsM_grav = OpenHRP::hat(fsPgc)*fsF_grav;
-		fsM_grav = tvmet::cross(fsPgc, fsF_grav);
 
-		fsF_offset += (fsF_tmp[i] - fsF_grav);
+	// Calculate the "force offset" F_GC and M_GC. Used later with raw_forces to generate compensated force/moment vector.
+	// Use the 4 planned positions for computation.
+	for(int i=0; i<5; i++)
+	{
+		vector3 fsF_grav, fsM_grav;
+
+		// Force Gravity Vector wrt World
+		fsF_grav = fsRr_gc[i]*(mass*GACC*rG_vec);
+
+		// Moment Gravity Vector
+		fsM_grav = tvmet::cross(fsPgc, fsF_grav);	// fsPgc is the centroid point in hand frame
+
+		// Force offset is the raw_force - gravity vector
+		fsF_offset += (fsF_tmp[i] - fsF_grav);		// fsF_offset used in hiroArm::calc_gc_forces
 		fsM_offset += (fsM_tmp[i] - fsM_grav);
 	}
+
+	// Normalize the force offset
 	fsF_offset = 0.2 * fsF_offset;
 	fsM_offset = 0.2 * fsM_offset;
 
-#ifdef DEBUG_PLUGIN2
-	std::cout << "GravityComp parameters" << std::endl;
-	std::cout << "mass =" << mass << std::endl;
-	std::cout << "rG_vec =" << rG_vec << std::endl;
-	std::cout << "fsPgc =" << fsPgc << std::endl;
-	std::cout << "fsF_offset =" << fsF_offset << std::endl;
-	std::cout << "fsM_offset =" << fsM_offset << std::endl;
-#endif
-	//Gray
-	std::cout << "GravityComp parameters" << std::endl;
-	std::cout << "mass =" << mass << std::endl;
-	std::cout << "rG_vec =" << rG_vec << std::endl;
-	std::cout << "fsPgc =" << fsPgc << std::endl;
-	std::cout << "fsF_offset =" << fsF_offset << std::endl;
-	std::cout << "fsM_offset =" << fsM_offset << std::endl;
-
+	if(DEBUG)
+	{
+		std::cout << "GravityComp parameters" 	<< std::endl;
+		std::cout << "mass =" 					<< mass 		<< std::endl;
+		std::cout << "rG_vec =" 				<< rG_vec 		<< std::endl;
+		std::cout << "fsPgc =" 					<< fsPgc 		<< std::endl;
+		std::cout << "fsF_offset =" 			<< fsF_offset 	<< std::endl;
+		std::cout << "fsM_offset =" 			<< fsM_offset 	<< std::endl;
+	}
 	return true;
 }
 
 /*********************************************************************************/
 // get_raw_forces
-// Extract the raw forces from the forcetorque sensor
+// Extract the raw forces from the force-torque sensor
 /*********************************************************************************/
 bool hiroArm::get_raw_forces(double f_out[6])                         //Gray
 {
 	// If we have a good pointer to the nittaFS class, extract values
-#if 0
-	if(fs != 0)
-	{
-#endif
-		// In simulation simply extract raw values
-#ifdef SIMULATION
+	#if 0
+		if(fs != 0)
+		{
+	#endif
+
+	// In simulation simply extract raw values
+	#ifdef SIMULATION
 		for(int i=0; i<6; i++) f_out[i] = raw_forces[i];
 
 		// With the real robot transform from left hand coordinates
-#else
+	#else
 		//fs->get_forces(NO_fs, f_out);
-#ifdef DEBUG_PLUGIN2
-		cerr << "hiroArm::get_raw_forces(): Reading ifs force data." << std::endl;
-#endif
+	#ifdef DEBUG_PLUGIN2
+			cerr << "hiroArm::get_raw_forces(): Reading ifs force data." << std::endl;
+	#endif
+
 		ifs_read_data(0,f_out);
 		// The NittaR FT Sensor uses a left-handed coordinate system. We need to convert to a right-hand system here
 		// Change the sign of the force and moment z-axis
 		f_out[2] = -f_out[2];
 		f_out[5] = -f_out[5];
-#endif
+	#endif
 
-#ifdef DEBUG_PLUGIN2
-		std::cout << "get_raw_forces: \t\t" << f_out[0] << " " << f_out[1] << " " << f_out[2] << " " << f_out[3] << " " << f_out[4] << " " << f_out[5] << std::endl;
-#endif
+	#ifdef DEBUG_PLUGIN2
+			std::cout << "get_raw_forces: \t\t" << f_out[0] << " " << f_out[1] << " " << f_out[2] << " " << f_out[3] << " " << f_out[4] << " " << f_out[5] << std::endl;
+	#endif
 
-		return true;
-#if 0
-	}
-	else
-		return false;
-#endif
+	return true;
+
+	#if 0
+		}
+		else
+			return false;
+	#endif
 }
 
 /*********************************************************************************/
@@ -1960,25 +1925,22 @@ bool hiroArm::calc_gc_forces(vector3 &rFfs_gc_out, vector3 &rMfs_gc_out)
 {
 	if(f_gc) //  && (fs != 0)) // OldHiroArm Update
 	{
-		vector3 rF_grav, rM_grav;			// Gravity vector. Magnitude and direction.
-		//int i,j;
+		vector3 rF_grav, rM_grav;					// Gravity vector. Magnitude and direction.
 
-		// TODO:この計算を左右で変更する必要あり // Left and right need to be changed in this calculation
-
-		// Calculate hRfs
+		// Calculate rotation transform from robot to wrist: rRfs
 		matrix33 rRfs, hRfs;
-		hRfs = calc_hRfs(q);
-		rRfs = rRh * hRfs;
+		hRfs = calc_hRfs(q);						// Hand to wrist fixed rotation: Rx(-q5)Ry(-pi/2)
+		rRfs = rRh * hRfs;							// Robot2Wrist=Robot2Hand*Hand2Wrist
 
-		// Gravity Vector - Force
+		// Gravity Vector (wrt Local Coord??): Force
 		rF_grav = mass*GACC*rG_vec;					// mg*\hat_g   //ttt
 
-		// Gravity Vector - Moment
+		// Gravity Vector: Moment
 		vector3 oGC_pos;							//matrix33 oGC_pos_hat;
 		oGC_pos = rRfs * fsPgc;						//oGC_pos_hat = OpenHRP::hat(oGC_pos);		//rM_grav = oGC_pos_hat * rF_grav;
 		rM_grav = tvmet::cross(oGC_pos, rF_grav);
+
 		// Offset
-		//Gray
 		matrix33 rRfs_inv;
 		rRfs_inv = OpenHRP::inverse(rRfs);
 		//rFfs_gc_out = (rRfs * (fsF_raw - fsF_offset)) - rF_grav;
@@ -1987,11 +1949,11 @@ bool hiroArm::calc_gc_forces(vector3 &rFfs_gc_out, vector3 &rMfs_gc_out)
 		rMfs_gc_out = rRfs_inv * ((rRfs * (fsM_raw - fsM_offset)) - rM_grav);
 
 #ifdef DEBUG_PLUGIN2
-		std::cout << "calc_gc_forces: " << std::endl;
-		std::cout << "rF_grav = " << rF_grav << std::endl;
-		std::cout << "rM_grav = " << rM_grav << std::endl;
-		std::cout << "oGC_pos = " << oGC_pos << std::endl;
-		std::cout << std::endl;
+		std::cerr << "calc_gc_forces: " << std::endl;
+		std::cerr << "rF_grav = " 		<< rF_grav 	<< std::endl;
+		std::cerr << "rM_grav = " 		<< rM_grav 	<< std::endl;
+		std::cerr << "oGC_pos = " 		<< oGC_pos 	<< std::endl;
+		std::cerr << std::endl;
 		//f_out[0] <<" " << f_out[1] <<" " << f_out[2] <<" " << f_out[3] <<" " << f_out[4] <<" " << f_out[5] << std::endl;
 #endif
 
@@ -2007,12 +1969,13 @@ bool hiroArm::calc_gc_forces(vector3 &rFfs_gc_out, vector3 &rMfs_gc_out)
 void hiroArm::calc_gc_forces_at_hand(vector3 &rFh_out, vector3 &rMh_out)
 {
 	// 手先での力・モーメントに変換 // Converted to forces and moments in the hand
-	rFh_out = rFfs_gc;					// Arm force gravitational component
+	rFh_out = rFfs_gc;										// Arm force gravitational component
 	rMh_out = rMfs_gc + cross((rRh*hPfs), rFfs_gc);			// Arm moment gravitational component
 }
 
 /*********************************************************************************************************************************/
 // moveto()
+// smooth path through the generation of quintic functions.
 // return false when no path is generated
 //------------------------------------------------------------------------------------------------------------------------------
 // n-yamanobe 2011/02/23
@@ -2383,19 +2346,19 @@ void hiroArm::SkewToVector(matrix33 skew, vector3 &vec)
 
   return R_out;
   }*/
-/*
- *  hiroArm Master class
- */
 
-hiroArmMas::hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, double period_in, float ang_limits_in[6][5],
-		vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
-:hiroArm(name_in, body_in, num_q0_in, period_in, ang_limits_in, ePh_in, eRh_in, hPfs_in)
+//-------------------------------------------------------------
+// hiroArmMas::hiroArmMas - Constructor
+//
+//-----------------------------------------------------------------
+hiroArmMas::hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0_in,
+						  double period_in, float ang_limits_in[6][5],
+						  vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
+						:hiroArm(name_in, body_in, num_q0_in,
+								 period_in, ang_limits_in,
+								 ePh_in, eRh_in, hPfs_in)
 {
 	std::cout << "hiroArmMas constructor" << std::endl;
-
-#ifdef DEBUG_PLUGIN2
-	std::cout << "exit hiroArmMas constructor" << std::endl;
-#endif
 }
 
 int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
@@ -2403,6 +2366,7 @@ int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 #if(TWOARM_HSA_FLAG)
 #define APPROACH_TYPE	LEFT_ARM_HOLD
 #endif
+
 	int ret = 0;
 
 	// Assign path trunk to each of the FIVE char variables
@@ -2411,24 +2375,24 @@ int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	strcpy(manipTest,  	READ_DIR);
 	strcpy(Angles,	    WRITE_DIR);
 	strcpy(CartPos,		WRITE_DIR);
-	strcpy(State,	    	WRITE_DIR);
+	strcpy(State,	    WRITE_DIR);
 	strcpy(Forces,	    WRITE_DIR);
 
 	// Concatenate with appropriate endings
-	strcat(TrajState1,	"/HIRO/L_sideApproachState.dat");							// Desired Trajectory
-	strcat(TrajState2,	"/PA10/PA10_pivotApproachState2.dat");	// Desired Trajectory
-	strcat(manipTest,		L_MANIP_TEST_FILE);						// What test axis do you want to try
-	strcat(Angles,		L_ANGLES_FILE);							// Robot Joint Angles
+	strcat(TrajState1,	L_2ARM_HSA_APP_FILE);							// Desired Trajectory for state 1 (in PivotApproach or SideApproach)for left arm
+	strcat(TrajState2,	"/PA10/PA10_pivotApproachState2.dat");		// Desired Trajectory for state 2 (in PA) for left arm
+	strcat(manipTest,	L_MANIP_TEST_FILE);							// What test axis do you want to try
+	strcat(Angles,		L_ANGLES_FILE);								// Robot Joint Angles
 	strcat(CartPos,		L_CARTPOS_FILE);							// Cartesian Positions
-	strcat(State,			L_STATE_FILE);							// New States Time Occurrence
-	strcat(Forces,		L_FORCES_FILE);							// Robot Forces/Moments
+	strcat(State,		L_STATE_FILE);								// New States Time Occurrence
+	strcat(Forces,		L_FORCES_FILE);								// Robot Forces/Moments
 
 	// Initialize AssemblyStrategy Class:
 	// 1) Open files associated with the directories to read/write data
 	// 2) Assign homing Cartesian Position, Joint Angles, and Rotation matrix position.
 	// 3) Assign Motion and Control Strategies
 	// 4) Declare and Allocate Filtering Object (consider using a static object instead for faster real-time performance).
-	ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, 			// Data Directories
+	ret=PA->Initialize(TrajState1,TrajState2,Angles,CartPos,State,Forces, 	// Data Directories
 			pos, rot, CurAngles,											// Homing Data
 			APPROACH_TYPE, CONTROL_TYPE);									// Assembly Strategy and Control Method Used
 
@@ -2445,23 +2409,11 @@ int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	return ret;
 }
 
-/*
- * //~ void hiroArmMas::savedata()
- //~ {
- //~ fprintf(fp1,"%f %f %f %f %f %f\n",rFfs_gc[0],rFfs_gc[1],rFfs_gc[2],rMfs_gc[0],rMfs_gc[1],rMfs_gc[2]);
- //~ vector3 tmp = OpenHRP::rpyFromRot(rRh);
- //~ fprintf(fp2,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",rPh[0],rPh[1],rPh[2],tmp[0],tmp[1],tmp[2], rRh(0,0),rRh(0,1),rRh(0,2), rRh(1,0),rRh(1,1),rRh(1,2), rRh(2,0),rRh(2,1),rRh(2,2));
- //~ }
- */
-
 // Calculate rotation for moment vector
 matrix33 hiroArmMas::calc_hRfs(dvector6 q_in)
 {
-
-#ifdef DEBUG_PLUGIN23
-	std::cout << "calc_hRfs in hiroArmMas" << std::endl;
-#endif
 	matrix33 hRfs;
+	if(DEBUG) std::cout << "calc_hRfs in hiroArmMas" << std::endl;
 
 	hRfs = get_rot33(X,-q_in[5]) * get_rot33(Y,-(M_PI/2.0));	//hRfs = get_rot33(X,q_in[5])*get_rot33(Y,-M_PI/2);
 	return hRfs;
@@ -2504,7 +2456,7 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	strcpy(manipTest,  	READ_DIR);
 	strcpy(Angles,	    WRITE_DIR);
 	strcpy(CartPos,		WRITE_DIR);
-	strcpy(State,	    	WRITE_DIR);
+	strcpy(State,	    WRITE_DIR);
 	strcpy(Forces,	    WRITE_DIR);
 	//strcpy(Forces_gc,     WRITE_DIR);
 

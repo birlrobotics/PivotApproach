@@ -708,6 +708,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			/*------------------------------------------------------------------------ Gravity Compensaation -------------------------------------------------*/
 
 			case GravityCompensation:
+				// Hierarcy of class happens as follows;
+				// 1. hiroArm::gravity_comp()
+				// 2. hiroArm::calc_gravity_param()
+				// 3. hiroArm::update_currforcedata()
+				// 4. hiroArm::calc_gc_forces()
 				if(DEBUG)	std::cerr << "GravityCompensation" << std::endl;
 
 				// (A) Checking to see if we calib parameters are on file. If yes, skip calib routine.
@@ -975,6 +980,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				vector3 rF_gc[2], rM_gc[2];
 
 				rArm->get_forces(rF_gc[1], rM_gc[1]);
+
 				ostr_gcWrenchR << cur_time << "\t";
 				for(int i=0; i<3; i++) ostr_gcWrenchR << rF_gc[1][i] << " \t";
 				for(int i=0; i<3; i++) ostr_gcWrenchR << rM_gc[1][i] << " \t";
