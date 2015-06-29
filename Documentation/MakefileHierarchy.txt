@@ -1,0 +1,7 @@
+﻿./plugin/Makefile
+	|_/plugin/Make.rules
+		|_/plugin/forceSensor_Juan/server/Makefile.common
+			|_plugin/Make.rules.common
+
+./plugin/forceSensor_Juan/server/Makefile
+	|_/plugin/forceSensor_Juan/server/Makefile.robot

@@ -21,7 +21,6 @@
 // In QNX
 #include <math.h>
 
-
 // CONSTANTS
 #define MAX_ERROR 5000
 
@@ -31,7 +30,8 @@
 #define POSE_JAC_TRANS_CTRL     0
 #define ERROR_TEST         		0 						// If want to test controller with fixed error
 
-
+// Debugging
+#define DEBUG 0 										// Print out screen info
 /************************************************ CONSTRUCTOR ************************************************/
 ControlBasis::ControlBasis()
 {
