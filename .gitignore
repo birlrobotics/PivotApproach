@@ -1,5 +1,7 @@
 # Data
+/data/
 /data/Results
+/data/GravComp
 ./metadata/*
 
 # Python stuff
