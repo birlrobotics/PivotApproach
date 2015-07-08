@@ -103,11 +103,12 @@ class forceSensorPlugin_impl : public plugin,
 
   // External Classes                     	//nittaFS    *fs;					// Force Sensor Class
   //ifs        *fs;
-  hiroArmMas *lArm;				// Left Master Arm Class
-  hiroArmSla *rArm;				// Right Slave Arm Class
+  hiroArmMas *lArm;							// Left Master Arm Class
+  hiroArmSla *rArm;							// Right Slave Arm Class
 
   // Gravity Compensation
   bool f_gravity_comp[2];
+  int  gravCompRes[2];
 
   // Position and Rotation variables
   vector3  Pb_mas,   Pb_sla;
@@ -120,9 +121,9 @@ class forceSensorPlugin_impl : public plugin,
   vector3 femaleCam_4snaps_left_ePh;
 
   // Force and Moment Variables
-  vector3 F_ave[2],   M_ave[2];
-  vector3 F_sd[2],	  M_sd[2];
-  vector3 F_err_max[2], M_err_max[2];
+  vector3 F_ave[2],   	 M_ave[2];
+  vector3 F_sd[2],	  	 M_sd[2];
+  vector3 F_err_max[2],  M_err_max[2];
   double F_zero_lim[2], M_zero_lim[2];
 
   // Digital State and HW Switches
@@ -157,11 +158,12 @@ class forceSensorPlugin_impl : public plugin,
 
   // Log
   ofstream ostr_rstate, ostr_astate, ostr_force, ostr_worldforce;
+
   /********************************************************** Methods ************************************************************/
   void 	 init(void);
   void 	 readInitialFile(const char *filename);
   void 	 readGainFile(const char *filename);
-  bool  readGravCompParams(const char *filename);
+  bool  readGravCompStatData(const char *filename);
   bool  extract_SingleItem(ifstream& in, Vector3* first, Vector3* second, int size);
   //bool  extract_SingleItem(ifstream& in, double* first, double* second, int size);
   matrix33 get_rot33(int dir, double rad );

@@ -8,16 +8,28 @@
 #ifndef HIRO_ARM_H
 #define HIRO_ARM_H
 
-// Includes
+// Standard Lib
 #include <cstddef>
 #include <cstdlib>
+
+// Math
 #include <cmath>
+
+// Error
 #include <cerrno>
+
+// System
 //#include <sys/syspage.h>
 #include <sys/time.h>
+
+// Streams
 #include <fstream>
 #include <string>
 #include <string.h>
+#include <iomanip>
+#include <cstring>
+
+// Input and Output
 #include <stdio.h>
 #include "tvmet3d.h"
 //#--------------------------------------------------------------------------------------------------------------------#--------------------------------------------------------------------------------------------------------------------
@@ -322,8 +334,13 @@ class hiroArm
   bool moveto(dvector6 q_start, dvector6 q_goal);
 
   // Gravity Compensation
+  int      gravCompParam_ctr;
+  ifstream istr_gravCompParam;								// Read/Write data gravComp data from/to file
+  ofstream ostr_gravCompParam;
   bool calc_gravity_param();
   bool calc_gravity_param_shimizu();
+  bool readGravCompParamData(const char* whatArm, const char *filename, long& position);
+  bool writeGravCompParamData(vector3 fsF_tmp[5], vector3 fsM_tmp[5], matrix33 fsRr_gc[5],vector3&  rG_vec,vector3& fsPgc);
 
   // Force Computations
   bool get_raw_forces(double f_out[6]);
@@ -337,7 +354,7 @@ class hiroArm
   void calc_rPe_rRe(vector3 rPh_in, matrix33 rRh_in, vector3 &rPe_out, matrix33 &rRe_out); //base2wrist position and rotation matrices
 };
 
-/*********************************************************************** ArmMas classes. Inherits from hiroArm ******************************************************************************************/
+/*********************************************************************** hiroArm Child Classes. Inherits from hiroArm ******************************************************************************************/
 // Master Class. Associated with the Left Arm.
 class hiroArmMas : public hiroArm
 {

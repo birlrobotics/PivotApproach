@@ -64,9 +64,11 @@ extern "C" {
 #define ASSR  0x10000000    // Axis Select Switch-> right
 #define DTES  0x08000000    // DT enable switch (for data acquisition)
 
-// FILES
-#define GRAV_COMP_FILE "./data/GravComp/gravCompParams.dat"
-
+// Gravity Compensation Parameter Files
+#define GRAV_COMP_STAT_DATA_FILE 	"./data/GravComp/gravCompStatData.dat"
+#define GRAV_COMP_PARAM_FILE     	"./data/GravComp/gravCompParams.dat"				// Also defined in hiroArm.cpp
+#define GRAV_COMP_RIGHT_WRENCH		"./data/Results/R_GC_Torques.dat"
+#define GRAV_COMP_LEFT_WRENCH		"./data/Results/L_GC_Torques.dat"
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Debugging
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -224,6 +226,9 @@ void forceSensorPlugin_impl::init(void)
 		F_err_max[i] = -100.0, -100.0, -100.0;
 		M_err_max[i] = -100.0, -100.0, -100.0;
 	}
+
+	// Gravity Compensation
+	gravCompRes={0};
 
 	/*------------------------------------------------------------------- Setup Force Sensor -------------------------------------------------------*/
 
@@ -506,7 +511,6 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 		controlmode_r 	 = GravityCompensation;
 	}
 	else {
-		controlmode_nr = PivotApproach;
 		controlmode_r  = PivotApproach;
 	}
 
@@ -648,11 +652,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				/*---------------------- Open Gravity Compensation Files --------------------------*/
 				// Open the right arm gravity compensated torques file: forces_gc
-				ostr_gcWrenchR.open("./data/Results/fgc.dat");
+				ostr_gcWrenchR.open(GRAV_COMP_RIGHT_WRENCH);
 				if (!ostr_gcWrenchR.is_open())	std::cerr << ostr_gcWrenchR << " was not opened." << std::endl;
 
 				// Open the left arm gravity compensated torques file: forces_gc
-				ostr_gcWrenchL.open("./data/Results/lfgc.dat");
+				ostr_gcWrenchL.open(GRAV_COMP_LEFT_WRENCH);
 				if(!ostr_gcWrenchL.is_open())	std::cerr << ostr_gcWrenchL << " was not opened." << std::endl;
 
 				/*---------------------- Start Timing Loop --------------------------*/
@@ -713,16 +717,28 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// 2. hiroArm::calc_gravity_param()
 				// 3. hiroArm::update_currforcedata()
 				// 4. hiroArm::calc_gc_forces()
+
 				if(DEBUG)	std::cerr << "GravityCompensation" << std::endl;
 
-				// (A) Checking to see if we calib parameters are on file. If yes, skip calib routine.
-				ret=readGravCompParams(GRAV_COMP_FILE);
+				// (A) Checking to see if calib parameters are on file. If yes, skip calib routine.
+				ret=readGravCompStatData(GRAV_COMP_STAT_DATA_FILE);
 				if(ret)
 				{
-					std::cerr << "Gravity Compensation already calibrated." << std::endl;
-					// Call PivotApproach
-					controlmode_r = PivotApproach;
-					break;
+					// Use either arm object to call readGravCompParamData and read data for both arms.
+					long position=0;
+					ret=lArm->readGravCompParamData("left", GRAV_COMP_PARAM_FILE,position);
+					if(ret)
+					{
+						ret=rArm->readGravCompParamData("right", GRAV_COMP_PARAM_FILE,position);
+						if(ret)
+						{
+							std::cerr << "Gravity Compensation already calibrated." << std::endl;
+
+							// Call PivotApproach
+							controlmode_r = PivotApproach;
+							break;
+						}
+					}
 				}
 
 				// (B) Perform Gravity Compensation Calibration Routine
@@ -730,38 +746,35 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				if (!f_gravity_comp[0])
 				{
 					// Call gravity compsensation: 2000 step iteration algorithm computing gravity vectors.
-					int res_gc;
-					res_gc = lArm->gravity_comp();
-					if(DEBUG)	std::cerr << "Gravity Compensation: res_gc = " << res_gc << std::endl;
+					gravCompRes[0] = lArm->gravity_comp();
+					if(DEBUG)	std::cerr << "Gravity Compensation: res_gc = " << gravCompRes[0] << std::endl;
 
 					// Success
-					if (res_gc == 1)
+					if (gravCompRes[0] == 1)
 					{
 						f_gravity_comp[0] = true;
 						num_test 		  = 0;
 					}
-					else if (res_gc == 0)
+					else if (gravCompRes[0] == 0)
 						f_control[LEFT] = true;
 				}
 
-				// (B) RIGHT ARM
 				else if (!f_gravity_comp[1])
 				{
 					// Call gravity compensation
-					int res_gc;
-					res_gc = rArm->gravity_comp();
+					gravCompRes[1] = rArm->gravity_comp();
 
 					if(DEBUG)
-						std::cerr << "Gravity Compensation: res_gc = " << res_gc << std::endl;
+						std::cerr << "Gravity Compensation: res_gc = " << gravCompRes[1] << std::endl;
 
 					// Success
-					if (res_gc == 1)
+					if (gravCompRes[1] == 1)
 					{
 						f_gravity_comp[1] 	= true;
 						num_test 			= 0;
 						std::cerr << "GC succeeded." << std::endl;
 					}
-					else if (res_gc == 0)
+					else if (gravCompRes[1] == 0)
 						f_control[RIGHT] = true;
 				}
 
@@ -822,7 +835,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					// Last Iteration
 					else if (num_test == 2000)
 					{
-						std::string f_name1 = GRAV_COMP_FILE;
+						std::string f_name1 = GRAV_COMP_STAT_DATA_FILE;
 						if ((fp = fopen(f_name1.c_str(), "a")) == NULL) std::cerr << "file open error!!" << std::endl;
 
 						for (int i = 0; i < 2; i++)
@@ -870,7 +883,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 							fprintf(fp, "zero_limit:   %f %f\n\n", F_zero_lim[i],
 									M_zero_lim[i]);
 
-							if(DEBUG) {
+							if(DEBUG)
+							{
 								std::cerr << "error of rF_gc = " << F_ave << std::endl;
 								std::cerr << "error of rM_gc = " << M_ave << std::endl;
 								std::cerr << "max error F" << F_err_max << std::endl;
@@ -883,7 +897,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 						fclose(fp);
 						num_test++;
 
-						// Call PivotApproach
+						// Change control mode
 						controlmode_r = PivotApproach;
 					}
 				}
@@ -905,13 +919,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// Select Right Arm
 				f_control[RIGHT] = true;
 
-				// Update the forces
+				//------------------------------------------------ Update Wrench Data -------------------------------------------------------------//
 #ifdef SIMULATION
 				if(LEFT_ARM)
-					for(int i=0;i<6;i++)
-						L_CurrentForces(i) = lArm->raw_forces[i];
-				for(int i=0;i<6;i++)
-					CurrentForces(i) = rArm->raw_forces[i];
+					for(int i=0;i<6;i++) L_CurrentForces(i) = lArm->raw_forces[i];
+				    for(int i=0;i<6;i++)   CurrentForces(i) = rArm->raw_forces[i];
 
 #else
 				rArm->update_currforcedata();
@@ -945,6 +957,38 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				CurrentForces(5) = rotated_moment(2);
 #endif
 
+				// Update latest force: either raw or gravity compensated.
+				if(LEFT_ARM)
+					lArm->update_currforcedata();
+					rArm->update_currforcedata();
+
+				// Read Gravity Compensated Forces into local variables.
+				vector3 rF_gc[2], rM_gc[2];
+				if(LEFT_ARM)
+					lArm->get_forces(rF_gc[0], rM_gc[0]);
+					rArm->get_forces(rF_gc[1], rM_gc[1]);
+
+				// Copy force data over to CurrentForces for Left and Right Arms
+				for( int i = 0 ; i < 3 ; i++ ){
+					if(LEFT_ARM) {
+						L_CurrentForces(i)   = rF_gc[0][i];
+						L_CurrentForces(3+i) = rM_gc[0][i];
+					}
+					CurrentForces(i)   = rF_gc[1][i];
+					CurrentForces(3+i) = rM_gc[1][i];
+				}
+
+				// Write each side's data to different files.
+				ostr_gcWrenchR << cur_time << "\t";
+				for(int i=0; i<3; i++) ostr_gcWrenchR << rF_gc[1][i] << " \t";
+				for(int i=0; i<3; i++) ostr_gcWrenchR << rM_gc[1][i] << " \t";
+				ostr_gcWrenchR << std::endl;
+
+				ostr_gcWrenchL << cur_time << "\t";
+				for(int i=0; i<3; i++) ostr_gcWrenchL<< CurrentForces(i)   << " \t";
+				for(int i=0; i<3; i++) ostr_gcWrenchL<< CurrentForces(i+3) << " \t";
+				ostr_gcWrenchL << std::endl;
+
 				if(DEBUG)
 					std::cerr << "Current Wrench is:\t" << CurrentForces << std::endl;
 
@@ -952,6 +996,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				if(LEFT_ARM)
 					lArm->get_curr_handpos(L_CurXYZ,L_CurRot);
 					rArm->get_curr_handpos(CurXYZ,CurRot);
+
+				// Perform necessary procedures to run the inverse kinematic computations later
+				/*for(int j=0; j<4; j++) { rArm->m_path->setIkGain(rArm->ikGains[j]); rArm->m_path->setMaxIKErrorRot(rArm->ikRot[j]); rArm->m_path->setMaxIKErrorTrans(rArm->ikTrans[j]); } */
 
 				if(DEBUG) std::cerr << "\n\n!!!!! forceSensorPlugin::control(). CurXYZ: " << CurXYZ << std::endl;
 
@@ -971,47 +1018,10 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					lArm->set_Iteration();						// Increase iteration
 					rArm->set_Iteration();
 
-				// Update Wrench Data
-				if(LEFT_ARM)
-					lArm->update_currforcedata();
-					rArm->update_currforcedata();
-
-				// Write Gravity Compensated Wrench Info to File
-				vector3 rF_gc[2], rM_gc[2];
-
-				rArm->get_forces(rF_gc[1], rM_gc[1]);
-
-				ostr_gcWrenchR << cur_time << "\t";
-				for(int i=0; i<3; i++) ostr_gcWrenchR << rF_gc[1][i] << " \t";
-				for(int i=0; i<3; i++) ostr_gcWrenchR << rM_gc[1][i] << " \t";
-				ostr_gcWrenchR << std::endl;
-
-				lArm->get_forces(rF_gc[0], rM_gc[0]);
-				ostr_gcWrenchL << cur_time << "\t";
-				for(int i=0; i<3; i++) ostr_gcWrenchL<< CurrentForces(i)   << " \t";
-				for(int i=0; i<3; i++) ostr_gcWrenchL<< CurrentForces(i+3) << " \t";
-				ostr_gcWrenchL << std::endl;
-
-				vector3 diffForces, diffMoment;
-
-				for( int i = 0 ; i < 3 ; i++ ){
-					CurrentForces(i)   = rF_gc[1][i];
-					CurrentForces(3+i) = rM_gc[1][i];
-				}
-
-				// Perform necessary procedures to run the inverse kinematic computations later
-				/*for(int j=0; j<4; j++)
-				{
-					// rArm->m_path->setIkGain(rArm->ikGains[j]);
-					//rArm->m_path->setMaxIKErrorRot(rArm->ikRot[j]);
-					//rArm->m_path->setMaxIKErrorTrans(rArm->ikTrans[j]);
-				}*/
-
 				// Call PivotApproach and retrieve a Joint angle update and CurrentAngles
 				if(DEBUG)	std::cerr << "\nforceSensorPlugin::control - Calling hiroArm::PivotApproach()" << std::endl;
 
-				if(LEFT_ARM)
-				{
+				if(LEFT_ARM) {
 					ret=lArm->PivotApproach(cur_time,L_CurXYZ,L_CurRot,L_CurrentForces,L_JointAngleUpdate,L_CurrentAngles);
 					if(ret==-1)
 					{
@@ -1507,7 +1517,7 @@ void forceSensorPlugin_impl::readGainFile(const char *filename)
 }
 
 /***********************************************************************
- * Read GravityCompesnationParameters
+ * Read GravityCompesnationStatData
  * Reads parameters from the file. There are parameters for left and
  * right arms. For each arms you also have the following parameters:
  * 		sensor# - which is the tile of the sensor to use
@@ -1518,7 +1528,7 @@ void forceSensorPlugin_impl::readGainFile(const char *filename)
  *
  * 		Note that sometimes a nan string value gets in there.
  ***********************************************************************/
-bool forceSensorPlugin_impl::readGravCompParams(const char *filename)
+bool forceSensorPlugin_impl::readGravCompStatData(const char *filename)
 {
 	// Local variables
 	int index=0;				// Represents right or left index of data
@@ -1533,22 +1543,22 @@ bool forceSensorPlugin_impl::readGravCompParams(const char *filename)
 	int len = 0; 				// Length of a given data struc
 
 	// Create input stream
-	ifstream istr_gravCompParam(filename,ios::in);
-	if(!istr_gravCompParam) return false;
+	ifstream istr_gravCompStatData(filename,ios::in);
+	if(!istr_gravCompStatData) return false;
 
 	// Extract data for four pairs: F_ave/M_ave, F_sd/M_sd, F_err_max/M_err_max; F_zero_lim/M_zero_lim
-	while(istr_gravCompParam && !istr_gravCompParam.eof())
+	while(istr_gravCompStatData && !istr_gravCompStatData.eof())
 	{
 
 		/* 		Should run the function as follows, however, I could not resolve a system call error originated when calling the funciton below:
 		// 		Cannot figure out why the following function call is giving a system call error... there is some problem with the prototype, probably with the multiD vector but not sure */
-		//		extract_SingleItem(istr_gravCompParam, F_ave, M_ave, 6);
+		//		extract_SingleItem(istr_gravCompStatData, F_ave, M_ave, 6);
 		//		if(ret)
-		//			ret= extract_SingleItem(istr_gravCompParam, F_sd[index], M_sd[index], 6);
+		//			ret= extract_SingleItem(istr_gravCompStatData, F_sd[index], M_sd[index], 6);
 		//		if(ret)
-		//			ret= extract_SingleItem(istr_gravCompParam, F_err_max[index], M_err_max[index], 6);
+		//			ret= extract_SingleItem(istr_gravCompStatData, F_err_max[index], M_err_max[index], 6);
 		//		if(ret)
-		//			ret= extract_SingleItem(istr_gravCompParam, &F_zero_lim[index], &M_zero_lim[index], 2);
+		//			ret= extract_SingleItem(istr_gravCompStatData, &F_zero_lim[index], &M_zero_lim[index], 2);
 
 		for(int dataIn=0; dataIn<4; dataIn++)
 		{
@@ -1557,11 +1567,11 @@ bool forceSensorPlugin_impl::readGravCompParams(const char *filename)
 				// Extract Arm Index on first line.
 				if(ctr==1)
 				{
-					istr_gravCompParam.ignore(1,'\0');
-					istr_gravCompParam.sync();
-					istr_gravCompParam.getline(command,10,'\n');
+					istr_gravCompStatData.ignore(1,'\0');
+					istr_gravCompStatData.sync();
+					istr_gravCompStatData.getline(command,10,'\n');
 				}
-				istr_gravCompParam.getline(command,10,'\n');
+				istr_gravCompStatData.getline(command,10,'\n');
 
 				// Check for first loop: Left Sensor
 				if (!strcmp(command, "sensor 0:"))
@@ -1587,12 +1597,12 @@ bool forceSensorPlugin_impl::readGravCompParams(const char *filename)
 
 			// Extract average values
 			// Average
-			istr_gravCompParam >>  title; // This first extraction is for the title. It is discarded.
+			istr_gravCompStatData >>  title; // This first extraction is for the title. It is discarded.
 
 			// Now extract actual values.
 			for (int i=0; i<size; i++)
 			{
-				istr_gravCompParam >>  data;
+				istr_gravCompStatData >>  data;
 
 				// check for -nan
 				if(strcmp(data.c_str(),"nan")==0 || strcmp(data.c_str(),"-nan")==0)

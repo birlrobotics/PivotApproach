@@ -53,13 +53,13 @@ using std::ceil;
 #define L_MANIP_TEST_FILE			"/L_manipulationTestAxis.dat"		// Used to test force and moment controllers behavior
 
 // Gravity Compensation Parameters
-#define GRAV_COMP_FILE 				"./data/GravComp/gravCompParams.dat" // Saves grav comp parameters
+#define GRAV_COMP_PARAM_FILE 		"./data/GravComp/gravCompParams.dat" // Saves grav comp parameters
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define DB_TIME 				0			// Used to print timing duration of functions
-#define DEBUG					1			// Used to print temporary cerr statements
+#define DEBUG					0			// Used to print temporary cerr statements
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // TEST MODE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,6 +135,10 @@ using std::ceil;
 		#define APPROACH_TYPE 	FAILURE_CHARAC
 	#endif
 #endif
+
+// Global
+	static int whatArm = 0; 		// GravityCompensation: used in hiroArm::writeGravCompParam()
+									// Refers to arm index. 0 is left, 1 is right.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Constructor Definition : Variable Initialisation List
 //
@@ -156,11 +160,11 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 	// Save to local members
 	name 		= name_in;										// Right or left arm
 	body 		= body_in;										// Body object extracted from ModelLoader
-	NUM_q0 	= num_q0_in;									// Which joint is the starting joint. Right arm=3, Left arm=9
-	DEL_T 	= period_in;									// Time step set at 0.0005 secs in calling function
+	NUM_q0 		= num_q0_in;									// Which joint is the starting joint. Right arm=3, Left arm=9
+	DEL_T 		= period_in;									// Time step set at 0.0005 secs in calling function
 	for(int i = 0; i < ARM_DOF; i++){
 		for(int j = 0; j < 5; j++){
-			ang_limits[i][j] = ang_limits_in[i][j];			// Set angle limits
+			ang_limits[i][j] = ang_limits_in[i][j];				// Set angle limits
 		}
 	}
 
@@ -238,6 +242,9 @@ hiroArm::hiroArm(std::string name_in, BodyPtr body_in, unsigned int num_q0_in, d
 	rot=m_path->joint(5)->segmentAttitude();    // Instead of RARM_JOINT5 I had a 5 before.
 	if(DEBUG) std::cerr << "hiroArm(): Orientation: " << rot << std::endl;
 
+	// Gravity Compensation
+	gravCompParam_ctr = 0; 						// Set counter to zero.
+
 	// Pivot Approach variables
 	if(DEBUG) std::cerr << "hiroArm(): Allocating AssemblyStrategy" << std::endl;
 	PA = new AssemblyStrategy(NUM_q0,pos,rot,ePh,momentGainFactor);	// Wrist position, Wrist Rotation Matrix, Wrist2EndEffXform
@@ -258,7 +265,7 @@ hiroArm::~hiroArm()
 //
 // Gray:init
 // Get the value of rRe, rPe, rRh, rPh and the q
-// Set the value of rPh_ref , rRh_ref and q_ref to be rPh, rRh and q
+// Set the value of rPh_ref , rRh_ref and  be rPh, rRh and q
 /*************************************************************************************************************/
 void hiroArm::init()
 {
@@ -269,7 +276,6 @@ void hiroArm::init()
 }
 
 //Gray: this init function will be commented, for we will define each arm.
-
 /*************************************************************************************************************/
 // init(vector3 pos, matrix33 rot, double CurAngles[15])
 // Initialization Routine for a selected arm. Compute the position vector and rotation matrix from base to end effector
@@ -1010,39 +1016,38 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 
 	// Timing
 	#if 0
+		//timeval startTime, endTime, sJ, eJ;			// create variables
+		unsigned long long sJ,eJ,endTick;
+		double duration = 0.0;
+		double dJ = 0.0;
+		double freq = 0;
+		freq = SYSPAGE_ENTRY(qtime)->cycles_per_sec;	// define operational frequency
+		std::cerr << "The frequency is: " << freq << std::endl;
 
-	//timeval startTime, endTime, sJ, eJ;			// create variables
-	unsigned long long sJ,eJ,endTick;
-	double duration = 0.0;
-	double dJ = 0.0;
-	double freq = 0;
-	freq = SYSPAGE_ENTRY(qtime)->cycles_per_sec;	// define operational frequency
-	std::cerr << "The frequency is: " << freq << std::endl;
+		if(DB_TIME)
+		{
+			//gettimeofday(&startTime,NULL); 			// Initialize startTime for this function
+			//gettimeofday(&sJ,NULL);					// start time for jacobian computations
+			sJ = get_tick();
+		}
 
-	if(DB_TIME)
-	{
-		//gettimeofday(&startTime,NULL); 			// Initialize startTime for this function
-		//gettimeofday(&sJ,NULL);					// start time for jacobian computations
-		sJ = get_tick();
-	}
+		// Compute Jacobian and PseudoJac
+		m_path->calcJacobian(Jac);							// Calculate the Jacobian based on the base-2-wrist path segment we have assigned. This is a JointPathPtr type
+		//OpenHRP::calcPseudoInverse(Jac,PseudoJac);		// Not used with HIRO
 
-	// Compute Jacobian and PseudoJac
-	m_path->calcJacobian(Jac);							// Calculate the Jacobian based on the base-2-wrist path segment we have assigned. This is a JointPathPtr type
-	//OpenHRP::calcPseudoInverse(Jac,PseudoJac);		// Not used with HIRO
+		// Finalize jacobian time computations
+		if(DB_TIME)
+		{
+			//gettimeofday(&eJ,NULL);
+			//dJ  = (double)(eJ.tv_sec -  sJ.tv_sec)  * 1000.0; 	// Get from sec to msec
+			//dJ += (double)(eJ.tv_usec - sJ.tv_usec) / 1000.0; 	// From usec to msec
 
-	// Finalize jacobian time computations
-	if(DB_TIME)
-	{
-		//gettimeofday(&eJ,NULL);
-		//dJ  = (double)(eJ.tv_sec -  sJ.tv_sec)  * 1000.0; 	// Get from sec to msec
-		//dJ += (double)(eJ.tv_usec - sJ.tv_usec) / 1000.0; 	// From usec to msec
+			eJ = get_tick();
+			dJ = ((double)(eJ-sJ)/(freq))*1000.0; //ms
 
-		eJ = get_tick();
-		dJ = ((double)(eJ-sJ)/(freq))*1000.0; //ms
-
-		// Print out the duration of the function
-		std::cerr << "Duration of Jacobian Computations in hiroArm::PivotApproach() is: " << dJ << "ms." << std::endl;
-	}
+			// Print out the duration of the function
+			std::cerr << "Duration of Jacobian Computations in hiroArm::PivotApproach() is: " << dJ << "ms." << std::endl;
+		}
 	#endif
 
 	// Compute Jacobian and PseudoJac
@@ -1240,7 +1245,7 @@ void hiroArm::reset_gravity_comp()
 }
 
 /**************************************************************************/
-// reset_gravity_comp
+// gravity_comp
 // return 1: when gravity compensation is finished
 // return 0: continue
 // return neg values: error exists
@@ -1312,12 +1317,12 @@ int hiroArm::gravity_comp()    //ttt
 				if(calc_qref(rPh_initial, rRh_ref_tmp, q_ref_tmp))
 				{
 					q_gc_ref[i+1] = q_ref_tmp;
-					std::cout<<"This q_gc_ref"<<i+1<<"and this is "<<q_ref_tmp<<std::endl;
-
-					#ifdef DEBUG_PLUGIN2
-					std::cout << "rRh_ref_tmp: " << rRh_ref_tmp << std::endl;
-					std::cout << "q_ref_tmp: " << q_ref_tmp << std::endl;
-					#endif
+					if(DEBUG)
+					{
+						std::cout<<"This q_gc_ref "<< i+1 << "and this is " << q_ref_tmp << std::endl;
+						std::cout << "rRh_ref_tmp: " << rRh_ref_tmp << std::endl;
+						std::cout << "q_ref_tmp: " << q_ref_tmp << std::endl;
+					}
 				}
 
 				else
@@ -1700,7 +1705,7 @@ bool hiroArm::calc_gravity_param_shimizu()
 // hiroArm::gravity_comp() is called by forceSensorPlugin_impl::control.case GravityCompensation()
 // and ouputs the following parameters:
 // 		rG_vec
-//		fsF_tmp[5]			fsPc
+//		fsF_tmp[5]			fsPgc
 //		fsM_tmp[5]			fsRr_gc[5]
 // and computes a number of parameters used here, namely:
 // 		<fsF_offset, fsM_offset>
@@ -1871,9 +1876,182 @@ bool hiroArm::calc_gravity_param()
 		std::cout << "fsF_offset =" 			<< fsF_offset 	<< std::endl;
 		std::cout << "fsM_offset =" 			<< fsM_offset 	<< std::endl;
 	}
+
+	/************************************* SAVE DATA TO FILE ********************************/
+	ret=writeGravCompParamData(fsF_tmp,fsM_tmp,fsRr_gc,rG_vec,fsPgc);
+	return ret;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+// The following method writes computed gravity parameters is hiroArm::calc_gravity_param() to file.
+//
+// This function will write the data below starting for the left arm and then the write arm.
+// fsF_tmp[0]: 3 values
+// fsF_tmp[1]: 3 values
+// ...
+// fsF_tmp[4]: 3 values
+//
+// fsM_tmp[0]: 3 values
+// fsM_tmp[1]: 3 values
+// ...
+// fsM_tmp[4]: 3 values
+//
+// matrix1 9 values
+// matrix2 9 values
+// ...
+// matrix5 9 values
+//
+// rG_vec: 3values
+// fsPgc: 3 values
+//
+// f_gc:  bool for each arm.
+// mass:  1 value
+//--------------------------------------------------------------------------------------------------------------------------------------
+bool hiroArm::writeGravCompParamData(vector3 fsF_tmp[5], vector3 fsM_tmp[5], matrix33 fsRr_gc[5],vector3& rG_vec,vector3& fsPgc)
+{
+	// Open file stream: for left arm--first set of data use ios::out, for rightarm appenduse ios::app
+	if(whatArm==0)
+	{
+		ostr_gravCompParam.open(GRAV_COMP_PARAM_FILE,ios::out);
+		whatArm=1;
+	}
+	else
+		ostr_gravCompParam.open(GRAV_COMP_PARAM_FILE,ios::app);
+
+	// Check if file was opened succesfully
+	if(!ostr_gravCompParam)
+	{
+		std::cerr << "Could not open GravCompParams.dat file" << std::endl;
+		return 0;
+	}
+	// Set precision to 6 decimal places
+	ostr_gravCompParam << std::fixed << std::setprecision(6);
+
+	// Write data for fsF_tmp and fsM_tmp
+	// Go through each of the five records
+	for(int i=0; i<5; i++) ostr_gravCompParam <<  fsF_tmp[i][0] << "\t" << fsF_tmp[i][1] <<  "\t" << fsF_tmp[i][2] << std::endl;
+	for(int i=0; i<5; i++) ostr_gravCompParam <<  fsM_tmp[i][0] << "\t" << fsM_tmp[i][1] <<  "\t" << fsM_tmp[i][2]  << std::endl;
+	for(int i=0; i<5; i++)
+	{
+		// go through matrix [j][k]
+		for(int j=0; j<3; j++)
+			for(int k=0; k<3; k++)
+				ostr_gravCompParam <<  fsRr_gc[i](j,k) << "\t";
+		ostr_gravCompParam << std::endl;
+	}
+
+	// Single vectors
+	ostr_gravCompParam << rG_vec[0] << "\t" << rG_vec[1] <<  "\t" << rG_vec[2] << std::endl;
+	ostr_gravCompParam << fsPgc[0]  << "\t" << fsPgc[1]  <<  "\t" << fsPgc[2]  << std::endl;
+
+	// Force gravity compensation flag: f_gc to true.
+	ostr_gravCompParam << 1 << std::endl;
+
+	// Mass
+	ostr_gravCompParam << mass << std::endl;
+	ostr_gravCompParam << std::endl;
+
+	// Close the file
+	ostr_gravCompParam.close();
+
 	return true;
 }
 
+// readGravCompParam
+// This file reads data saved by writeGravCompParam.
+// Thata data is saved into two sets: first for the left arm then for the right.
+//
+// The structure is as follows:
+// fsF_tmp[0]: 3 values
+// fsF_tmp[1]: 3 values
+// ...
+// fsF_tmp[4]: 3 values
+//
+// fsM_tmp[0]: 3 values
+// fsM_tmp[1]: 3 values
+// ...
+// fsM_tmp[4]: 3 values
+//
+// matrix1 9 values
+// matrix2 9 values
+// ...
+// matrix5 9 values
+//
+// rG_vec: 3values
+// fsPgc: 3 values
+//
+// f_gc: force gravity compensation bool
+// mass
+//
+// std::endl
+//
+// The input variable position is used to set the file pointer either to the start of the file
+// to be read for the lArm object, or to the second set of data for the rArm object.
+///////////////////////////////////////////////////////////////////////////////////////////////
+bool hiroArm::readGravCompParamData(const char* whatArm, const char *filename, long& position)
+{
+	// Open input stream
+	istr_gravCompParam.open(GRAV_COMP_PARAM_FILE,ios::in);
+	if(!istr_gravCompParam) return false;
+
+	// Adjust the position of the file pointer
+	if(position!=0)
+		istr_gravCompParam.seekg(position,ios::beg);
+
+
+	// Extract data from the file
+	while(!istr_gravCompParam.eof())
+	{
+		// Read 5 3D vectors for fsF_tmp
+		for(int i=0; i<5; i++)
+			for(int j=0; j<3; j++)
+				istr_gravCompParam >> fsF_tmp[i][j];
+
+		// Read 5 3D vectors for fsM_tmp
+		for(int i=0; i<5; i++)
+			for(int j=0; j<3; j++)
+				istr_gravCompParam >> fsM_tmp[i][j];
+
+		// Read 5 3x3 matrices for fsRr_gc
+		for(int i=0; i<5; i++)
+			for(int j=0; j<3; j++)
+				for(int k=0; k<3; k++)
+				istr_gravCompParam >> fsRr_gc[i](j,k);
+
+		// Read 1 3D vector: rG_vec
+		for(int i=0; i<3; i++)
+			istr_gravCompParam >> rG_vec[i];
+
+		// Read 1 3D vector: rG_vec
+		for(int i=0; i<3; i++)
+			istr_gravCompParam >> fsPgc[i];
+
+		// Read the f_gc flag
+		istr_gravCompParam >> f_gc;
+
+		// Read the mass
+		istr_gravCompParam >> mass;
+
+		// Ignore new line
+		istr_gravCompParam.ignore(256,'\n');
+
+		// Now return the current position of the file pointer to be used in the second run to retrieve the right hand's data
+		position = istr_gravCompParam.tellg();
+
+		// Increase Counter
+		gravCompParam_ctr++;
+
+		break;
+	}
+
+	// This method is called independently for the left and right arm objects. When each of the sides is finished, gravCompParam should be 1 to be successful.
+	if(!strcmp(whatArm,"left") && gravCompParam_ctr==1)
+		return true;
+	else if(!strcmp(whatArm,"right") && gravCompParam_ctr==1)
+		return true;
+	else
+		return false;
+}
 /*********************************************************************************/
 // get_raw_forces
 // Extract the raw forces from the force-torque sensor
@@ -1904,9 +2082,9 @@ bool hiroArm::get_raw_forces(double f_out[6])                         //Gray
 		f_out[5] = -f_out[5];
 	#endif
 
-	#ifdef DEBUG_PLUGIN2
-			std::cout << "get_raw_forces: \t\t" << f_out[0] << " " << f_out[1] << " " << f_out[2] << " " << f_out[3] << " " << f_out[4] << " " << f_out[5] << std::endl;
-	#endif
+	if(DEBUG)
+		std::cout << "get_raw_forces: \t" << f_out << std::endl;
+
 
 	return true;
 
@@ -1948,14 +2126,14 @@ bool hiroArm::calc_gc_forces(vector3 &rFfs_gc_out, vector3 &rMfs_gc_out)
 		rFfs_gc_out = rRfs_inv * ((rRfs * (fsF_raw - fsF_offset)) - rF_grav);
 		rMfs_gc_out = rRfs_inv * ((rRfs * (fsM_raw - fsM_offset)) - rM_grav);
 
-#ifdef DEBUG_PLUGIN2
-		std::cerr << "calc_gc_forces: " << std::endl;
-		std::cerr << "rF_grav = " 		<< rF_grav 	<< std::endl;
-		std::cerr << "rM_grav = " 		<< rM_grav 	<< std::endl;
-		std::cerr << "oGC_pos = " 		<< oGC_pos 	<< std::endl;
-		std::cerr << std::endl;
-		//f_out[0] <<" " << f_out[1] <<" " << f_out[2] <<" " << f_out[3] <<" " << f_out[4] <<" " << f_out[5] << std::endl;
-#endif
+		if(DEBUG) {
+			std::cerr << "calc_gc_forces: " << std::endl;
+			std::cerr << "rF_grav = " 		<< rF_grav 	<< std::endl;
+			std::cerr << "rM_grav = " 		<< rM_grav 	<< std::endl;
+			std::cerr << "oGC_pos = " 		<< oGC_pos 	<< std::endl;
+			std::cerr << std::endl;
+			//f_out[0] <<" " << f_out[1] <<" " << f_out[2] <<" " << f_out[3] <<" " << f_out[4] <<" " << f_out[5] << std::endl;
+		}
 
 		return true;
 	}
@@ -2020,15 +2198,11 @@ bool hiroArm::moveto(dvector6 q_start_in, dvector6 q_goal_in)
 				{
 					// Set the qref parameter
 					q_ref = p_param.q_start + DEL_T * m_time * p_param.jvel;
-					//std::cout<<"q_ref in the moveto function:"<<q_ref<<std::endl;
 
-#ifdef DEBUG_PLUGIN2
-					std::cout << "q_ref in moveto: " << q_ref *180/M_PI << std::endl;
-					std::cout << "m_time = " << m_time << std::endl;
-					//~ for (int i =0; i<ARM_DOF; i++)
-					//~ std::cout << (body->joint(NUM_q0 + i)->q )*180/M_PI << ", ";
-					//~ std::cout << std::endl;
-#endif
+					if(DEBUG){
+						std::cout << "q_ref in moveto: " << q_ref *180/M_PI << std::endl;
+						std::cout << "m_time = " 		<< m_time 			<< std::endl;
+					}
 
 					f_moving = true;
 					return true;
@@ -2091,11 +2265,11 @@ bool hiroArm::init_path_params(dvector6 q_start_in, dvector6 q_goal_in)
 				m_time = 0; m_time++;
 				q_ref = p_param.q_start + DEL_T * m_time * p_param.jvel;
 
-#ifdef DEBUG_PLUGIN2
-				std::cout << "jvel = " << p_param.jvel*180/M_PI << std::endl;
-				std::cout << "duration = " << p_param.duration << std::endl;
-				std::cout << "q_ref in moveto: " << q_ref *180/M_PI << std::endl;
-#endif
+				if(DEBUG) {
+				std::cout << "jvel = " 			 << p_param.jvel*180/M_PI 	<< std::endl;
+				std::cout << "duration = " 		 << p_param.duration 		<< std::endl;
+				std::cout << "q_ref in moveto: " << q_ref *180/M_PI 		<< std::endl;
+				}
 
 				f_moving = true;
 				return true;
@@ -2351,12 +2525,9 @@ void hiroArm::SkewToVector(matrix33 skew, vector3 &vec)
 // hiroArmMas::hiroArmMas - Constructor
 //
 //-----------------------------------------------------------------
-hiroArmMas::hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0_in,
-						  double period_in, float ang_limits_in[6][5],
+hiroArmMas::hiroArmMas(std::string name_in, BodyPtr body_in, unsigned int num_q0_in,double period_in, float ang_limits_in[6][5],
 						  vector3 ePh_in, matrix33 eRh_in, vector3 hPfs_in)
-						:hiroArm(name_in, body_in, num_q0_in,
-								 period_in, ang_limits_in,
-								 ePh_in, eRh_in, hPfs_in)
+						:hiroArm(name_in, body_in, num_q0_in,period_in, ang_limits_in,ePh_in, eRh_in, hPfs_in)
 {
 	std::cout << "hiroArmMas constructor" << std::endl;
 }
@@ -2402,9 +2573,7 @@ int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	rRh_ref = rRh;			// Base2EndEff rotation matrix
 	q_ref = q;				// At home joint angles
 
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "\nhiroArm::init - exited" << std::endl;
-#endif
+	if(DEBUG) std::cerr << "\nhiroArm::init - exited" << std::endl;
 
 	return ret;
 }
@@ -2463,12 +2632,12 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	// Concatenate with appropriate endings
 	strcat(TrajState1,	MOTION_FILE);							// Desired Trajectory
 	strcat(TrajState2,	"/PA10/PA10_pivotApproachState2.dat");	// Desired Trajectory
-	strcat(manipTest,		R_MANIP_TEST_FILE);						// What test axis do you want to try
+	strcat(manipTest,	R_MANIP_TEST_FILE);						// What test axis do you want to try
 	strcat(Angles,		R_ANGLES_FILE);							// Robot Joint Angles
 	strcat(CartPos,		R_CARTPOS_FILE);						// Cartesian Positions
-	strcat(State,			R_STATE_FILE);							// New States Time Occurrence
+	strcat(State,		R_STATE_FILE);							// New States Time Occurrence
 	strcat(Forces,		R_FORCES_FILE);							// Robot Forces/Moments
-	//strcat(Forces_gc,     R_FORCES_GC_FILE);                 		// Gravity Compensated Torques
+	//strcat(Forces_gc, R_FORCES_GC_FILE);                 		// Gravity Compensated Torques
 
 	// Initialize AssemblyStrategy Class:
 	// 1) Open files associated with the directories to read/write data
@@ -2487,29 +2656,23 @@ int hiroArmSla::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	rRh_ref = rRh;			// Base2EndEff rotation matrix
 	q_ref = q;				// At home joint angles
 
-#ifdef DEBUG_PLUGIN2
-	std::cerr << "\nhiroArm::init - exited" << std::endl;
-#endif
+	if(DEBUG) std::cerr << "\nhiroArm::init - exited" << std::endl;
 
 	return ret;
 }
 
 matrix33 hiroArmSla::calc_hRfs(dvector6 q_in)
 {
-
-#ifdef DEBUG_PLUGIN2
-	std::cout << "calc_hRfs in hiroArmSla" << std::endl;
-#endif
-
+	if(DEBUG)	std::cout << "calc_hRfs in hiroArmSla" << std::endl;
 	return hRfs;
 }
 
-/*//~ void hiroArmSla::calc_forces_at_hand(vector3 &rFh_out, vector3 &rMh_out)
-//~ {
-//~ // 手先での力・モーメントに変換
-//~ rFh_out = rFfs_gc;
-//~ rMh_out = rMfs_gc + cross((rRh*hPfs), rFfs_gc);
-//~ }
+/* void hiroArmSla::calc_forces_at_hand(vector3 &rFh_out, vector3 &rMh_out)
+ {
+ // 手先での力・モーメントに変換
+ rFh_out = rFfs_gc;
+ rMh_out = rMfs_gc + cross((rRh*hPfs), rFfs_gc);
+ }
  */
 
 /************************************************************************/
