@@ -31,7 +31,7 @@
 #define ERROR_TEST         		0 						// If want to test controller with fixed error
 
 // Debugging
-#define DEBUG 0 										// Print out screen info
+#define DEBUG 1 										// Print cerr statements
 /************************************************ CONSTRUCTOR ************************************************/
 ControlBasis::ControlBasis()
 {
@@ -90,7 +90,7 @@ ControlBasis::ControlBasis(double factor)
   for(int i=0;i<7;i++)
     {
       CurJointAngles(i) 	= (0);
-      JointAngleUpdate(i) = (0);
+      JointAngleUpdate(i) 	= (0);
     }
 
   // Other var's init
@@ -320,27 +320,22 @@ int ControlBasis::ComputeCompoundController(/*out*/  	dvector6& 			JointAngleUpd
 
 #ifdef DEBUG_PLUGIN3
       // Print data
-      std::cerr<< "\nComputeCompoundController. Dominant desired data is:\t" << DesData1(0) << "\t" << DesData1(1) << "\t" << DesData1(2);
-      std::cerr<< "\nComputeCompoundController. Subordinate desired data is:\t" << DesData2(0) << "\t" << DesData2(1) << "\t" << DesData2(2);
+      std::cerr<< "ComputeCompoundController. Dominant desired data is:\t" 		<< DesData1 << std::endl;
+      std::cerr<< "ComputeCompoundController. Subordinate desired data is:\t" 	<< DesData2 << std::endl;
 #endif
       
       // 1a. Compute the joint angle update for the subordinate primitive controller
       ComputePrimitiveController(AngleUpdate2, NumCtlrs, type2, DesData2, CurData2, CurJointAngles, Jacobian, 1, ErrorNorm2);
-#ifdef DEBUG_PLUGIN3
-      std::cerr << "\nSubordinate Controller AngleUpdate2:\t" << AngleUpdate2(0) << "\t" << AngleUpdate2(1) << "\t" << AngleUpdate2(2) << "\t" << AngleUpdate2(3) << "\t" << AngleUpdate2(4) << "\t" << AngleUpdate2(5);
-#endif
+      if(DEBUG) std::cerr << "Subordinate Controller AngleUpdate2: " << AngleUpdate2 << std::endl;
+
       // 1b. Compute the joint angle update for the dominant primitive controller
       ComputePrimitiveController(AngleUpdate1, NumCtlrs, type1, DesData1, CurData1, CurJointAngles, Jacobian, 2, ErrorNorm1);
-#ifdef DEBUG_PLUGIN3
-      std::cerr << "\nDominant Controller AngleUpdate1:\t" << AngleUpdate1(0) << "\t" << AngleUpdate1(1) << "\t" << AngleUpdate1(2) << "\t" << AngleUpdate1(3) << "\t" << AngleUpdate1(4) << "\t" << AngleUpdate1(5);
-#endif
+      if(DEBUG) std::cerr << "Dominant Controller AngleUpdate1:" << AngleUpdate1 << std::endl;
 
       // 2. Project the subordinate controller's update unto the left null space of the
       // dominant controller to produce an optimized joint angle update
       NullSpaceProjection(JointAngleUpdate,AngleUpdate1,AngleUpdate2);
-#ifdef DEBUG_PLUGIN3
-      std::cerr << "\nCompound Joint Angle Update:\t" << JointAngleUpdate(0) << "\t" << JointAngleUpdate(1) << "\t" << JointAngleUpdate(2) << "\t" << JointAngleUpdate(3) << "\t" << JointAngleUpdate(4) << "\t" << JointAngleUpdate(5);
-#endif
+      if(DEBUG) std::cerr << "Compound Joint Angle Update:\t" << JointAngleUpdate << std::endl;
 
       // 3. Add the joint angle update to the current angular joint position of the robot
       UpdateJointAngles(CurJointAngles, JointAngleUpdate);

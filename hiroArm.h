@@ -201,14 +201,25 @@ class hiroArm
   // Reset the original EndEff pos and rpy
   void set_OrgPosRot(vector3& pos, vector3& RPY);
 
-  // Files
+  // Right Arm Files
   char TrajState1[STR_LEN];
   char TrajState2[STR_LEN];
   char Angles[STR_LEN];
   char CartPos[STR_LEN];
   char Forces[STR_LEN];
+  char worldForces[STR_LEN];
   char State[STR_LEN];
   char manipTest[STR_LEN];
+
+  // Left Arm Files
+  char TrajState1L[STR_LEN];
+  char TrajState2L[STR_LEN];
+  char AnglesL[STR_LEN];
+  char CartPosL[STR_LEN];
+  char ForcesL[STR_LEN];
+  char worldForcesL[STR_LEN];
+  char StateL[STR_LEN];
+  char manipTestL[STR_LEN];
 
 #ifdef SIMULATION
   double raw_forces[6];

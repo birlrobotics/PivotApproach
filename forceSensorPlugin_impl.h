@@ -136,8 +136,17 @@ class forceSensorPlugin_impl : public plugin,
   // Streams
   FILE *fv_L, *fv_R; 				// Left and Right arm velocities
   FILE *fp, *fv;
-  ofstream ostr_gcWrenchR;          // Right arm Gravity Compensated Torques File
-  ofstream ostr_gcWrenchL;         	// Left arm Gravity Compensated Torques File
+
+  /****** Gravity Compensation Streams ******/
+  // Local Coordinates
+  ofstream ostr_gcWrenchR;          // Right arm Gravity Compensated Torques File for local coordinates
+  ofstream ostr_gcWrenchL;         	// Left arm Gravity Compensated Torques File for local coordinates
+
+  // World Coordinates
+  ofstream ostr_gc_worldWrenchR; 	// Right arm Gravity Compensated Torques File for world coordinates
+  ofstream ostr_gc_worldWrenchL; 	// Left arm Gravity Compensated Torques File for world coordinates
+
+  // Parameters
   ofstream ostr_gravCompParam;		// Contains Parameters used to compute GravityCompensation
 
   // Flags
@@ -147,17 +156,15 @@ class forceSensorPlugin_impl : public plugin,
 
   // Pivot Approach
   double cur_time;
-  vector3  CurXYZ, 			L_CurXYZ;
-  matrix33 CurRot, 			L_CurRot;
-  dvector6 CurrentForces, 	L_CurrentForces;
-  dvector6 CurrentAngles, 	L_CurrentAngles;
-  dvector6 JointAngleUpdate,L_JointAngleUpdate;
+  vector3  CurXYZ, 				L_CurXYZ;
+  matrix33 CurRot, 				L_CurRot;
+  dvector6 CurrentForces, 		L_CurrentForces;
+  dvector6 worldCurrentForces, 	L_worldCurrentForces;
+  dvector6 CurrentAngles, 		L_CurrentAngles;
+  dvector6 JointAngleUpdate,	L_JointAngleUpdate;
 
   // Flags
   bool initFlag;
-
-  // Log
-  ofstream ostr_rstate, ostr_astate, ostr_force, ostr_worldforce;
 
   /********************************************************** Methods ************************************************************/
   void 	 init(void);

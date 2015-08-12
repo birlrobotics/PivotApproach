@@ -52,7 +52,7 @@ extern "C" {
 #define RIGHT 			1 	// Used to indicate index for f_control
 
 #define LEFT_ARM  		1 	// Flag to enable left Arm computations.
-#define GRAVITY_COMP 	1 	// Flag to activate gravity compensation through a control_mode. Automatically set to call the PivotApproach after that.
+#define GRAVITY_COMP 	0 	// Flag to activate gravity compensation through a control_mode. Automatically set to call the PivotApproach after that.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 // HARDWARE BIT-WISE SWITCH DEFINITIONS
@@ -65,17 +65,21 @@ extern "C" {
 #define DTES  0x08000000    // DT enable switch (for data acquisition)
 
 // Gravity Compensation Parameter Files
-#define GRAV_COMP_STAT_DATA_FILE 	"./data/GravComp/gravCompStatData.dat"
-#define GRAV_COMP_PARAM_FILE     	"./data/GravComp/gravCompParams.dat"				// Also defined in hiroArm.cpp
-#define GRAV_COMP_RIGHT_WRENCH		"./data/Results/R_GC_Torques.dat"
-#define GRAV_COMP_LEFT_WRENCH		"./data/Results/L_GC_Torques.dat"
+#define GRAV_COMP_STAT_DATA_FILE 		"./data/GravComp/gravCompStatData.dat"
+#define GRAV_COMP_PARAM_FILE     		"./data/GravComp/gravCompParams.dat"				// Also defined in hiroArm.cpp
+// Local Coordinates
+#define GRAV_COMP_RIGHT_WRENCH			"./data/Results/R_GC_Torques.dat"
+#define GRAV_COMP_LEFT_WRENCH			"./data/Results/L_GC_Torques.dat"
+// World Coordinates
+#define GRAV_COMP_RIGHT_WORLD_WRENCH	"./data/Results/R_GC_worldTorques.dat"
+#define GRAV_COMP_LEFT_WORLD_WRENCH		"./data/Results/L_GC_worldTorques.dat"
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Debugging
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define DB_TIME 			0			// Used to print timing duration of functions
 #define FORCE_TEST 			0 			// Used to test if force drivers are working in Old HIRO
 #define SIMULATION_TEST 	1	 		// Used to test certain pieces of code within the control method for testing purposes
-#define DEBUG 				0 			// Used to print temporary cerr statements
+#define DEBUG 				1 			// Used to print temporary cerr statements
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // GLOBALS
@@ -110,7 +114,6 @@ forceSensorPlugin_impl::forceSensorPlugin_impl(istringstream &strm)
 		std::cerr << "forceSensorPlugin_impl entered constructor" << std::endl;
 
 	DT 				= 0.005;   	// [sec]
-	assigned_time 	= 0.002; 	// assigned_time = 2[ms]
 
 	// Test Flags used within the control method
 	initControl = 0;
@@ -132,21 +135,25 @@ forceSensorPlugin_impl::forceSensorPlugin_impl(istringstream &strm)
 	for(int i=0;i<6;i++)
 	{
 		CurrentForces(i)		= 0.0;		// Right Arm
+		worldCurrentForces(i)	= 0.0;
 		CurrentAngles(i)		= 0.0;
 		JointAngleUpdate(i)		= 0.0;
-		L_JointAngleUpdate(i) 	= 0.0;		// Left Arm
+		L_CurrentForces(i)		= 0.0;		// Left Arm
+		L_worldCurrentForces(i) = 0.0;
+		L_CurrentAngles(i) 		= 0.0;
+		L_JointAngleUpdate(i) 	= 0.0;
 	}
 	for(int i=0;i<3;i++)
 		for(int j=0;j<3;j++){				// 3x3 Rotation Matrix
 			CurRot(i,j) = 0.0;				// Right Arm
 			L_CurRot(i,j) = 0.0;			// Left
 		}
-	if(DEBUG)		std::cerr << "forceSensorPlugin_impl(): finished initializing variables" << std::endl;
+	if(DEBUG) std::cerr << "forceSensorPlugin_impl(): finished initializing variables" << std::endl;
 
 	// Flags
 	initFlag = false;
 
-	if(DEBUG)		std::cerr << "forceSensorPlugin_impl: leaving constructor" << std::endl;
+	if(DEBUG) std::cerr << "forceSensorPlugin_impl: leaving constructor" << std::endl;
 }
 
 forceSensorPlugin_impl::~forceSensorPlugin_impl()
@@ -160,21 +167,11 @@ forceSensorPlugin_impl::~forceSensorPlugin_impl()
 	if(ostr_gcWrenchL.is_open()) ostr_gcWrenchL.close();
 	ostr_gcWrenchL.clear();
 
-#ifdef WRITELOG
-	if(ostr_astate.is_open()) ostr_astate.close();
-	ostr_astate.clear();
+	if(ostr_gc_worldWrenchR.is_open()) ostr_gc_worldWrenchR.close();
+	ostr_gc_worldWrenchR.clear();
 
-	if(ostr_rstate.is_open()) ostr_rstate.close();
-	ostr_rstate.clear();
-
-	// Wrist Wrench
-	if(ostr_force.is_open()) ostr_force.close();
-	ostr_force.clear();
-
-	// World Wrench
-	if(ostr_worldforce.is_open()) ostr_worldforce.close();
-	ostr_force.clear();
-#endif
+	if(ostr_gc_worldWrenchL.is_open()) ostr_gc_worldWrenchL.close();
+	ostr_gc_worldWrenchL.clear();
 }
 
 /***************************** Initialize Plugin*********************************/
@@ -227,7 +224,7 @@ void forceSensorPlugin_impl::init(void)
 		M_err_max[i] = -100.0, -100.0, -100.0;
 	}
 
-	// Gravity Compensation
+	// Gravity Compensation Result Flag
 	gravCompRes={0};
 
 	/*------------------------------------------------------------------- Setup Force Sensor -------------------------------------------------------*/
@@ -362,21 +359,6 @@ void forceSensorPlugin_impl::init(void)
 	controlmode_nr = GravityCompensation;
 	controlmode_r  = GravityCompensation;
 
-#ifdef WRITELOG
-	ostr_astate.open("./data/PivotApproach/HIRO/astate.dat");
-	if(!ostr_astate.is_open())
-		std::cerr << "astate.dat was not opened." << std::endl;
-	ostr_rstate.open("./data/PivotApproach/HIRO/rstate.dat");
-	if(!ostr_rstate.is_open())
-		std::cerr << "rstate.dat was not opened." << std::endl;
-	ostr_force.open("./data/PivotApproach/HIRO/localforce.dat");
-	if(!ostr_force.is_open())
-		std::cerr << "localforce.dat was not opened." << std::endl;
-	ostr_worldforce.open("./data/PivotApproach/HIRO/worldforce.dat");
-	if(!ostr_worldforce.is_open())
-		std::cerr << "worldforce.dat was not opened." << std::endl;
-#endif
-
 	if(DEBUG) std::cerr << "out init()" << std::endl;
 
 }
@@ -456,7 +438,8 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 	if(DEBUG)	std::cerr << "forceSensorPlugin::setup() - Arm Initialization" << std::endl;
 
 	/*----------------------- LEFT ARM ----------------------*/
-	if(LEFT_ARM) {
+	if(LEFT_ARM)
+	{
 		lArm->init(body->link(LARM_JOINT5)->p, 					// Initialize Left Arm HIRO class. Provide end-effector position, orientation, and current angles.
 				   body->link(LARM_JOINT5)->attitude(),
 				   CurAngles);
@@ -472,9 +455,9 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 
 		if(DEBUG)
 		{
-			cerr << "forceSensorPlugin::setup(). LEFT EndEffector Position: " 		<< L_CurXYZ << std::endl;
-			cerr << "forceSensorPlugin::setup(). LEFT EndEffector Pose: " 			<< rpy2 << std::endl;
-			cerr << "forceSensorPlugin::setup(). LEFT Current Angles (radians):\t" 	<< L_CurrentAngles << std::endl;
+			std::cerr << "forceSensorPlugin::setup(). LEFT EndEffector Position: " 			<< L_CurXYZ 		<< std::endl;
+			std::cerr << "forceSensorPlugin::setup(). LEFT EndEffector Pose: " 				<< rpy2 			<< std::endl;
+			std::cerr << "forceSensorPlugin::setup(). LEFT Current Angles (radians):\t" 	<< L_CurrentAngles 	<< std::endl;
 		}
 	}
 
@@ -489,14 +472,14 @@ bool forceSensorPlugin_impl::setup(RobotState *rs, RobotState *mc)
 		// Number of joints
 		int n=0;
 		n = rArm->m_path->numJoints();
-		cerr << "forceSensorPlugin::setup(). RIGHT Num Joints: " << n << std::endl;
+		std::cerr << "forceSensorPlugin::setup(). RIGHT Num Joints: " << n << std::endl;
 
 		// Position
 		vector3 rpy(0);
 		rArm->set_OrgPosRot(CurXYZ,rpy);
-		cerr << "forceSensorPlugin::setup(). RIGHT EndEffector Position: " 		<< CurXYZ << std::endl;
-		cerr << "forceSensorPlugin::setup(). RIGHT EndEffector Orientation: " 	<< rpy << std::endl;
-		cerr << "forceSensorPlugin::setup(). RIGHT Current Angles (radians):\t" << CurrentAngles << std::endl;
+		std::cerr << "forceSensorPlugin::setup(). RIGHT EndEffector Position: " 	 << CurXYZ 			<< std::endl;
+		std::cerr << "forceSensorPlugin::setup(). RIGHT EndEffector Orientation: " 	 << rpy 			<< std::endl;
+		std::cerr << "forceSensorPlugin::setup(). RIGHT Current Angles (radians):\t" << CurrentAngles 	<< std::endl;
 	}
 
 	// Check result
@@ -579,6 +562,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 			// IK Computation
 			rArm->m_path->calcInverseKinematics(CurXYZ,CurRot);
+			// Save orientation, not done correctly above
+			CurRot=rArm->m_path->joint(5)->attitude();
 			for (int i=0;i<6;i++) CurrentAngles(i) = rArm->m_path->joint(i)->q;
 
 			if(LEFT_ARM)
@@ -588,6 +573,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				// IK Computation
 				lArm->m_path->calcInverseKinematics(L_CurXYZ,L_CurRot);
+				// Save orientation, not done correctly above
+				L_CurRot=lArm->m_path->joint(5)->attitude();
 				for(int i=0;i<6;i++) L_CurrentAngles(i) = lArm->m_path->joint(i)->q;
 			}
 
@@ -651,14 +638,23 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				if(DEBUG)	std::cerr << "forceSensorPlugin - The 15 current angles in radians are: " << rs->angle << std::endl;
 
 				/*---------------------- Open Gravity Compensation Files --------------------------*/
+				// Local Coordinates
 				// Open the right arm gravity compensated torques file: forces_gc
 				ostr_gcWrenchR.open(GRAV_COMP_RIGHT_WRENCH);
-				if (!ostr_gcWrenchR.is_open())	std::cerr << ostr_gcWrenchR << " was not opened." << std::endl;
+				if (!ostr_gcWrenchR.is_open())	std::cerr << "File: " << GRAV_COMP_RIGHT_WRENCH << " was not opened." << std::endl;
 
 				// Open the left arm gravity compensated torques file: forces_gc
 				ostr_gcWrenchL.open(GRAV_COMP_LEFT_WRENCH);
-				if(!ostr_gcWrenchL.is_open())	std::cerr << ostr_gcWrenchL << " was not opened." << std::endl;
+				if(!ostr_gcWrenchL.is_open())	std::cerr << "File: " << GRAV_COMP_LEFT_WRENCH << " was not opened." << std::endl;
 
+				// World Coordinates
+				// Open the right arm gravity compensated torques file: forces_gc
+				ostr_gc_worldWrenchR.open(GRAV_COMP_RIGHT_WORLD_WRENCH);
+				if (!ostr_gc_worldWrenchR.is_open())	std::cerr << "File: " << GRAV_COMP_RIGHT_WORLD_WRENCH << " was not opened." << std::endl;
+
+				// Open the left arm gravity compensated torques file: forces_gc
+				ostr_gc_worldWrenchL.open(GRAV_COMP_LEFT_WORLD_WRENCH);
+				if(!ostr_gc_worldWrenchL.is_open())	std::cerr << "File: " << GRAV_COMP_LEFT_WORLD_WRENCH << " was not opened." << std::endl;
 				/*---------------------- Start Timing Loop --------------------------*/
 				if(DB_TIME)
 				{
@@ -726,12 +722,18 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				{
 					// Use either arm object to call readGravCompParamData and read data for both arms.
 					long position=0;
-					ret=lArm->readGravCompParamData("left", GRAV_COMP_PARAM_FILE,position);
-					if(ret)
+					f_gravity_comp[0]=lArm->readGravCompParamData("left", GRAV_COMP_PARAM_FILE,position);
+					if(f_gravity_comp[0])
 					{
-						ret=rArm->readGravCompParamData("right", GRAV_COMP_PARAM_FILE,position);
-						if(ret)
+						// Set flags to true
+						gravCompRes[0]=1;
+						lArm->f_gc=true;
+						f_gravity_comp[1]=rArm->readGravCompParamData("right", GRAV_COMP_PARAM_FILE,position);
+						if(f_gravity_comp[1])
 						{
+							// Set flags to true
+							gravCompRes[1]=1;
+							rArm->f_gc=true;
 							std::cerr << "Gravity Compensation already calibrated." << std::endl;
 
 							// Call PivotApproach
@@ -787,7 +789,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 					vector3 rF_gc[2], rM_gc[2];
 
-					// Get forces and moments
+					// Get hand forces and moments
 					lArm->get_forces(rF_gc[0], rM_gc[0]);
 					rArm->get_forces(rF_gc[1], rM_gc[1]);
 
@@ -919,80 +921,8 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				// Select Right Arm
 				f_control[RIGHT] = true;
 
-				//------------------------------------------------ Update Wrench Data -------------------------------------------------------------//
-#ifdef SIMULATION
-				if(LEFT_ARM)
-					for(int i=0;i<6;i++) L_CurrentForces(i) = lArm->raw_forces[i];
-				    for(int i=0;i<6;i++)   CurrentForces(i) = rArm->raw_forces[i];
-
-#else
-				rArm->update_currforcedata();
-				/*for(int i=0;i<3;i++)
-				{
-		  	  	 	CurrentForces(i)   = rArm->fsF_raw[i];
-		  	  	  	CurrentForces(i+3) = rArm->fsM_raw[i];
-		  	  	}*/
-
-				vector3 tmp_force;
-				vector3 tmp_moment;
-				vector3 rotated_force;
-				vector3 rotated_moment;
-				matrix33 mod_rot;
-
-				mod_rot = get_rot33(Y,-(M_PI/2.0)) * get_rot33(Z,-(M_PI/4));
-				for(int i=0;i<3;i++)
-				{
-					tmp_force(i)   = rArm->fsF_raw[i];
-					tmp_moment(i) = rArm->fsM_raw[i];
-				}
-
-				rotated_force = mod_rot * tmp_force;
-				rotated_moment = mod_rot * tmp_moment;
-
-				CurrentForces(0) = -rotated_force(0);
-				CurrentForces(1) = rotated_force(1);
-				CurrentForces(2) = rotated_force(2);
-				CurrentForces(3) = -rotated_moment(0);
-				CurrentForces(4) = rotated_moment(1);
-				CurrentForces(5) = rotated_moment(2);
-#endif
-
-				// Update latest force: either raw or gravity compensated.
-				if(LEFT_ARM)
-					lArm->update_currforcedata();
-					rArm->update_currforcedata();
-
-				// Read Gravity Compensated Forces into local variables.
-				vector3 rF_gc[2], rM_gc[2];
-				if(LEFT_ARM)
-					lArm->get_forces(rF_gc[0], rM_gc[0]);
-					rArm->get_forces(rF_gc[1], rM_gc[1]);
-
-				// Copy force data over to CurrentForces for Left and Right Arms
-				for( int i = 0 ; i < 3 ; i++ ){
-					if(LEFT_ARM) {
-						L_CurrentForces(i)   = rF_gc[0][i];
-						L_CurrentForces(3+i) = rM_gc[0][i];
-					}
-					CurrentForces(i)   = rF_gc[1][i];
-					CurrentForces(3+i) = rM_gc[1][i];
-				}
-
-				// Write each side's data to different files.
-				ostr_gcWrenchR << cur_time << "\t";
-				for(int i=0; i<3; i++) ostr_gcWrenchR << rF_gc[1][i] << " \t";
-				for(int i=0; i<3; i++) ostr_gcWrenchR << rM_gc[1][i] << " \t";
-				ostr_gcWrenchR << std::endl;
-
-				ostr_gcWrenchL << cur_time << "\t";
-				for(int i=0; i<3; i++) ostr_gcWrenchL<< CurrentForces(i)   << " \t";
-				for(int i=0; i<3; i++) ostr_gcWrenchL<< CurrentForces(i+3) << " \t";
-				ostr_gcWrenchL << std::endl;
-
-				if(DEBUG)
-					std::cerr << "Current Wrench is:\t" << CurrentForces << std::endl;
-
-				// Get current hand (endeffector) position and rotation
+				//------------------------------------------------ Update Pose Data -------------------------------------------------------------//
+				// Get current hand (endeffector) position and rotation transformations wrt the base
 				if(LEFT_ARM)
 					lArm->get_curr_handpos(L_CurXYZ,L_CurRot);
 					rArm->get_curr_handpos(CurXYZ,CurRot);
@@ -1012,11 +942,128 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 				if(DEBUG) std::cerr << "Current Joint Angles are:\t" << CurrentAngles << std::endl;
 
+				//------------------------------------------------ Update Wrench Data -------------------------------------------------------------//
+				#ifdef SIMULATION
+				// Update latest force: either raw or gravity compensated.
+				if(LEFT_ARM)
+					lArm->update_currforcedata();
+					rArm->update_currforcedata();
+
+				// Read Hand Gravity Compensated Forces into local variables if used for left and right arms.
+				vector3 rF_gc[2], rM_gc[2];
+				if(LEFT_ARM && gravCompRes[0])	lArm->get_forces(rF_gc[0], rM_gc[0]);
+				if(gravCompRes[1])				rArm->get_forces(rF_gc[1], rM_gc[1]);
+
+				// Copy force data over to CurrentForces for Left and Right Arms
+				for( int i = 0 ; i < 3 ; i++ ){
+					if(LEFT_ARM) {
+						if(f_gravity_comp[0]) {
+							L_CurrentForces(i)   = rF_gc[0][i];
+							L_CurrentForces(3+i) = rM_gc[0][i];
+						}
+						else
+							for(int i=0;i<6;i++) L_CurrentForces(i) = lArm->raw_forces[i];
+					}
+					if(f_gravity_comp[1]) {
+						CurrentForces(i)   = rF_gc[1][i];
+						CurrentForces(3+i) = rM_gc[1][i];
+
+					}
+					else
+						for(int i=0;i<6;i++)   CurrentForces(i) = rArm->raw_forces[i];
+				}
+
+				// Convert Local Gravity Compensated Force into World Coordinates
+				vector3 temp1,temp2;
+
+				if(LEFT_ARM && f_gravity_comp[0])
+				{
+					temp1 = L_CurRot*rF_gc[0];
+					temp2 = L_CurRot*rF_gc[0];
+
+					// Copy to 6 dimensional vector
+					for(int i=0;i<3;i++)
+					{
+						L_worldCurrentForces(i)   = temp1(i);
+						L_worldCurrentForces(i+3) = temp2(i);
+					}
+				}
+
+				if(f_gravity_comp[1])
+				{
+					temp1 = CurRot*rF_gc[1];
+					temp2 = CurRot*rF_gc[1];
+
+					// Copy to 6 dimensional vector
+					for(int i=0;i<3;i++)
+					{
+						worldCurrentForces(i)   = temp1(i);
+						worldCurrentForces(i+3) = temp2(i);
+					}
+				}
+
+				/****************************************** WRITE DATA TO FILE ******************************************/
+				// Write gravity compensated wrenches in LOCAL coordinates for releavnt arm.
+				ostr_gcWrenchR << cur_time << "\t";
+				for(int i=0; i<6; i++) ostr_gcWrenchR << CurrentForces(i) << " \t";
+				ostr_gcWrenchR << std::endl;
+
+				if(LEFT_ARM) {
+				ostr_gcWrenchL << cur_time << "\t";
+				for(int i=0; i<6; i++) ostr_gcWrenchL << L_CurrentForces(i) << " \t";
+				ostr_gcWrenchL << std::endl;
+				}
+
+				// Write gravity compensated wrenches in WORLD coordinates for releavnt arm.
+				ostr_gc_worldWrenchR << cur_time << "\t";
+				for(int i=0; i<6; i++) ostr_gc_worldWrenchR << worldCurrentForces(i) << "\t";
+				ostr_gc_worldWrenchR << std::endl;
+
+				if(LEFT_ARM) {
+				ostr_gc_worldWrenchL << cur_time << "\t";
+				for(int i=0; i<3; i++) ostr_gc_worldWrenchL << L_worldCurrentForces(i)   << "\t";
+				ostr_gc_worldWrenchL << std::endl;
+				}
+
+				if(DEBUG && LEFT_ARM) std::cerr << "Left Current Wrench before calling SM is:\t" << L_CurrentForces << std::endl;
+				else std::cerr 					<< "Right Current Wrench before calling SM is:\t" << CurrentForces   << std::endl;
+
+#else
+				// For real robot need to correct force orientation.
+				rArm->update_currforcedata();
+
+				vector3 tmp_force;
+				vector3 tmp_moment;
+				vector3 rotated_force;
+				vector3 rotated_moment;
+				matrix33 mod_rot;
+
+				mod_rot = get_rot33(Y,-(M_PI/2.0)) * get_rot33(Z,-(M_PI/4));
+				for(int i=0;i<3;i++)
+				{
+					tmp_force(i)   = rArm->fsF_raw[i];
+					tmp_moment(i) = rArm->fsM_raw[i];
+				}
+
+				// Rotate and change direction.
+				rotated_force = mod_rot * tmp_force;
+				rotated_moment = mod_rot * tmp_moment;
+
+				CurrentForces(0) = -rotated_force(0);
+				CurrentForces(1) = rotated_force(1);
+				CurrentForces(2) = rotated_force(2);
+				CurrentForces(3) = -rotated_moment(0);
+				CurrentForces(4) = rotated_moment(1);
+				CurrentForces(5) = rotated_moment(2);
+#endif
+
 				// Controller time counter
 				cur_time=DT*double(rArm->get_Iteration());		// sampling time * iteration
 				if(LEFT_ARM)
 					lArm->set_Iteration();						// Increase iteration
 					rArm->set_Iteration();
+
+				//------------------------------------------------ Call PivotApproach -------------------------------------------------------------//
 
 				// Call PivotApproach and retrieve a Joint angle update and CurrentAngles
 				if(DEBUG)	std::cerr << "\nforceSensorPlugin::control - Calling hiroArm::PivotApproach()" << std::endl;
@@ -1025,24 +1072,24 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 					ret=lArm->PivotApproach(cur_time,L_CurXYZ,L_CurRot,L_CurrentForces,L_JointAngleUpdate,L_CurrentAngles);
 					if(ret==-1)
 					{
-						std::cerr << "InverseKinematics failed for Left Arm. \nCurrent time:\t" 			<< cur_time <<
-								".\nCurrent iteration:\t" 	<< rArm->get_Iteration() 	<<
-								".\nCurrent Position:\t" 	<< CurXYZ 					<<
-								".\nCurrent Pose:\t" 		<< CurRot 					<<
-								".\nCurrent Angles:\t" 		<< CurrentAngles 			<<
-								".\nCurrent Forces:\t" 		<< CurrentForces 			<< std::endl;
+						std::cerr << "ControlComposition failed for Left Arm. \nCurrent time:\t" << cur_time <<
+								".\nCurrent iteration: " 		<< rArm->get_Iteration() 	<<
+								".\nCurrent Position: " 		<< L_CurXYZ 				<<
+								".\nCurrent Orientation Mat: "	<< L_CurRot 				<<
+								".\nCurrent Angles: " 			<< L_CurrentAngles 			<<
+								".\nCurrent Forces: " 			<< L_CurrentForces 			<< std::endl;
 					}
 				}
 
 				ret=rArm->PivotApproach(cur_time,CurXYZ,  CurRot,  CurrentForces,  JointAngleUpdate,  CurrentAngles);
 				if(ret==-1)
 				{
-					std::cerr << "InverseKinematics failed for Right Arm.\nCurrent time:\t" 			<< cur_time <<
-							".\nCurrent iteration:\t" 	<< rArm->get_Iteration() 	<<
-							".\nCurrent Position:\t" 	<< CurXYZ 					<<
-							".\nCurrent Pose:\t" 		<< CurRot 					<<
-							".\nCurrent Angles:\t" 		<< CurrentAngles 			<<
-							".\nCurrent Forces:\t" 		<< CurrentForces 			<< std::endl;
+					std::cerr << "ControlComposition failed for Right Arm.\nCurrent time:\t" << cur_time <<
+							".\nCurrent iteration:" 		<< rArm->get_Iteration() 	<<
+							".\nCurrent Position:" 			<< CurXYZ 					<<
+							".\nCurrent Orientation Mat: " 	<< CurRot 					<<
+							".\nCurrent Angles: " 			<< CurrentAngles 			<<
+							".\nCurrent Forces: " 			<< CurrentForces 			<< std::endl;
 				}
 				break;
 			}
@@ -1090,9 +1137,9 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 
 			if(DEBUG)
 			{
-				std::cerr << "\nforceSensorPlugin - The current angles in degrees (including chest and head) are:\t" << mc->angle[0]*rad2degC << "\t" << mc->angle[1]*rad2degC << "\t" << mc->angle[2]*rad2degC << "\t"
-						<< mc->angle[3]*rad2degC << "\t" << mc->angle[4]*rad2degC << "\t" << mc->angle[5]*rad2degC << "\t"
-						<< mc->angle[6]*rad2degC << "\t" << mc->angle[7]*rad2degC << "\t" << mc->angle[8]*rad2degC << std::endl;
+				std::cerr << "\nforceSensorPlugin - The current angles in degrees (including chest and head) are: " << mc->angle[0]*rad2degC << " " << mc->angle[1]*rad2degC << " " << mc->angle[2]*rad2degC << " "
+						<< mc->angle[3]*rad2degC << " " << mc->angle[4]*rad2degC << " " << mc->angle[5]*rad2degC << " "
+						<< mc->angle[6]*rad2degC << " " << mc->angle[7]*rad2degC << " " << mc->angle[8]*rad2degC << std::endl;
 			}
 			controlmode_pre = controlmode_r;
 
@@ -1126,7 +1173,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			cur_time=DT*double(rArm->get_Iteration());      						// sampling time * iteration
 			rArm->set_Iteration();                          						// Increase iteration           // Controller time counter
 
-			if(DEBUG) cerr << "\nTime + Forces: " << cur_time << "\t" << CurrentForces << std::endl; 				// Print value to the error console
+			if(DEBUG) cerr << "Time and Forces: " << cur_time << "\t" << CurrentForces << std::endl; 				// Print value to the error console
 		}
 
 	} // END FORCE TEST
@@ -1134,47 +1181,6 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 	#ifndef SIMULATION
 		mc->angle[8] += 0.531117;
 	#endif
-
-	#ifdef WRITELOG
-	// Desired Robot Angles for the Right Arm
-	ostr_astate << cur_time;
-	for(int i=3;i<9;i++)
-		ostr_astate << " " << rs->angle[i];
-	ostr_astate << std::endl;
-	ostr_rstate << cur_time;
-
-	// Actual Robot Angles for the Right Arm
-	for(int i=3;i<9;i++)
-		ostr_rstate << " " << mc->angle[i];
-	ostr_rstate << std::endl;
-	ostr_force << cur_time;
-
-	// Current Forces in Local Coordinates
-	for(int i=0;i<6;i++)
-		ostr_force << " " << CurrentForces(i);
-	ostr_force << std::endl;
-
-	// Current Forces in World Coordinates
-	vector3 world_force;
-	vector3 world_moment;
-	vector3 tmp_force;
-	vector3 tmp_moment;
-
-	for(int i=0;i<3;i++)
-	{
-		tmp_force(i) = CurrentForces(i);
-		tmp_moment(i) = CurrentForces(i+3);
-	}
-
-	world_force = CurRot * tmp_force;
-	world_moment = CurRot * tmp_moment;
-	ostr_worldforce << cur_time;
-	for(int i=0;i<3;i++)
-		ostr_worldforce << " " << world_force(i);
-	for(int i=0;i<3;i++)
-		ostr_worldforce << " " << world_moment(i);
-	ostr_worldforce << std::endl;
-#endif
 }
 
 /************************* CleanUp *********************************/

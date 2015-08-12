@@ -79,10 +79,11 @@ typedef tvmet::Vector<double, 6> vector6;
 // CONTACT Transitional Parameters
 #define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 #define HSA_Rot2Ins_My				0.8			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
-//  --- Diro -------------------
-#define TwoArm_SA_App2Rot_Fx				0.95//0.45//5.6//9.0		// TwoArm_SA: Transition condition between Approach and Rotation stages.
-#define TwoArm_SA_Rot2Ins_My				-0.0332226			// TwoArm_SA: Transition condition between Rotation and Insertion stages.
-#define TwoArm_SA_Ins2SubIns_My				-0.167044
+
+// Dual Arm Transitional Parameters
+#define TwoArm_SA_App2Rot_Fx		 0.95 		//0.45//5.6//9. // TwoArm_SA: Transition condition between Approach and Rotation stages.
+#define TwoArm_SA_Rot2Ins_My		-0.0332226	// TwoArm_SA: Transition condition between Rotation and Insertion stages.
+#define TwoArm_SA_Ins2SubIns_My		-0.167044
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables
 #define PI 		      				3.1416
@@ -117,19 +118,20 @@ class AssemblyStrategy {
     MomentCtrl,
   };
 
-  // Control Strategy: What kind of approach will you adopt to complete the snap assembly
+  // Control Strategy: What kind of approach will you adopt to complete the snap assembly. These enumerations should
+  // math the typedefs found in hiroArm.cpp around L96
   enum CtrlStrategy
   {
-    ManipulationTest,
+    ManipulationTest = 1,
     StraightLineApproach,
     PivotApproach,
     SideApproach,
     FailureCharacerization,
-    // ==== Diro ======
-    TwoArm_HSA,
-    Left_Arm_Hold,
-    //Gray
-    L_TwoArm_HSA
+    // ==== Dual Arm Strategies for Hiro Side Approach======
+    Left_Arm_Hold,		// These 4 strategies follow a push-hold or push-push coordination scheme.
+    Left_Arm_Push,
+    Right_Arm_Hold,
+    Right_Arm_Push
   };
 
   enum TestAxis
@@ -312,10 +314,16 @@ class AssemblyStrategy {
   // Failure Case Characterization
   dvector6 divPoint;											// This vector will hold x,y, and roll, yall values that will be added to the way-points in order to control which directions we want to modify to test failure case scenarios
 
-  // Files
-  ifstream ifstr_pivApproachState1;																			// Input Streams
-  ofstream ostr_TrajState2, ostr_cartPos, ostr_angles, ostr_state, ostr_Forces, ostr_des, ostr_cur; 		// Output Streams
-  char strTrajState1[STR_LEN], strTrajState2[STR_LEN], strCartPos[STR_LEN], strAngles[STR_LEN], strState[STR_LEN], strForces[STR_LEN];
+  /**************************************************************************** Files **********************************************************************************/
+  ifstream ifstr_pivApproachState1,ifstr_pivApproachState1L;																				// Input Streams
+
+  // Right Arm
+  ofstream ostr_TrajState2, ostr_cartPos, ostr_angles, ostr_state, ostr_Forces, ostr_Forces_world, ostr_des, ostr_cur; 						// Output Streams
+  char strTrajState1[STR_LEN], strTrajState2[STR_LEN], strCartPos[STR_LEN], strAngles[STR_LEN], strState[STR_LEN], strForces[STR_LEN], strForcesWorld[STR_LEN];
+
+  // Left Arm
+  ofstream ostr_TrajState2L, ostr_cartPosL, ostr_anglesL, ostr_stateL, ostr_ForcesL, ostr_Forces_worldL, ostr_desL, ostr_curL; 				// Output Streams
+  char strTrajState1L[STR_LEN], strTrajState2L[STR_LEN], strCartPosL[STR_LEN], strAnglesL[STR_LEN], strStateL[STR_LEN], strForcesL[STR_LEN], strForcesWorldL[STR_LEN];;
 
   // Imported values
   double 		cur_time;												// Save current time
@@ -348,7 +356,7 @@ class AssemblyStrategy {
 					dvector6		currForces,
 					double 			cur_time);																			// Switches the states of the state machine according to approach.
 
-  void NextStateActions(double cur_time, int insertionStateSubFlag);												// Fixed number of operations to be done between switching of states
+  void NextStateActions(double cur_time, int insertionStateSubFlag);													// Fixed number of operations to be done between switching of states
 
   // Call any combination of legal control compositions (upto three for now), and pass desired data.
   int ControlCompositions(JointPathPtr 	m_path,
@@ -390,7 +398,7 @@ class AssemblyStrategy {
 					   dmatrix 			PseudoJacobian);
 
   // Other
-  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN],
+  int  Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char Angles[STR_LEN], char Position[STR_LEN], char State[STR_LEN], char Forces[STR_LEN], char worldForcesDir[STR_LEN],
 		  	  	  	vector3 pos, matrix33 rot, double CurAngles[15],
 		            int strategyType, int controlMethodType);
 
@@ -399,9 +407,9 @@ class AssemblyStrategy {
   void FreeResources(ctrlComp type);
 
   // Files
-  void OpenFiles();
+  void OpenFiles(int strategyType);
   void CloseFiles();
-  int  WriteFiles(double cur_time, dvector6 CurrAngles, dvector6 JointAngleUpdate, vector3 CurrPos, vector3 CurrRPY, dvector6 CurrForces);
+  int  WriteFiles(int whichSide, double& cur_time, dvector6& CurrAngles, dvector6& JointAngleUpdate, vector3& CurrPos, vector3& CurrRPY, dvector6& CurrForces, dvector6& worldCurrForces);
   int  ProcessTrajFile(char path[STR_LEN], int State, vector3 pos, vector3 rpy, double cur_time);
   bool checkArmLimit(JointPathPtr arm_path);
   bool IK_arm(JointPathPtr arm_path, Link *base, Link *waist, const vector3& p, const matrix33& R);
