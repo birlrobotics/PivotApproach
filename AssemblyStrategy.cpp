@@ -1000,7 +1000,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Y: Up			(UP_AXIS)
 			// +Z: Forward		(FORWARD_AXIS)
 
-			// Force Controller Goal
+			// Force Controller Goal without Gravity Compensation
 			DesForce(SIDE_AXIS)	=	 6.5;	//  1.0*HORIZONTAL_FORCE;
 			DesForce(UP_AXIS)	=	-7.18;	// -0.5*VERTICAL_FORCE;
 			DesForce(FWD_AXIS) 	=	-13.85;	// -32.000*TRANSVERSE_FORCE;
@@ -1033,7 +1033,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Y: Up			(UP_AXIS)
 			// +Z: Forward		(FORWARD_AXIS)
 
-			// Force Controller Goal
+			// Force Controller Goal without Gravity Compensation
 			DesForce(SIDE_AXIS)	=	  6.50;
 			DesForce(UP_AXIS)	=	 -7.00;
 			DesForce(FWD_AXIS) 	=	-13.85;
@@ -1065,7 +1065,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Y: Up			(UP_AXIS)
 			// +Z: Forward		(FORWARD_AXIS)
 
-			// Force Controller Goal
+			// Force Controller Goal without Gravity Compensation
 			DesForce(SIDE_AXIS) =	11.50;
 			DesForce(UP_AXIS)	=	-5.90;					//	DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
 			DesForce(FWD_AXIS) 	=	-12.10;
