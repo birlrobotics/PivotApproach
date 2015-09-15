@@ -48,7 +48,7 @@ extern "C" {
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ARM CONFIGUARTIONS
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define LEFT       		0   // Used to indicate index for f_control
+#define LEFT       	0   // Used to indicate index for f_control
 #define RIGHT 			1 	// Used to indicate index for f_control
 
 #define LEFT_ARM  		1 	// Flag to enable left Arm computations.
@@ -77,9 +77,9 @@ extern "C" {
 // Debugging
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define DB_TIME 			0			// Used to print timing duration of functions
-#define FORCE_TEST 			0 			// Used to test if force drivers are working in Old HIRO
+#define FORCE_TEST 		0 			// Used to test if force drivers are working in Old HIRO
 #define SIMULATION_TEST 	1	 		// Used to test certain pieces of code within the control method for testing purposes
-#define DEBUG 				1 			// Used to print temporary cerr statements
+#define DEBUG 				0 			// Used to print temporary cerr statements
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // GLOBALS
@@ -558,7 +558,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			vector3 rpy(0), rpy2(0);
 
 			rArm->set_OrgPosRot(CurXYZ,rpy);									// Set EE pose
-			std::cerr << "Right Pose (RPY)" << CurXYZ << rpy << std::endl;
+			if(DEBUG) std::cerr << "Right Pose (RPY)" << CurXYZ << rpy << std::endl;
 
 			// IK Computation
 			rArm->m_path->calcInverseKinematics(CurXYZ,CurRot);
@@ -569,7 +569,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 			if(LEFT_ARM)
 			{
 				lArm->set_OrgPosRot(L_CurXYZ,rpy2);
-				std::cerr << "Left Pose (RPY)" << L_CurXYZ << rpy2 << std::endl;
+				if(DEBUG) std::cerr << "Left Pose (RPY)" << L_CurXYZ << rpy2 << std::endl;
 
 				// IK Computation
 				lArm->m_path->calcInverseKinematics(L_CurXYZ,L_CurRot);
@@ -1014,7 +1014,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				ostr_gcWrenchL << std::endl;
 				}
 
-				// Write gravity compensated wrenches in WORLD coordinates for releavnt arm.
+				// Write gravity compensated wrenches in WORLD coordinates for relevant arm.
 				ostr_gc_worldWrenchR << cur_time << "\t";
 				for(int i=0; i<6; i++) ostr_gc_worldWrenchR << worldCurrentForces(i) << "\t";
 				ostr_gc_worldWrenchR << std::endl;
@@ -1025,8 +1025,11 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 				ostr_gc_worldWrenchL << std::endl;
 				}
 
-				if(DEBUG && LEFT_ARM) std::cerr << "Left Current Wrench before calling SM is:\t" << L_CurrentForces << std::endl;
-				else std::cerr 					<< "Right Current Wrench before calling SM is:\t" << CurrentForces   << std::endl;
+				if(DEBUG)
+				{
+					if(LEFT_ARM) std::cerr << "Left Current Wrench before calling SM is:\t" << L_CurrentForces << std::endl;
+					else 		  std::cerr << "Right Current Wrench before calling SM is:\t" << CurrentForces   << std::endl;
+				}
 
 #else
 				// For real robot need to correct force orientation.

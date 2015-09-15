@@ -30,17 +30,15 @@ using std::ceil;
 // **Single Arm
 #define SL_APPROACH_FILE 			"/PA10/pivotApproachState1.dat"					// Waypoints for State1 in StraightLineApproach for the PA10 Robot
 #define PIVOT_APPROACH_FILE 		"/PA10/PA10_pivotApproachState1.dat"			// Waypoints for State1 in PivotApproach for the PA10 Robot
-#define SIDE_APPROACH_FILE 			"/HIRO/R_sideApproachState.dat"					// Waypoints for State1 in SideApproach for the HIRO Robot
+#define SIDE_APPROACH_FILE 		"/HIRO/R_sideApproachState.dat"					// Waypoints for State1 in SideApproach for the HIRO Robot
 
 // **Failure Case
 #define FAILURE_CHARAC_FILE 		"/FC/failureCaseYDir.dat"						// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseXRoll.dat
 
-// **Dual Arm Case
-#define TWOARM_HSA_FILE				"/HIRO/DualArm/R_sideApproachState.dat"			// Waypoints for State1 for right arm in 2 arm side approach in a push(R)-hold(L) scheme.
-
-// **Push-Hold Approach
-#define R_2ARM_HSA_APP_FILE    		"/HIRO/DualArm/R_sideApproachState1.dat"		// Waypoints for State1 for right arm in 2 arm side approach in a push(R)-hold(L) scheme.
-#define L_2ARM_HSA_APP_FILE    		"/HIRO/DualArm/L_sideApproachState1.dat"		// Waypoints for State1 for left arm in 2 arm side approach in a push(R)-hold(L) scheme. "HIRO/L_sideApproachState.dat"
+// **Dual Arm Files
+#define MALE_PUSH_FEMALE_HOLD_FILE	"/HIRO/DualArm/male_push_female_hold.dat"		// Waypoints for State1 for this coordination scheme
+#define MALE_HOLD_FEMALE_PUSH_FILE	"/HIRO/DualArm/male_hold_female_push.dat"
+#define MALE_PUSH_FEMALE_PUSH_FILE	"/HIRO/DualArm/male_push_female_push.dat"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
@@ -50,7 +48,7 @@ using std::ceil;
 #define R_CARTPOS_FILE				"/R_CartPos.dat"								// Save CartPos of End-Effector in world coordinates
 #define R_STATE_FILE				"/R_State.dat"									// Save State Transition times for SideApproach
 #define R_FORCES_FILE				"/R_Torques.dat"								// Save Joint Torques wrt wrist for robot
-#define R_FORCES_WORLD_FILE			"/R_worldTorques.dat"							// Save Joint Torques wrt to the base/world for robot
+#define R_FORCES_WORLD_FILE		"/R_worldTorques.dat"							// Save Joint Torques wrt to the base/world for robot
 #define R_MANIP_TEST_FILE			"/R_manipulationTestAxis.dat"					// Used to test force and moment controllers behavior
 
 // For Left Arm
@@ -58,7 +56,7 @@ using std::ceil;
 #define L_CARTPOS_FILE				"/L_CartPos.dat"								// Save CartPos of End-Effector in world coordinates
 #define L_STATE_FILE				"/L_State.dat"									// Save State Transition times for SideApproach
 #define L_FORCES_FILE				"/L_Torques.dat"								// Save Joint Torques for robot
-#define L_FORCES_WORLD_FILE			"/L_worldTorques.dat"							// Save Joint Torques wrt to the base/world for robot
+#define L_FORCES_WORLD_FILE		"/L_worldTorques.dat"							// Save Joint Torques wrt to the base/world for robot
 #define L_MANIP_TEST_FILE			"/L_manipulationTestAxis.dat"					// Used to test force and moment controllers behavior
 
 // Gravity Compensation Parameters
@@ -67,91 +65,106 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define DB_TIME 				0			// Used to print timing duration of functions
-#define DEBUG					1			// Used to print temporary cerr statements
+#define DB_TIME 					0			// Used to print timing duration of functions
+#define DEBUG						0			// Used to print temporary cerr statements
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // TEST MODE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define TEST    				0			// If true, a test is activated to see the response of the force/moment controllers. Reads an int from file to know which axis to activate.
+#define TEST    					0			// If true, a test is activated to see the response of the force/moment controllers. Reads an int from file to know which axis to activate.
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // CONTROL METHODS
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define USE_MOTION_DAT 			0			// Should be zero if used with control basis approach or reading a trajectory from file
-#define CONTROL_BASIS			1			// If using the control basis approach
+#define CONTROL_BASIS				1			// If using the control basis approach
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-// ASSEMBLY STRATEGY TYPES
+// SINGLE ARM ASSEMBLY STRATEGY TYPES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_FLAG 		0 			// Masking Flags to determine which trajectory to choose
 #define PIVOT_APPROACH_FLAG		0			// Pivot approach. 								If true, STRAIGHT_LINE_FLAG=0,SIDE_APPROACH_FLAG=0, FAILURE_CHARAC_FLAG=0.
-#define SIDE_APPROACH_FLAG		0			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
+#define SIDE_APPROACH_FLAG			0			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
 #define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
-											// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
-
-// DualArm Strategy Types
+												// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// DOUBLE ARM ASSEMBLY STRATEGY TYPES
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 #define TWOARM_HSA_FLAG			1			// Perform SideApproach with Dual Arms. 		If true, set others to zero.
+												// DualArm mode can execute 3 coordination schemes: male-push|female-hold or male-hold|female-push or male-push|female-push.												// Choose one of the following three:
+#define MALE_PUSH_FEMALE_HOLD_FLAG	0
+#define MALE_HOLD_FEMALE_PUSH_FLAG 1
+#define MALE_PUSH_FEMALE_PUSH_FLAG	0
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define MANIP_TEST				1		// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
+// Strategy Values
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define MANIP_TEST					1		// Numbers assigned in correlation to the enumeration CtrlStrategy in AssemblyStrategy.h
 //-------------------------------------
-#define STRAIGHT_LINE_APPROACH 2
+#define STRAIGHT_LINE_APPROACH 	2
 //-------------------------------------
 #define PIVOT_APPROACH 			3
-#define SIDE_APPROACH			4
+#define SIDE_APPROACH				4
 //-------------------------------------
 #define FAILURE_CHARAC 			5
-//------------------------------------- DualArm SideApproach according to Coordination Policy
-#define LEFT_ARM_HOLD			6
-#define LEFT_ARM_PUSH          7
-#define RIGHT_ARM_HOLD		    8
-#define RIGHT_ARM_PUSH			9
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// DualArm SideApproach according to Coordination Policy: male-push|female-hold or male-hold|female-push or male-push|female-push
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+#define MALE_PUSH_FEMALE_HOLD		6
+#define MALE_HOLD_FEMALE_PUSH      7
+#define MALE_PUSH_FEMALE_PUSH		8
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSIGN VARIABLES TO BE USED WITH PA->INITIALIZE(...)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #if(USE_MOTION_DAT==0) 						//I.e. We are using the control basis approach, then choose between strategies. File name assigned during constructor to private member.
 
-// (A) Define the Control Strategy
-#define CONTROL_TYPE  CONTROL_BASIS
+	// (A) Define the Control Strategy
+	#define CONTROL_TYPE  CONTROL_BASIS
 
-// (B) Define the Assembly Strategy: used in AssemblyStrategy::StateMachine
-#if(STRAIGHT_LINE_FLAG)
-	#define MOTION_FILE 	SL_APPROACH_FILE
-	#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
-
-#elif(PIVOT_APPROACH_FLAG)
-	#define MOTION_FILE 	PIVOT_APPROACH_FILE
-	#define APPROACH_TYPE 	PIVOT_APPROACH
-
-#elif(SIDE_APPROACH_FLAG)
-	#define MOTION_FILE 	SIDE_APPROACH_FILE
-	#define APPROACH_TYPE 	SIDE_APPROACH
-
-#elif(FAILURE_CHARAC_FLAG)
-	#define MOTION_FILE 	FAILURE_CHARAC_FILE
-	#define APPROACH_TYPE 	FAILURE_CHARAC
-
-#elif(TWOARM_HSA_FLAG)
-	#define MOTION_FILE				TWOARM_HSA_FILE
-	#define APPROACH_TYPE_LEFT		LEFT_ARM_HOLD
-	#define APPROACH_TYPE_RIGHT 	RIGHT_ARM_PUSH
-	#define APPROACH_TYPE 			RIGHT_ARM_PUSH 		// 	Kept as a default
-#endif
-
-#else
-	#define CONTROL_TYPE USE_MOTION_DAT
+	// (B) Define the Assembly Strategy: used in AssemblyStrategy::StateMachine
 	#if(STRAIGHT_LINE_FLAG)
 		#define MOTION_FILE 	SL_APPROACH_FILE
 		#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+
 	#elif(PIVOT_APPROACH_FLAG)
 		#define MOTION_FILE 	PIVOT_APPROACH_FILE
 		#define APPROACH_TYPE 	PIVOT_APPROACH
+
 	#elif(SIDE_APPROACH_FLAG)
 		#define MOTION_FILE 	SIDE_APPROACH_FILE
 		#define APPROACH_TYPE 	SIDE_APPROACH
+
 	#elif(FAILURE_CHARAC_FLAG)
 		#define MOTION_FILE 	FAILURE_CHARAC_FILE
 		#define APPROACH_TYPE 	FAILURE_CHARAC
+
+	// Dual Arm Approach: Select coordination scheme
+	#elif(TWOARM_HSA_FLAG)
+		#if(MALE_PUSH_FEMALE_HOLD_FLAG)
+			#define APPROACH_TYPE 			MALE_PUSH_FEMALE_HOLD
+			#define MOTION_FILE			MALE_PUSH_FEMALE_HOLD_FILE
+		#elif(MALE_HOLD_FEMALE_PUSH_FLAG)
+			#define APPROACH_TYPE 			MALE_HOLD_FEMALE_PUSH
+			#define MOTION_FILE			MALE_HOLD_FEMALE_PUSH_FILE
+		#elif(MALE_PUSH_FEMALE_PUSH_FLAG)
+			#define APPROACH_TYPE 			MALE_PUSH_FEMALE_PUSH
+			#define MOTION_FILE			MALE_PUSH_FEMALE_PUSH_FILE
+		#endif
+	#else
+		#define CONTROL_TYPE USE_MOTION_DAT
+		#if(STRAIGHT_LINE_FLAG)
+			#define MOTION_FILE 	SL_APPROACH_FILE
+			#define APPROACH_TYPE 	STRAIGHT_LINE_APPROACH
+		#elif(PIVOT_APPROACH_FLAG)
+			#define MOTION_FILE 	PIVOT_APPROACH_FILE
+			#define APPROACH_TYPE 	PIVOT_APPROACH
+		#elif(SIDE_APPROACH_FLAG)
+			#define MOTION_FILE 	SIDE_APPROACH_FILE
+			#define APPROACH_TYPE 	SIDE_APPROACH
+		#elif(FAILURE_CHARAC_FLAG)
+			#define MOTION_FILE 	FAILURE_CHARAC_FILE
+			#define APPROACH_TYPE 	FAILURE_CHARAC
+		#endif
 	#endif
 #endif
 
@@ -1040,36 +1053,36 @@ int hiroArm::PivotApproach(double 	    cur_time,			/*in*/
 		if(name=="left")
 		{
 			// Invoke the state machine to run the pivot approach using the control basis
-			ret = PA->StateMachine( PA->none,								// Use all axis to run test. Not applicable here since the flag test is off.
-					(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE_LEFT,		// Type of approach. Can choose between the straight line approach, pivot approach, side approach, failure characterization, or in Dual Arm Strategies: Left_Arm_Hold/Right_Arm_Push...
-					m_path,													// Pointer containing Arm Path (joints and links)
-					body,													// Pointer containting whole body (joints and links)
-					cur_time,												// Current internal clock time (not synced to GrxUI Simulation clock)
-					pos,													// Current wrist position in Cartesian Coordinates
-					rot,													// Rotation wrist orientation rpy wrt base
-					currForces,												// Current Torques and Moments at the wrist
-					JointAngleUpdate,										// Joint Angle Update produced by control basis
-					CurrAngles,												// Current Arm Joint Angles
-					Jac,													// Jacobian
-					PseudoJac);												// JPseudo Jacobian
+			ret = PA->StateMachine( (AssemblyStrategy::TestAxis)1,							// ** Use this axis to tell if it's a right arm or left under the given Approach Type in dual arm scenarios. Left is 1, Right is 0.
+									(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,			// Type of approach. Can choose between several single arm/dual arm approaches
+									m_path,													// Pointer containing Arm Path (joints and links)
+									body,													// Pointer containing whole body (joints and links)
+									cur_time,												// Current internal clock time (not sync'ed to GrxUI Simulation clock)
+									pos,													// Current wrist position in Cartesian Coordinates
+									rot,													// Rotation wrist orientation rpy wrt base
+									currForces,												// Current Torques and Moments at the wrist
+									JointAngleUpdate,										// Joint Angle Update produced by control basis
+									CurrAngles,												// Current Arm Joint Angles
+									Jac,													// Jacobian
+									PseudoJac);												// JPseudo Jacobian
 		}
 
 		// (C) Launch Right Arm StateMachine to run the pivot approach using the control basis
 		else
 		{
 			// Invoke the state machine to run the pivot approach using the control basis
-			ret = PA->StateMachine( PA->none,								// Use all axis to run test. Not applicable here since the flag test is off.
-					(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,			// Type of approach. Can choose between the straight line approach and the pivot approach
-					m_path,													// Pointer containing Arm Path (joints and links)
-					body,													// Pointer containting whole body (joints and links)
-					cur_time,												// Current internal clock time (not synced to GrxUI Simulation clock)
-					pos,													// Current wrist position in Cartesian Coordinates
-					rot,													// Current wrist rotation wrt in rpy wrt base
-					currForces,												// Current Torques and Moments at the wrist
-					JointAngleUpdate,										// Joint Angle Update produced by control basis
-					CurrAngles,												// Current Arm Joint Angles
-					Jac,													// Jacobian
-					PseudoJac);												// JPseudo Jacobian
+			ret = PA->StateMachine( (AssemblyStrategy::TestAxis)0,							// Use all axis to run test. Not applicable here since the flag test is off.
+									(AssemblyStrategy::CtrlStrategy)APPROACH_TYPE,			// ** Use this axis to tell if it's a right arm or left under the given Approach Type in dual arm scenarios. Left is 1, Right is 0.
+									m_path,													// Pointer containing Arm Path (joints and links)
+									body,													// Pointer containing whole body (joints and links)
+									cur_time,												// Current internal clock time (not sync'ed to GrxUI Simulation clock)
+									pos,													// Current wrist position in Cartesian Coordinates
+									rot,													// Current wrist rotation wrt in rpy wrt base
+									currForces,												// Current Torques and Moments at the wrist
+									JointAngleUpdate,										// Joint Angle Update produced by control basis
+									CurrAngles,												// Current Arm Joint Angles
+									Jac,													// Jacobian
+									PseudoJac);												// JPseudo Jacobian
 		}
 	}
 
@@ -1123,7 +1136,7 @@ void hiroArm::set_OrgPosRot(vector3& pos, vector3& RPY)
 	pos = rPh;
 	rot = rRh;
 
-	cerr << "KH1 " << pos << std::endl;
+	if(DEBUG) cerr << "KH1 " << pos << std::endl;
 
 	RPY = rpyFromRot(rRh);
 
@@ -2498,7 +2511,7 @@ int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	strcpy(worldForcesL,	WRITE_DIR);
 
 	// Concatenate with appropriate endings
-	strcat(TrajState1L,		L_2ARM_HSA_APP_FILE);						// Desired Trajectory for state 1 (in PivotApproach or SideApproach)for left arm
+	strcat(TrajState1L,		MOTION_FILE);								// Desired Trajectory for state 1 (in PivotApproach or SideApproach)for left arm
 	strcat(TrajState2L,		"/PA10/PA10_pivotApproachState2.dat");		// Desired Trajectory for state 2 (in PA) for left arm
 	strcat(manipTestL,		L_MANIP_TEST_FILE);							// What test axis do you want to try
 	strcat(AnglesL,			L_ANGLES_FILE);								// Robot Joint Angles
@@ -2514,7 +2527,7 @@ int hiroArmMas::init(vector3 pos, matrix33 rot, double CurAngles[15])
 	// 4) Declare and Allocate Filtering Object (consider using a static object instead for faster real-time performance).
 	ret=PA->Initialize(TrajState1L,TrajState2L,AnglesL,CartPosL,StateL,ForcesL,worldForcesL, 	// Data Directories
 						pos, rot, CurAngles,														// Homing Data
-						APPROACH_TYPE_LEFT, CONTROL_TYPE);												// Assembly Strategy and Control Method Used
+						APPROACH_TYPE, CONTROL_TYPE);												// Assembly Strategy and Control Method Used
 
 	// Compute the current position vector and rotation matrix from base to end effector and current joint angles.
 	update_currposdata();

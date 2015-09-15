@@ -25,13 +25,13 @@
 #define MAX_ERROR 5000
 
 /** Design parameters **/								// The default position/pose jacobian control computation is the pseudoinverse.
-#define PSEUDO_JAC_HRP			0						// If you want to use the pseudojacobian computed by the HRP classes.
-#define POSITION_JAC_TRANS_CTRL 0 						// If want to use Jacobian Transpose Control instead of the pseudoinverse. Pseudoinverse works better for position control.
-#define POSE_JAC_TRANS_CTRL     0
-#define ERROR_TEST         		0 						// If want to test controller with fixed error
+#define PSEUDO_JAC_HRP				0					// If you want to use the pseudojacobian computed by the HRP classes.
+#define POSITION_JAC_TRANS_CTRL 	0 					// If want to use Jacobian Transpose Control instead of the pseudoinverse. Pseudoinverse works better for position control.
+#define POSE_JAC_TRANS_CTRL     	0
+#define ERROR_TEST         		0 					// If want to test controller with fixed error
 
 // Debugging
-#define DEBUG 1 										// Print cerr statements
+#define DEBUG 0 										// Print cerr statements
 /************************************************ CONSTRUCTOR ************************************************/
 ControlBasis::ControlBasis()
 {
@@ -318,11 +318,11 @@ int ControlBasis::ComputeCompoundController(/*out*/  	dvector6& 			JointAngleUpd
 	  AngleUpdate2(i) 	= 0;
 	}
 
-#ifdef DEBUG_PLUGIN3
       // Print data
-      std::cerr<< "ComputeCompoundController. Dominant desired data is:\t" 		<< DesData1 << std::endl;
-      std::cerr<< "ComputeCompoundController. Subordinate desired data is:\t" 	<< DesData2 << std::endl;
-#endif
+      if(DEBUG) {
+    	  std::cerr<< "ComputeCompoundController. Dominant desired data is:\t" 		<< DesData1 << std::endl;
+      	  std::cerr<< "ComputeCompoundController. Subordinate desired data is:\t" 	<< DesData2 << std::endl;
+      }
       
       // 1a. Compute the joint angle update for the subordinate primitive controller
       ComputePrimitiveController(AngleUpdate2, NumCtlrs, type2, DesData2, CurData2, CurJointAngles, Jacobian, 1, ErrorNorm2);
@@ -563,11 +563,9 @@ int ControlBasis::ComputeError(/*in*/dvector6& DesData, /*in*/dvector6& CurData,
   ErrorNorm = sqrt(ErrorNorm)/3;
 
   // Printer error to terminal
-  //if(DEBUG)
-#ifdef DEBUG_PLUGIN3
-  std::cerr << "\nThe error norm # " << flag << " is: " << ErrorNorm <<
-    "\n/----------------------------------------------------------------------------/\n";
-#endif
+  if(DEBUG)
+	  std::cerr << "The error norm # " << flag << " is: " << ErrorNorm <<
+	  "\n/----------------------------------------------------------------------------/\n";
 
 
   // 4. If low error set Errorflag to true. Used in position control in order to receive the next desired coordinate.

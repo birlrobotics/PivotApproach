@@ -5,6 +5,10 @@
   --------------------------------*/
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <math.h>
+// Gaussian Noise
+#include <cstdlib>
+#include <ctime>
 #include "AssemblyStrategy.h"
 ///---------------------------------------------------------------------------------------------------------------------------------------------------//
 /************************************************************* DESIGN PARAMETERS AND FLAGS ************************************************************/
@@ -12,7 +16,7 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
 #define HIRO					0
-#define TWOARM_HIRO				1
+#define TWOARM_HIRO			1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSEMBLY_STRATEGY_AUTOMATA STATES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -28,14 +32,14 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define   FILT_FLAG				1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
+#define   FILT_FLAG			1			// Used to enable or disable the filtering of the torques signal. Filtering uses FilterTools class and is called in ::StateMachine
 //-----------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define DEBUG					1			// Used to print temporary cerr statements
-#define DEBUG_AS				0			// Flag used to test functions with hard-coded data
-#define DB_WRITE				1	   		// Used to write angles, cart position, forces, and states to FILE.
-#define DB_TIME 				0		 	// Used to print timing duration of functions
+#define DEBUG					0			// Used to print temporary cerr statements
+#define DEBUG_AS		     	0           // Flag used to test functions with hard-coded data
+#define DB_WRITE               1           // Used to write angles, cart position, forces, and states to FILE.
+#define DB_TIME 				0           // Used to print timing duration of functions
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // COORDINATES AXES DEFINTIONS
@@ -55,7 +59,7 @@
 
 // DualArm HIRO
 #else
-#define UP_AXIS				1		// y becomes down/up 		   in local coordinates. +=down after transform
+#define UP_AXIS			1		// y becomes down/up 		   in local coordinates. +=down after transform
 #define FWD_AXIS			2		// z becomes forward/backwards in local coordinates. +=forward after transform
 #define SIDE_AXIS			0		// x becomes left/right 	   in local coordinates. +=left after transform
 #endif
@@ -82,10 +86,10 @@ AssemblyStrategy::AssemblyStrategy()
 	completionFlag = false;
 
 	// Manipulation Test
-	testCounter 			= 0;
+	testCounter 		= 0;
 	compositionTypeTest	= 0;	// Force or Moment
 	DesForceSwitch		= 0;	// Switch which element to activate
-	initialFlag 			= true;
+	initialFlag 		= true;
 	completionFlag 		= false;
 
 	// State Transition
@@ -98,13 +102,18 @@ AssemblyStrategy::AssemblyStrategy()
 	transitionTimebool	= false;
 	state3_zPos			= 0.0;
 	state3_zPrevPos		= 0.0;
-	SA_S4_Height 	 		= 0.0;
-	mating2EndTime 		= 1.0;
+	SA_S4_Height 	 	= 0.0;
+
+	// End Times
+	matingTime 			= 0.0;
+	matingTimeL 		= 0.0;
+	mating2EndTime 		= 2.0;
+	END_TIME            = 0.0;
 
 	// Control Basis Members
-	NumCtlrs				= 1;
+	NumCtlrs			= 1;
 	ErrorFlag 			= true;
-	ctrlInitFlag			= true;
+	ctrlInitFlag		= true;
 
 	// Data vectors
 	// DesIKin holds the final desired position for contact with the pivoting dock
@@ -140,10 +149,10 @@ AssemblyStrategy::AssemblyStrategy()
 
 	for(int i=0; i<6; i++)
 	{
-		CurCartPos(i)			= 0.0;
-		DesCartPos(i)			= 0.0;
-		contactPos(i)			= 0.0;
-		CurJointAngles(i)		= 0.0;
+		CurCartPos(i)		= 0.0;
+		DesCartPos(i)		= 0.0;
+		contactPos(i)		= 0.0;
+		CurJointAngles(i)	= 0.0;
 		JointAngleUpdate(i)	= 0.0;
 	}
 
@@ -157,28 +166,32 @@ AssemblyStrategy::AssemblyStrategy()
 	IKinTestFlag  		= 0;
 	zerothJoint			= 0;
 	transWrist2CamXEff	= 0.0;
-	ContactWristAngle		= 0.0, -1.5708, 0.0;
+	ContactWristAngle	= 0.0, -1.5708, 0.0;
 	for(int i=0; i<6; i++) avgSig = 0.0;
 
 	// Motion
 	wrist_r				= (0);
-	EndEff_r_org			= (0);
+	EndEff_r_org		= (0);
 	wrist_p				= (0);
-	EndEff_p_org			= (0);
-	divPoint 				= (0);
+	EndEff_p_org		= (0);
+	divPoint 			= (0);
 
 	// File Paths: save global path's to internal variables
-	strcpy(strState, 			"");			// File designed to save the time at which new states occur
-	strcpy(strForces,			"");			// File designed to save the value of forces and moments registered in the task
+	strcpy(strState, 		"");			// File designed to save the time at which new states occur
+	strcpy(strForces,		"");			// File designed to save the value of forces and moments registered in the task
 	strcpy(strTrajState1,  	"");			// File that contains the desired position trajectory to be followed
 	strcpy(strAngles,  		"");			// File designed to save the joint angles during the task
 	strcpy(strCartPos, 		"");			// File designed to save the cartesian positions during the task
 
 	// Imported Values
-	cur_time				= 0.0;						// used in transitions
+	cur_time			= 0.0;						// used in transitions
 	flagFiltering 		= FILT_FLAG;				// Set filtering flag to parameter define in preprocessor
 	// Control Basis
-	momentGainFactor 		= 1.0;
+	momentGainFactor 	= 1.0;
+
+	// Noise
+	/* Generate a new random seed from system time - do this once in your constructor */
+	srand(time(0));
 
 	if(DEBUG)
 		std::cerr << "AssemblyStrategy(): Exiting Constructor" << std::endl;
@@ -219,7 +232,12 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	state3_zPos				= 0.0;
 	state3_zPrevPos			= 0.0;
 	SA_S4_Height 	 		= 0.0;
-	mating2EndTime 			= 1.00;
+
+	// End Times
+	matingTime 				= 0.0;
+	matingTimeL 			= 0.0;
+	mating2EndTime 			= 2.00;
+	END_TIME                = 0.0;
 
 	// Control Basis Members
 	NumCtlrs				= 1;
@@ -307,6 +325,10 @@ AssemblyStrategy::AssemblyStrategy(int NUM_q0, vector3 base2endEffectorPos, matr
 	// ControlBasis
 	momentGainFactor = momentGainFac;
 
+	// Noise
+	/* Generate a new random seed from system time - do this once in your constructor */
+	srand(time(0));
+
 	if(DEBUG) std::cerr << "AssemblyStrategy::AssemblyStrategy(num_q0,base2endeffPoss,base2endeffRot,ePh,momentGainFac) - exiting\n-----------------------------------------------------------------------------------------" << std::endl;
 }
 
@@ -352,7 +374,8 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	// 1) Read user specified files. If null strings, go with default values. Trajectory File for State1. If not null, then read. Otherwise we used pre-saved values that were written during the constructor.
 	//--------------------------------------------------------------------------------------------------------------------------------
 
-	if(strategyType==Left_Arm_Hold || strategyType==Left_Arm_Push) 				// LEFT ARM
+	/*------------------------- Generate Left Arm Files if any Dual Arm Coordination Policy is Used-------------------------*/
+	if(strategyType==Male_Push_Female_Hold || strategyType==Male_Hold_Female_Push || strategyType==Male_Push_Female_Push)
 	{
 		if(abs(strcmp(TrajState1,"")))
 			strcpy(strTrajState1L,TrajState1);
@@ -381,7 +404,7 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 		if(abs(strcmp(worldForcesDir,"")))
 			strcpy(strForcesWorldL,worldForcesDir);
 	}
-	// RIGHT ARM
+	/*------------------------- Generate Right Arm Files regardless of Coordination Policy -------------------------*/
 	else
 	{
 		if(abs(strcmp(TrajState1,"")))
@@ -423,11 +446,11 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	//--------------------------------------------------------------------------------------------------------------------------------
 	// 3) Reassign original end effector position and rotation
 	//--------------------------------------------------------------------------------------------------------------------------------
-	EndEff_r_org 			= rpyFromRot(rot);
-	wrist_r = EndEff_r_org;
+	EndEff_r_org 	= rpyFromRot(rot);
+	wrist_r 		= EndEff_r_org;
 
-	EndEff_p_org			= pos;
-	wrist_p = EndEff_p_org;
+	EndEff_p_org	= pos;
+	wrist_p 		= EndEff_p_org;
 
 	if(DEBUG) {
 		// Cartesian Position
@@ -440,9 +463,10 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 
 	vector3 rpy=rpyFromRot(rot);
 
-	// Extract information from the way point file for state 1
-	if(strategyType==Left_Arm_Hold || strategyType==Left_Arm_Push)
+	// If there is a Left Arm strategy, change the file from which we extract information for the starting state way point
+	if(strategyType==Male_Push_Female_Hold || strategyType==Male_Hold_Female_Push || strategyType==Male_Push_Female_Push)
 		ProcessTrajFile(strTrajState1L,1,pos,rpy,0.0);	// string path,state,curr_pos,cur_time
+	// Single Arm Task
 	else
 		ProcessTrajFile(strTrajState1,1,pos,rpy,0.0);	// string path,state,curr_pos,cur_time
 
@@ -487,16 +511,22 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	}
 
 	//-------------------------------------------- Dual Arm Strategies: Push-Hold or Push-Push
-	else if(strategyType==Left_Arm_Hold)				// Used with HIRO's two arms and force control
+	else if(strategyType==Male_Push_Female_Hold)				// Used with HIRO's two arms and force control
 	{
 		approachFlag = false;
-		approachType = Left_Arm_Hold;
+		approachType = Male_Push_Female_Hold;
 	}
 
-	else if(strategyType==Right_Arm_Push)
+	else if(strategyType==Male_Hold_Female_Push)
 	{
 		approachFlag = false;
-		approachType = Right_Arm_Push;
+		approachType = Male_Hold_Female_Push;
+	}
+
+	else if(strategyType==Male_Push_Female_Push)
+	{
+		approachFlag = false;
+		approachType = Male_Push_Female_Push;
 	}
 
 	else if(strategyType==FailureCharacerization)	// Used with HIRO, single arm, and force c ontrol.
@@ -508,29 +538,18 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 		/** Failure Case Characterization Vector **/
 		// Will only write values into x,y,roll,and yall since these will not greatly affect the motion of the robot.
 
-		// Keep the z-axis and the pitch at zero
+		// Single Arm: Keep the z-axis and the pitch at zero
 		divPoint(2)=0; divPoint(4)=0;
 
 		// Axis to Modify
 		// These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
 		// Test xDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test xDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test xDir3 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test yDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test yDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test yDir3 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test xRollDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test xRollDir2 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test x-yDir  divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test x-xRoll divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test yDir-xRoll divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
-		// Test x-y-xRoll  divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
 
-		divPoint(0) =     0.00;	// x-axis
-		divPoint(1) =     0.0083; 						// y-axis
-		divPoint(2) =     0.00;						// z-axis
-		divPoint(3) =    ANGLE_DEVIATION_MAGNITDUE;	// ROLL PATH_DEVIATION_MAGNITUDE
-		divPoint(5) =    0.00;						// YALL
+		divPoint(0) = noise(); // 0.00;	// x-axis
+		divPoint(1) = noise(); // 0.0083; 						// y-axis
+		divPoint(2) = 0.00;						// z-axis
+		divPoint(3) = 0.00; // ANGLE_DEVIATION_MAGNITDUE;	// ROLL PATH_DEVIATION_MAGNITUDE
+		divPoint(5) = 0.00;						// YALL
 	}
 
 	// For the first iteration they are both the same.
@@ -563,18 +582,18 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 // wrist coordinate frame.
 // Position is always computed with respect to the base/world coordinate frame.
 /****************************************************************************************************************************************************************************************************/
-int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
-										CtrlStrategy 	approach,			/*in*/
-										JointPathPtr 	m_path,				/*in*/
-										BodyPtr 		bodyPtr,			/*in*/
-										double 			cur_time,			/*in*/
-										vector3&		pos,				/*in*/	// end-effector pos
-										matrix33& 		rot,				/*in*/	// end-effector rot
-										dvector6 		currForces,			/*in*/
-										dvector6& 		JointAngleUpdate,	/*out*/
-										dvector6& 		CurrAngles,			/*out*/
-										dmatrix 		Jacobian,			/*in*/
-										dmatrix 		PseudoJacobian) 	/*in*/
+int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
+										 CtrlStrategy 	approach,			/*in*/
+										 JointPathPtr 	m_path,				/*in*/
+										 BodyPtr 		bodyPtr,			/*in*/
+										 double 		cur_time,			/*in*/
+										 vector3&		pos,				/*in*/	// end-effector pos
+										 matrix33& 		rot,				/*in*/	// end-effector rot
+										 dvector6 		currForces,			/*in*/
+										 dvector6& 		JointAngleUpdate,	/*out*/
+										 dvector6& 		CurrAngles,			/*out*/
+										 dmatrix 		Jacobian,			/*in*/
+										 dmatrix 		PseudoJacobian) 	/*in*/
 {
 	/*----------------------------- Local variables ----------------------------------------*/
 	//float 		MaxErrNorm = 0.0;
@@ -660,7 +679,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// 0) Check for state termination.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time); // Fix to add ErrorNorm2
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time); // Fix to add ErrorNorm2
 		}
 		break;
 
@@ -684,7 +703,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach, IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 		}
 		break;
 
@@ -710,7 +729,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 
 			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 		}
 		break;
 
@@ -735,7 +754,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach, MomentForceComposition,DesMoment,DesForce,DesIKin,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 		}
 		break;
 
@@ -798,7 +817,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// 0) Check for state termination.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time); // Fix to add ErrorNorm2
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time); // Fix to add ErrorNorm2
 		}
 		break;
 
@@ -823,16 +842,16 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 			// Or, use a ForceIKinController
 			// Set a DesForce that pushes down and against the wall of the camera model
-#ifdef SIMULATION
-			/*------------------------ WORLD COORDINATES -------------------------------*/
-			// +X: Downwards
-			// +Y: Moves right
-			// +Z: Moves forward (and a bit left)
-			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE;
-			DesMoment(1) 		=  3.0*ROTATIONAL_FORCE;
-#else
+			#ifdef SIMULATION
+				/*------------------------ WORLD COORDINATES -------------------------------*/
+				// +X: Downwards
+				// +Y: Moves right
+				// +Z: Moves forward (and a bit left)
+				DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;
+				//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
+				DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE;
+				DesMoment(1) 		=  3.0*ROTATIONAL_FORCE;
+			#else
 			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
 			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
 			DesForce(FWD_AXIS) 	= -20*TRANSVERSE_FORCE;
@@ -842,7 +861,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 		}
 		break;
 
@@ -863,12 +882,12 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +X: Downwards
 			// +Y: Moves right
 			// +Z: Moves forward (and a bit left)
-#ifdef SIMULATION
-			DesForce(UP_AXIS) 	=   1.300*VERTICAL_FORCE;
-			DesForce(SIDE_AXIS) =   2.000*HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
-			DesMoment(1) 		=   3.750*ROTATIONAL_FORCE;
-#else
+			#ifdef SIMULATION
+				DesForce(UP_AXIS) 	=   1.300*VERTICAL_FORCE;
+				DesForce(SIDE_AXIS) =   2.000*HORIZONTAL_FORCE;
+				DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+				DesMoment(1) 		=   3.750*ROTATIONAL_FORCE;
+			#else
 			DesForce(UP_AXIS) = VERTICAL_FORCE;
 			// DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
 			DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
@@ -878,7 +897,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+			StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 		}
 		break;
 
@@ -907,12 +926,12 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			//DesForce(UP_AXIS)   =  VERTICAL_FORCE;   // In world coordinates
 			//DesForce(FWD_AXIS)  =  TRANSVERSE_FORCE; //
 
-#ifdef SIMULATION
-			DesForce(UP_AXIS)		=   1.5000*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) 	=   0.000*HORIZONTAL_FORCE;
-			//DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
+			#ifdef SIMULATION
+				DesForce(UP_AXIS)		=   1.5000*VERTICAL_FORCE;
+				//DesForce(SIDE_AXIS) 	=   0.000*HORIZONTAL_FORCE;
+				//DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
 
-#else
+			#else
 			DesForce(UP_AXIS) = 3*VERTICAL_FORCE;
 			DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
 #endif
@@ -922,7 +941,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,MomentForceComposition,DesMoment,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
 
 			// Check for Approach termination condition
-			ret=StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+			ret=StateSwitcher(axis,approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
 
 			break;
 
@@ -947,12 +966,14 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 	/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	/*---------------------------------------------------------------------- DualArm: RightArm for Side Approach ------------------------------------------------------------------------*/
-	else if(approach==Right_Arm_Push)
+	// PUSHING SCHEME: depends on the coordination policy assumed (male-push|female-hold or male-hold|female-push or male-push|female-push). Here we contemplate only right arm pushes, or only left arm pushes, or both arm push.
+	else if(approach==Male_Push_Female_Hold || approach==Male_Hold_Female_Push || approach==Male_Push_Female_Push)
+	// else if(approach==Male_Hold_Female_Push)
 	{
 		switch(State)
 		{
 
-		// ------------------------ Approach --------------------------
+		// ------------------------ Dual Arm: Approach --------------------------
 		case twoArm_hsaApproach:
 		{
 			//Initialize
@@ -967,17 +988,26 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 				nextState = false;
 				ctrlInitFlag = false;
-
-				std::cerr << "DualArm::HSA::Right Arm Approach state." << cur_time << std::endl;
+				if(axis==0)	std::cerr << "DualArm::HSA::Right Arm Approach state." << cur_time << std::endl;
+				else       	std::cerr << "DualArm::HSA::Left Arm Approach state."  << cur_time << std::endl;
 			}
 
 			// Call IK Controller
-			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+			// Right Arm moves
+			if(approach==Male_Push_Female_Hold && axis==0)
+				ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			// Left Arm moves
+			else if(approach==Male_Hold_Female_Push && axis==1)
+				ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			else if (approach==Male_Push_Female_Push)
+				ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+			else
+				ret = -2; // Ignore, but no error
+			StateSwitcher(axis,approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
 		}
 		break;
 
-		// ------------------------ Rotation ---------------------------
+		// ------------------------ Right Arm Rotation ---------------------------
 		case twoArm_hsaRotation:
 		{
 			if(ctrlInitFlag)
@@ -990,31 +1020,73 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 				EndEff_p_org = pos;
 				EndEff_r_org = CurRPY;
 
-				std::cerr << "DualArm::HSA::Right Arm Rotation State: " << cur_time << std::endl;
+				if(axis==0) std::cerr << "DualArm::HSA::Right Arm Rotation State: " << cur_time << std::endl;
+				else 		std::cerr << "DualArm::HSA::Left Arm Rotation State: " << cur_time << std::endl;
 			}
 
-			/*------------------------ LOCAL COORDINATES -------------------------------*/
+			/*------------------------ ARM LOCAL COORDINATES -------------------------------*/
 			// From a frontal plane: looking towards the front of the robot
 			// Right Arm Coordinates using RHR are as follows:
 			// +X: Right 		(SIDE_AXIS)
-			// +Y: Up			(UP_AXIS)
+			// +Y: Up			(UP_AXIS)  || Left Arm is -Y: Down.
 			// +Z: Forward		(FORWARD_AXIS)
 
-			// Force Controller Goal without Gravity Compensation
-			DesForce(SIDE_AXIS)	=	 6.5;	//  1.0*HORIZONTAL_FORCE;
-			DesForce(UP_AXIS)	=	-7.18;	// -0.5*VERTICAL_FORCE;
-			DesForce(FWD_AXIS) 	=	-13.85;	// -32.000*TRANSVERSE_FORCE;
+			/*------------------------ DESIRED VALUES -------------------------------*/
+			// Need to distinguish between simulation and real robot values.
+			// Also need to distinguish between Gravity Compensated Values and none.
+			// Also need to distinguish between the 3 different coordination schemes: male-push|female-hold or male-hold|female-push or male-push|female-push
+			#if SIMULATION
+				// 1. Male Push
+				if(approach==Male_Push_Female_Hold)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+					// Right Arm
+					if(axis==0) {
+						DesForce(SIDE_AXIS)	=	 6.5;
+						DesForce(UP_AXIS)	=	-7.18;
+						DesForce(FWD_AXIS) 	=	-13.85;
 
-			// Moment Controller Goal
-			DesMoment(UP_AXIS) 	=  	3.0*ROTATIONAL_FORCE;
+						// MOMENT Controller Goal
+						DesMoment(UP_AXIS) 	=  	3.0*ROTATIONAL_FORCE;
+					}
+					// else: for left arm all values are zero. No need to assign.
+				}
+				// 2. Female Push
+				else if(approach==Male_Hold_Female_Push)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+					if(axis==1) {
+						DesForce(SIDE_AXIS) =	  9.00;
+						DesForce(UP_AXIS)	=     9.00;
+						DesForce(FWD_AXIS) 	=	-18.00;
+
+						// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
+						DesMoment(UP_AXIS)	= 3.75*ROTATIONAL_FORCE;
+					}
+					// else: for right arm all values are zero. No need to assign.
+				}
+				// 3. Both male and female push (push-push)
+				else if(approach==Male_Push_Female_Push)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+									DesForce(SIDE_AXIS)	=	   6.50/2.0;
+					if(axis==0) 	DesForce(UP_AXIS)	=	  -7.18/2.0;		// Right
+					if(axis==1) 	DesForce(UP_AXIS)	=	-1*7.18/2.0;		// Left
+									DesForce(FWD_AXIS) 	=	 -13.85/2.0;
+
+					// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
+					if(axis==0) 	DesMoment(UP_AXIS)	=	   3.0*ROTATIONAL_FORCE;	// Right
+					if(axis==1)  	DesMoment(UP_AXIS)	=	-1*3.0*ROTATIONAL_FORCE;	// Left
+				}
+			#endif
 
 			// Call ForceMoment Controller
 			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian); //ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach,MomentForceComposition,  DesMoment,DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+			StateSwitcher(axis,approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
 		}
 		break;
 
-		// ----------------------- Insertion Controller ------------------
+		// ----------------------- Right Arm Insertion Controller ------------------
 		case twoArm_hsaInsertion:
 		{
 			// Initialize
@@ -1023,7 +1095,8 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 				nextState 		= false;
 				ctrlInitFlag 	= false;
 
-				std::cerr << "DualArm::HSA::Right Arm Insertion State: " << cur_time << std::endl;
+				if(axis==0) std::cerr << "DualArm::HSA::Right Arm Insertion State: " << cur_time << std::endl;
+				else 		std::cerr << "DualArm::HSA::Left Arm Insertion State: "  << cur_time << std::endl;
 			}
 
 			/*------------------------ LOCAL COORDINATES -------------------------------*/
@@ -1033,17 +1106,59 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Y: Up			(UP_AXIS)
 			// +Z: Forward		(FORWARD_AXIS)
 
-			// Force Controller Goal without Gravity Compensation
-			DesForce(SIDE_AXIS)	=	  6.50;
-			DesForce(UP_AXIS)	=	 -7.00;
-			DesForce(FWD_AXIS) 	=	-13.85;
+			/*------------------------ DESIRED VALUES -------------------------------*/
+			// Need to distinguish between simulation and real robot values.
+			// Also need to distinguish between Gravity Compensated Values and none.
+			// Also need to distinguish between the 3 different coordination schemes: male-push|female-hold or male-hold|female-push or male-push|female-push
+			#if SIMULATION
+				// 1. Male Push
+				if(approach==Male_Push_Female_Hold)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+					// Right Arm
+					if(axis==0) {
+						DesForce(SIDE_AXIS)	=	  6.50;
+						DesForce(UP_AXIS)	=	 -7.00;
+						DesForce(FWD_AXIS) 	=	-13.85;
 
-			// Moment Controller Goal
-			DesMoment(UP_AXIS)	=	3.750*ROTATIONAL_FORCE;
+						// MOMENT Controller Goal
+						DesMoment(UP_AXIS)	=	3.750*ROTATIONAL_FORCE;
+					}
+					// else: for left arm, all values are zero. No need to assign.
+				}
+				// 2. Female Push
+				else if(approach==Male_Hold_Female_Push)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+					// Left Arm
+					if(axis==1) {
+						DesForce(SIDE_AXIS) =	  9.00;
+						DesForce(UP_AXIS)	=     9.00;
+						DesForce(FWD_AXIS) 	=	-18.50;
+
+						// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
+						DesMoment(UP_AXIS)	= 4*ROTATIONAL_FORCE;
+					}
+					// else: for right arm all values are zero. No need to assign.
+				}
+				// 3. Both male and female push (push-push)
+				else if(approach==Male_Push_Female_Push)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+									DesForce(SIDE_AXIS)	=	   6.50/2.0;
+					if(axis==0) 	DesForce(UP_AXIS)	=	  -7.00/2.0;	// Right
+					if(axis==1) 	DesForce(UP_AXIS)	=	-1*7.00/2.0;	// Left
+									DesForce(FWD_AXIS) 	=	 -13.85/2.0;
+
+					// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
+					if(axis==0) 	DesMoment(UP_AXIS)	=	   3.750*ROTATIONAL_FORCE;	// Right
+					if(axis==1)  	DesMoment(UP_AXIS)	=	-1*3.750*ROTATIONAL_FORCE; 	// Left
+				}
+			#endif
 
 			// Call ForceMoment Controller
 			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+			StateSwitcher(axis,approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
 		}
 		break;
 
@@ -1065,164 +1180,124 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// +Y: Up			(UP_AXIS)
 			// +Z: Forward		(FORWARD_AXIS)
 
-			// Force Controller Goal without Gravity Compensation
-			DesForce(SIDE_AXIS) =	11.50;
-			DesForce(UP_AXIS)	=	-5.90;					//	DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
-			DesForce(FWD_AXIS) 	=	-12.10;
+			/*------------------------ DESIRED VALUES -------------------------------*/
+			// Need to distinguish between simulation and real robot values.
+			// Also need to distinguish between Gravity Compensated Values and none.
+			// Also need to distinguish between the 3 different coordination schemes: male-push|female-hold or male-hold|female-push or male-push|female-push
+			#if SIMULATION
+				// 1. Male Push
+				if(approach==Male_Push_Female_Hold)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+					// Right Arm
+					if(axis==0) {
+						DesForce(SIDE_AXIS) =	 11.50;
+						DesForce(UP_AXIS)	=	 -5.90;
+						DesForce(FWD_AXIS) 	=	-12.10;
 
-			// Moment Controller Goal
-			DesMoment(UP_AXIS)	=	4.00*ROTATIONAL_FORCE;
+						// MOMENT Controller Goal
+						DesMoment(UP_AXIS)	=	4.00*ROTATIONAL_FORCE;
+					}
+					// else: for right arm all values are zero. No need to assign.
+				}
+				// 2. Female Push
+				else if(approach==Male_Hold_Female_Push)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+					// Left Arm
+					if(axis==1) {
+						DesForce(SIDE_AXIS) =	  9.50;
+						DesForce(UP_AXIS)	=     9.00;
+						DesForce(FWD_AXIS) 	=	-16.50;
+
+						// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
+						DesMoment(UP_AXIS)	= 4.25*ROTATIONAL_FORCE;
+					}
+					// else: for right arm all values are zero. No need to assign.
+				}
+				// 3. Both male and female push (push-push)
+				else if(approach==Male_Push_Female_Push)
+				{
+					// FORCE Controller Goal without Gravity Compensation
+									DesForce(SIDE_AXIS)	=	  11.50/2.0;
+					if(axis==0) 	DesForce(UP_AXIS)	=	  -5.90/2.0;	// Right
+					if(axis==1) 	DesForce(UP_AXIS)	=  -1*-5.90/2.0;	// Left
+									DesForce(FWD_AXIS) 	=	 -12.10/2.0;
+
+					// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
+					if(axis==0) 	DesMoment(UP_AXIS)	=	   4.00*ROTATIONAL_FORCE;	// Right
+					if(axis==1)  	DesMoment(UP_AXIS)	=	-1*4.00*ROTATIONAL_FORCE;	// Left
+				}
+			#endif
 
 			// Call ForceMoment Controller
 			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian); 			//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			ret = StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
+			ret = StateSwitcher(axis,approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
 		}
 		break;
 
-		// ----------------------- Mating Controller ------------------
+		// ----------------------- Right Mating Controller ------------------
 		case twoArm_hsaMating:
 		{
-			std::cerr << "DualArm::HSA::Right Arm Mating State." << cur_time << std::endl;
-			avgSig = avgSig * exp(-cur_time/2.5);
+			if(ctrlInitFlag)
+			{
+				nextState		=	false;
+				ctrlInitFlag	=	false;
+				matingTime 	 	= 	cur_time;
+				std::cerr << "DualArm::HSA::Right Arm Mating State: " << cur_time << std::endl;
+			}
+
+			for(int i=0;i<6;i++)
+				avgSig(i)=avgSig(i)-avgSig(i)*pow((cur_time-matingTime),2); // This quadratic kills the signals after about one second. //avgSig(i) = avgSig(i)*exp(-cur_time/2.5);
+
+//			//Initialize
+//			if(ctrlInitFlag)
+//			{
+//				// ensure that the original end-effector position and orientation are set correctly.
+//				EndEff_r_org = rpyFromRot(rot);
+//				wrist_r	=	EndEff_r_org;
+//
+//				EndEff_p_org = pos;
+//				wrist_p = EndEff_p_org;
+//
+//				nextState = false;
+//				ctrlInitFlag = false;
+//
+//				std::cerr << "DualArm::HSA::Right Arm Mating State." << cur_time << std::endl;
+//			}
+//
+//			//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//			// Position Approach: the position approach works in that the position does not move, however, the force sensor in the simulation registers a tremendous amount of noise.
+//			// Call IK Controller
+//			//ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+//			//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//			//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//			// Force Approach: 0 force (values by default)
+//			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
+//			//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+			StateSwitcher(axis,approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
 		}
 		break;
 
 		// ----------------------- Finish Controller ------------------
 		case twoArm_hsaFinish:
 		{
-			std::cout << "DualArm::HSA::Right Arm Finished." << endl;
+			std::cout << "DualArm::HSA::Right Arm Finished." << std::endl;
+			exit(0);
 		}
 		break;
 		}
 	}
 
-	/*---------------------------------------------------------------------- DualArm: Left Arm Hold for Side Approach --------------------------------------------------------------------*/
-	else if(approach==Left_Arm_Hold)
-	{
-		switch(State)
-		{
-
-		// ------------------------ Approach --------------------------
-		case twoArm_hsaApproach:
-		{
-			//Initialize
-			if(ctrlInitFlag)
-			{
-				// ensure that the original end-effector position and orientation are set correctly.
-				EndEff_r_org = rpyFromRot(rot);
-				wrist_r	=	EndEff_r_org;
-
-				EndEff_p_org = pos;
-				wrist_p = EndEff_p_org;
-
-				nextState = false;
-				ctrlInitFlag = false;
-
-				std::cerr << "DualArm::HSA::Left Arm Approach State:  " << cur_time << std::endl;
-			}
-
-			// Call IK Controller
-			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
-
-		}
-		break;
-		// ------------------------- Rotation ---------------------------
-		case twoArm_hsaRotation:
-		{}
-		break;
-
-		// ----------------------- Insertion ------------------
-		case twoArm_hsaInsertion:
-		{
-			// Initialize
-			if(ctrlInitFlag)
-			{
-				nextState 		= false;
-				ctrlInitFlag 	= false;
-
-				std::cerr << "DualArm--Left Arm Insertion state:  " << cur_time << std::endl;
-			}
-
-			/*------------------------ LOCAL COORDINATES -------------------------------*/
-			// From a frontal plane: looking towards the front of the robot
-			// Right Arm Coordinates using RHR are as follows:
-			// +X: Left 		(SIDE_AXIS)
-			// +Y: Down			(UP_AXIS)
-			// +Z: Forward		(FORWARD_AXIS)
-
-			// Force Controller Goal
-			DesForce(SIDE_AXIS)	=	  6.50;
-			DesForce(UP_AXIS)	=	- 7.00;
-			DesForce(FWD_AXIS) 	=	-13.85;
-
-			// Moment Controller Goal
-			DesMoment(UP_AXIS)	=	3.750*ROTATIONAL_FORCE;
-
-			// Call the controller
-			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce,DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
-		}
-		break;
-
-		// ----------------------- Sub Insertion ------------------
-		case twoArm_hsaSubInsertion:
-		{
-			if(ctrlInitFlag)
-			{
-				nextState	=	false;
-				ctrlInitFlag	=	false;
-
-				std::cerr << "DualArm::HSA::Left Arm Sub-Insertion State:  "  << cur_time << std::endl;
-			}
-
-			/*------------------------ LOCAL COORDINATES -------------------------------*/
-			// From a frontal plane: looking towards the front of the robot
-			// Right Arm Coordinates using RHR are as follows:
-			// +X: Left 		(SIDE_AXIS)
-			// +Y: Down			(UP_AXIS)
-			// +Z: Forward		(FORWARD_AXIS)
-
-			// Force Controller Goal
-			DesForce(SIDE_AXIS) =	11.50;
-			DesForce(UP_AXIS)	=	-5.90;						//	DesForce(UP_AXIS)	=	1.5000*VERTICAL_FORCE;
-			DesForce(FWD_AXIS) 	=	-12.10;
-
-			// Moment Controller Goal
-			DesMoment(UP_AXIS)	=	4.00*ROTATIONAL_FORCE;
-
-			// Call Controller
-			ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, ForceMomentComposition, DesForce, DesMoment, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian); //ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, MomentForceComposition, DesMoment, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
-			ret = StateSwitcher(approach, State, ErrorNorm1, ErrorNorm2, pos, rot, CurrAngles, avgSig, cur_time);
-		}
-		break;
-
-		// ----------------------- Mating ------------------
-		case twoArm_hsaMating:
-		{
-
-			std::cerr << "DualArm::HSA::Left Arm Mating State:  "  << cur_time << std::endl;
-			avgSig = avgSig * exp(-cur_time/2.5);
-		}
-		break;
-
-		case twoArm_hsaFinish:
-		{
-			std::cout << "DualArm::HSA::Left Arm Finish state." << endl;
-		}
-		break;
-		}
-	}
 	else
 		return -1;
 
 	/***************************************************************** Write data to file ***********************************************************************************/
-	// if state 1 or 2, return the endeffector (handPos) position, if state 3 or 4 return handpos<-wrist2endeffector
+	// if state 1 or 2, return the end-effector (handPos) position, if state 3 or 4 return handpos<-wrist2endeffector
 
 	if(DB_WRITE)
 	{
-		if(approach==SideApproach  	|| approach==FailureCharacerization ||
-		   approach==Left_Arm_Hold 	|| approach==Right_Arm_Push)
+		if(approach==SideApproach  	|| approach==FailureCharacerization || approach==Male_Push_Female_Hold 	|| approach==Male_Hold_Female_Push || approach==Male_Push_Female_Push)
 		{
 			// Temp Variables
 			int 				whatArm=0; 	// 0 represents Left, 1 represents the Right arm.
@@ -1232,7 +1307,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			dvector6 worldForce;
 
 			// Declare which arm is being used: look for left arm approaches
-			if(approach==Left_Arm_Hold)
+			if(axis==0) // Used to identify right arm.
 				whatArm = 0;
 			else
 				whatArm = 1;
@@ -1342,6 +1417,9 @@ int AssemblyStrategy::ControlCompositions( JointPathPtr 	m_path,								// Conta
 												dmatrix 		Jacobian,
 												dmatrix 		PseudoJacobian)
 {
+	// Local variable
+	int ret=0;
+
 	// Compute Timing
 	timeval startTime, endTime;
 	double duration = -1.0;
@@ -1713,21 +1791,24 @@ int AssemblyStrategy::ControlCompositions( JointPathPtr 	m_path,								// Conta
 		// Print out the duration of the function
 		std::cerr << "Duration of AssemblyStrategy::ControlComposition() is: " << duration << "ms." << std::endl;
 	}
-	return 0;
+	return ret;
 }
 
-// Switches states based on transition conditions
-int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
-										int& 		State,
-										double 		ErrorNorm1,
-										double 		ErrorNorm2,
-										vector3 	pos,
-										matrix33 	rot,
-										dvector6 	CurJointAngles,
-										dvector6 	currForces,
-										double 		cur_time)
+// Switches states based on transition conditions.
+// TODO: When using both the right and left arm, these conditions need to be separated.
+// Otherwise there may be false positives, that is, the left arm condition is true for the right arm, when the latter is not true.
+// Need to find a way to disambiguate both of these.
+int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
+										CtrlStrategy 	approach,
+										int& 			State,
+										double 			ErrorNorm1,
+										double 			ErrorNorm2,
+										vector3 		pos,
+										matrix33 		rot,
+										dvector6 		CurJointAngles,
+										dvector6 		currForces,
+										double 			cur_time)
 {
-	//        std::cerr << "pos:" << pos(2) << std::endl;
 	if(approach==PivotApproach)
 	{
 		// Local Variables
@@ -1911,83 +1992,159 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 		} // End Switch
 	} // End if == SideApproach
 	/*---------------------------------------------------------------------------------DUAL ARM SIDE APPROACH------------------------------------------------------------------------------------------------------------------------*/
-	else if(approach==Left_Arm_Hold || approach==Right_Arm_Push)
+	else if(approach==Male_Push_Female_Hold || approach==Male_Hold_Female_Push || approach==Male_Push_Female_Push)
 	{
 		Vector3 position(0), attitude(0);
 		position = pos;
 		attitude = rpyFromRot(rot);
 
 		switch (State) {
-		case TWOARM_hsaApproach2Rotation:
-		{
-			float endApproachTime = ex_time[1];
-
-			if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaApproach2Rotation." << std::endl;
-			if(cur_time > (endApproachTime*0.80))
+			//-------------------------------------------------- Approach2Rotation --------------------------------------------------
+			case TWOARM_hsaApproach2Rotation:
 			{
-				// Measure the Fx Force Signal coming from the right arm.
-				if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx) //(avgSig(Fx) < -TwoArm_SA_App2Rot_Fx)   //
+				float endApproachTime = ex_time[1];
+
+				if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaApproach2Rotation." << std::endl;
+				if(cur_time > (endApproachTime*0.80))
 				{
-					NextStateActions(cur_time,hsaHIROTransitionExepction);
-					std::cerr << "Transition Fx value occured at: " << cur_time << "and with an Fx value of: " << avgSig(Fx)
-							<< ".\n The threshold is set to: " << TwoArm_SA_App2Rot_Fx << std::endl;
+					// Right Arm
+					// Measure the Fx Force Signal coming from the active arm.
+					if(axis==0 && approach==Male_Push_Female_Hold) {
+						if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx)
+						{
+							NextStateActions(cur_time,hsaHIROTransitionExepction);
+							std::cerr << "Right Arm: Transition Fx value ocurred at: " << cur_time << " and with an Fx threshold value of: " << avgSig(Fx)
+									<< ".\n The threshold is set to: " << TwoArm_SA_App2Rot_Fx << std::endl;
+						}
+					}
+					// Left Arm
+					if(axis==1 && approach==Male_Hold_Female_Push) {
+						if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx_L)
+						{
+							NextStateActions(cur_time,hsaHIROTransitionExepction);
+							std::cerr << "Left Arm: Transition Fx value ocurred at: " << cur_time << " and with an Fx threshold value of: " << avgSig(Fx)
+									<< ".\n The threshold is set to: " << TwoArm_SA_App2Rot_Fx_L << std::endl;
+						}
+					}
 				}
 			}
-		}
-		break;
-
-		case TWOARM_hsaRotation2Insertion:
-		{
-			float endApproachTime = ex_time[1];
-
-			if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaRotation2Insertion: CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
-			if(cur_time > endApproachTime )
-			{
-				// Look for the right arm's 4th joint.
-				if(DEBUG) std::cerr << "Diro :: CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
-
-				// If wrist angle surpasses the threshold transition
-				if(CurJointAngles(4) < TwoArm_SA_Rot2Ins_My)
-				{
-					NextStateActions(cur_time, hsaHIROTransitionExepction);
-					std::cerr << "Diro :: change to Insertion state" << std::endl;
-				}
-			}
-		}
-		break;
-
-		case TWOARM_hsaInsertion2InsPartB:
-		{
-			if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaInsertion2InsPartB" << std::endl;
-
-			if(CurJointAngles(My) < TwoArm_SA_Ins2SubIns_My)
-			{
-				hsaHIROTransitionExepction = Ins2InsSubPart;
-				NextStateActions(cur_time, hsaHIROTransitionExepction);
-				hsaHIROTransitionExepction = normal;
-
-			}
-		}
-		break;
-
-		case TWOARM_hsaInsPartB2Mating:
-		{
-			if(CurJointAngles(My) < -0.275851)
-			{
-				if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaInsPartB2Mating" << std::endl;
-				NextStateActions(cur_time, hsaHIROTransitionExepction);
-
-				//					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
-				NextStateActions(cur_time+mating2EndTime, hsaHIROTransitionExepction);
-				hsaHIROTransitionExepction = normal;
-
-				return PA_FINISH;
-			}
-		}
-		break;
-
-		default:
 			break;
+
+			//-------------------------------------------------- Rotation2Insertion --------------------------------------------------
+			case TWOARM_hsaRotation2Insertion:
+			{
+				float endApproachTime = ex_time[1];
+				if(cur_time > endApproachTime )
+				{
+					// Right Arm
+					// Look for the right arm's 4th joint.
+					if(axis==0 && approach==Male_Push_Female_Hold) {
+						if(DEBUG) std::cerr << "TWOARM_hsaRotation2Insertion::RightArm::CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
+
+						// If wrist angle surpasses the threshold transition
+						if(CurJointAngles(4) < TwoArm_SA_Rot2Ins_My)
+						{
+							NextStateActions(cur_time, hsaHIROTransitionExepction);
+							std::cerr << "TWOARM_hsaRotation2Insertion :: change to Insertion state" << std::endl;
+						}
+					}
+
+					// Left Arm Conditions
+					if(axis==1 && approach==Male_Hold_Female_Push) {
+						if(DEBUG) std::cerr << "TWOARM_hsaRotation2Insertion::LeftArm::CurJointAngles(4):  " << CurJointAngles(4) << std::endl;
+
+						// If wrist angle surpasses the threshold transition
+						if(CurJointAngles(4) < TwoArm_SA_Rot2Ins_My_L)
+						{
+							NextStateActions(cur_time, hsaHIROTransitionExepction);
+							std::cerr << "TWOARM_hsaRotation2Insertion :: change to Insertion state" << std::endl;
+						}
+					}
+				}
+			}
+			break;
+
+			//-------------------------------------------------- Insertion2InsertionB --------------------------------------------------
+			case TWOARM_hsaInsertion2InsPartB:
+			{
+				float endApproachTime = ex_time[1];
+				if(cur_time>endApproachTime)	{
+					// Right Arm
+					// Look at the
+					if(axis==0 && approach==Male_Push_Female_Hold) {
+						if(CurJointAngles(My) < TwoArm_SA_Ins2SubIns_My)
+						{
+							hsaHIROTransitionExepction = Ins2InsSubPart;
+							NextStateActions(cur_time, hsaHIROTransitionExepction);
+							hsaHIROTransitionExepction = normal;
+							std::cerr << "TWOARM_hsaInsertion2InsertionB::RightArm::Change to Insertion B state" << std::endl;
+						}
+					}
+
+					// Left Arm
+					//
+					if(axis==1 && approach==Male_Hold_Female_Push) {
+						if(CurJointAngles(4) < TwoArm_SA_Ins2SubIns_My_L)
+						{
+							hsaHIROTransitionExepction = Ins2InsSubPart;
+							NextStateActions(cur_time, hsaHIROTransitionExepction);
+							hsaHIROTransitionExepction = normal;
+							std::cerr << "TWOARM_hsaInsertion2InsertionB::LeftArm::Change to Insertion B state" << std::endl;
+						}
+					}
+				}
+			}
+			break;
+
+			//-------------------------------------------------- Insertion2Mating --------------------------------------------------
+			case TWOARM_hsaInsPartB2Mating:
+			{
+				// Right Arm
+				// Look for the right arm's tth joint.
+				if(axis==0 && approach==Male_Push_Female_Hold) {
+					if(CurJointAngles(My) < TwoArm_SA_SubIns2Mat) // -13.3 degrees
+					{
+						if(DEBUG) std::cerr << "DualArmTransition::RightArm::TWOARM_hsaInsPartB2Mating" << std::endl;
+						hsaHIROTransitionExepction = normal;
+						NextStateActions(cur_time, hsaHIROTransitionExepction);
+
+						// Set an Ending Time
+						END_TIME=cur_time+mating2EndTime;
+					}
+				}
+
+				// Left Arm
+				// Look for the left arm's 5th joint.
+				if(axis==0 && approach==Male_Push_Female_Hold) {
+					if(CurJointAngles(My) < TwoArm_SA_SubIns2Mat_L) // -13.5 degrees
+					{
+						if(DEBUG) std::cerr << "DualArmTransition::LeftArm::TWOARM_hsaInsPartB2Mating" << std::endl;
+						hsaHIROTransitionExepction = normal;
+						NextStateActions(cur_time, hsaHIROTransitionExepction);
+
+						// Set an Ending Time
+						END_TIME=cur_time+mating2EndTime;
+					}
+				}
+
+					return PA_FINISH;
+			}
+			break;
+
+			//-------------------------------------------------- Mating2Finish --------------------------------------------------
+			case TWOARM_hsaMating2FinishTime:
+			{
+				if(cur_time==END_TIME) // End time is set by NextStateActions.
+				{
+					if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaMating2Finish" << std::endl;
+					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
+					NextStateActions(END_TIME, hsaHIROTransitionExepction); exit(0); // Terminate the program
+				}
+			}
+			break;
+
+			default:
+				break;
 		}
 
 	}// End if== TwoArm_HSA
@@ -2075,12 +2232,12 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 		// Compute the new END_EFFECTOR position.
 		// Original_Position + (New_Position - Original_Position)*scaling function
 		EndEff_p =  EndEff_p_org(0) + (x_pos[i]-EndEff_p_org(0)) * coswt,						// x_pos comes from the waypoints in setRobot()
-				EndEff_p_org(1) + (y_pos[i]-EndEff_p_org(1)) * coswt,
-				EndEff_p_org(2) + (z_pos[i]-EndEff_p_org(2)) * coswt;
+					EndEff_p_org(1) + (y_pos[i]-EndEff_p_org(1)) * coswt,
+					EndEff_p_org(2) + (z_pos[i]-EndEff_p_org(2)) * coswt;
 
 		EndEff_r =  EndEff_r_org(0) + ( roll_angle[i]-EndEff_r_org(0)) * coswt,
-				EndEff_r_org(1) + (pitch_angle[i]-EndEff_r_org(1)) * coswt,
-				EndEff_r_org(2) + (  yaw_angle[i]-EndEff_r_org(2)) * coswt;
+					EndEff_r_org(1) + (pitch_angle[i]-EndEff_r_org(1)) * coswt,
+					EndEff_r_org(2) + (  yaw_angle[i]-EndEff_r_org(2)) * coswt;
 
 		//		hand[0] = 	lhand_org + (l_hand[i] - lhand_org) * coswt;
 		//		hand[1] = 	rhand_org + (r_hand[i] - rhand_org) * coswt;
@@ -2091,13 +2248,13 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 	else if(i<T)
 	{
 		coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 			// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-		EndEff_p = x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-				y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
-				z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
+		EndEff_p = 	x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
+					y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
+					z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
 
-		EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+divPoint(3)-roll_angle[i-1])  * coswt,
-				pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
-				yaw_angle[i-1]   + (   yaw_angle[i]+divPoint(5)-yaw_angle[i-1])   * coswt;
+		EndEff_r = 	roll_angle[i-1]  + ( roll_angle[i] +divPoint(3)-roll_angle[i-1])  * coswt,
+					pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
+					yaw_angle[i-1]   + ( yaw_angle[i]  +divPoint(5)-yaw_angle[i-1])   * coswt;
 		//		 hand[0] = 	l_hand[i-1] + (l_hand[i] - l_hand[i-1]) * coswt;
 		//		 hand[1] = 	r_hand[i-1] + (r_hand[i] - r_hand[i-1]) * coswt;
 	}
@@ -2106,12 +2263,12 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 	//---------------	----------------------------------------------------------------------------------------------------------------------------
 	else
 	{
-		EndEff_p = x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
-				y_pos[i-1]			+divPoint(1),
-				z_pos[i-1]			+divPoint(2);
-		EndEff_r = roll_angle[i-1]	+divPoint(3),
-				pitch_angle[i-1]	+divPoint(4),
-				yaw_angle[i-1]		+divPoint(5);
+		EndEff_p = 	x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
+					y_pos[i-1]			+divPoint(1),
+					z_pos[i-1]			+divPoint(2);
+		EndEff_r = 	roll_angle[i-1]		+divPoint(3),
+					pitch_angle[i-1]	+divPoint(4),
+					yaw_angle[i-1]		+divPoint(5);
 		//		hand[0] = 	l_hand[i-1];
 		//		hand[1] = 	r_hand[i-1];
 		ret = false;
@@ -2154,7 +2311,7 @@ int ::AssemblyStrategy::manipulationTest(TestAxis		axis,
 	//	clock_t endTime;
 	//	clock_t clockTicksTaken;
 
-	::AssemblyStrategy::ctrlComp type;
+	::AssemblyStrategy::ctrlComp type=ForceComposition;
 	//double timeInSeconds = 0.0,
 	double ErrorNorm1 = 0.0, ErrorNorm2 = 0.0;
 
@@ -2546,7 +2703,7 @@ void AssemblyStrategy::OpenFiles(int strategyType)
 	if(DEBUG) std::cerr << "\nAssemblyStrategy::OpenFiles - Entering" << std::endl;
 
 	//--------------------------------------- Left Arm Files ------------------------------------------//
-	if(strategyType==Left_Arm_Hold || strategyType==Left_Arm_Push)
+	if(strategyType==Male_Push_Female_Hold || strategyType==Male_Hold_Female_Push || strategyType==Male_Push_Female_Push)
 	{
 		/*************************************** Current Joint Angles ***************************************/
 		ostr_anglesL.open(strAnglesL);			// "Angles.dat");
@@ -2555,7 +2712,6 @@ void AssemblyStrategy::OpenFiles(int strategyType)
 
 		/*************************************** EndEffector Cartesian Positions (World Coordinates) ***************************************/
 		ostr_cartPosL.open(strCartPosL); 		// "CartPos.dat");
-		//	#endif
 		if (!ostr_cartPosL.is_open())
 			std::cerr << strCartPosL << " was not  opened." << std::endl;
 
@@ -2588,7 +2744,6 @@ void AssemblyStrategy::OpenFiles(int strategyType)
 
 		/*************************************** EndEffector Cartesian Positions (World Coordinates) ***************************************/
 		ostr_cartPos.open(strCartPos); 		// "CartPos.dat");
-		//	#endif
 		if (!ostr_cartPos.is_open())
 			std::cerr << strCartPos << " was not  opened." << std::endl;
 
@@ -2924,7 +3079,7 @@ bool AssemblyStrategy::IK_arm(JointPathPtr arm_path, Link *base, Link *waist, co
 	bp = trans(base->attitude())*(p - base->p);
 	bR = trans(base->attitude())*R;
 
-	void *ik_handle;
+	void *ik_handle=0;
 	bool (*ik_)(const IKReal*, const IKReal*, const IKReal*,std::vector<IKSolution>&);
 
 	if(arm_path->joint(n-1)->name=="RARM_JOINT5"){
@@ -3008,4 +3163,28 @@ bool AssemblyStrategy::checkArmLimit(JointPathPtr arm_path)
 	}
 	return true;
 
+}
+
+double AssemblyStrategy::noise()
+{
+	/* Setup constants */
+	const static int q = 15;
+	const static float c1 = (1 << q) - 1;
+	const static float c2 = ((int)(c1 / 3)) + 1;
+	const static float c3 = 1.f / c1;
+
+	/* random number in range 0 - 1 not including 1 */
+	double random = 0.f;
+
+	/* the white noise */
+	double noise = 0.f;
+
+	//for (int i = 0; i < numSamples; i++)
+	//{
+	// Generate noise with mean 0 and variance from -1 to 1
+	random = ((float)rand() / (float)(RAND_MAX + 1));
+	noise = (2.f * ((random * c2) + (random * c2) + (random * c2)) - 3.f * (c2 - 1.f)) * c3;
+	noise = noise/2000; // 0.5mm
+	//}
+	return 0; // noise;
 }

@@ -57,7 +57,7 @@ typedef tvmet::Vector<double, 6> vector6;
 // GLOBAL VARIABLES
 //---------------------------------------------------------------------------------------------------------------------------
 // String length
-#define STR_LEN			    		256
+#define STR_LEN			    	256
 //---------------------------------------------------------------------------------------------------------------------------
 // Degrees of Freedom for body and arm
 #define ARM_DOF               		 6			// Right and left arm only have 6 DOF.
@@ -67,7 +67,7 @@ typedef tvmet::Vector<double, 6> vector6;
 #define HISTBUFF_LENGTH 	 		12 			// This value determines the size of the possible number of samples to be included to perform a moving average for data signals.
 //---------------------------------------------------------------------------------------------------------------------------
 // FORCE CONSTANTS FOR CONTROL POLICY
-#define CONST_FORCE_STATE3     		 5.0		// All forces need to be in world coordinates. Used in Hiro Side Approach (HSA) execution.
+#define CONST_FORCE_STATE3     	 5.0		// All forces need to be in world coordinates. Used in Hiro Side Approach (HSA) execution.
 #define VERTICAL_FORCE	      		10.0		// HSA: Used in state 3 and 4 of pivot approach/stage 3 of side approach. pos value pushes down. 10kg Force pointing downwards
 #define TRANSVERSE_FORCE      		0.25		// HSA: Moves out of the screen. Towards the desired wall of the mold in the side approach
 #define HORIZONTAL_FORCE      		0.30		// HSA: There is a natural push to the left by the robot and gravity. This compensates for that during the rotation.
@@ -80,14 +80,22 @@ typedef tvmet::Vector<double, 6> vector6;
 #define HSA_App2Rot_Fx				9.0			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 #define HSA_Rot2Ins_My				0.8			// HSA: Transition condition between Approach and Rotation stages. Used in Fx = 9N
 
-// Dual Arm Transitional Parameters
-#define TwoArm_SA_App2Rot_Fx		 0.95 		//0.45//5.6//9. // TwoArm_SA: Transition condition between Approach and Rotation stages.
-#define TwoArm_SA_Rot2Ins_My		-0.0332226	// TwoArm_SA: Transition condition between Rotation and Insertion stages.
-#define TwoArm_SA_Ins2SubIns_My		-0.167044
+// Dual Arm Transitional Parameters.
+/** Right Arm **/
+#define TwoArm_SA_App2Rot_Fx		 0.95 			//0.45//5.6//9. // TwoArm_SA: Transition condition between Approach and Rotation stages.
+#define TwoArm_SA_Rot2Ins_My		-0.0332226		// ~about -1.90 degrees. TwoArm_SA: Transition condition between Rotation and Insertion stages.
+#define TwoArm_SA_Ins2SubIns_My	-0.167044
+#define TwoArm_SA_SubIns2Mat 		-0.232128791
+/** Left Arm **/
+#define TwoArm_SA_App2Rot_Fx_L		 0.95 			//0.45//5.6//9. // TwoArm_SA: Transition condition between Approach and Rotation stages.
+#define TwoArm_SA_Rot2Ins_My_L		 0.00 			// about 0 deg: -0.104719755	// ~about -6.00 degrees. TwoArm_SA: Transition condition between Rotation and Insertion stages.
+#define TwoArm_SA_Ins2SubIns_My_L	-0.122173048	// about -7 deg.
+#define TwoArm_SA_SubIns2Mat_L		-0.274016693	// about -15.7 for approximate mating. 16.9 (with shaking) for perfect mating. degrees
+
 //---------------------------------------------------------------------------------------------------------------------------
 // Math variables
-#define PI 		      				3.1416
-#define RAD2DEG            			180.0/PI
+#define PI 		      			3.1416
+#define RAD2DEG            		180.0/PI
 //---------------------------------------------------------------------------------------------------------------------------
 
 // Class Forwarding
@@ -128,10 +136,16 @@ class AssemblyStrategy {
     SideApproach,
     FailureCharacerization,
     // ==== Dual Arm Strategies for Hiro Side Approach======
-    Left_Arm_Hold,		// These 4 strategies follow a push-hold or push-push coordination scheme.
-    Left_Arm_Push,
-    Right_Arm_Hold,
-    Right_Arm_Push
+//    Left_Arm_Hold,
+//    Left_Arm_Push,
+//    Right_Arm_Hold,
+//    Right_Arm_Push
+    Male_Push_Female_Hold,
+    Male_Hold_Female_Push,
+    Male_Push_Female_Push
+//#define MALE_PUSH_FEMALE_HOLD		6
+//#define MALE_HOLD_FEMALE_PUSH      7
+//#define MALE_PUSH_FEMALE_PUSH		8
   };
 
   enum TestAxis
@@ -197,7 +211,6 @@ class AssemblyStrategy {
 	  hsaFinish,
   };
 
-  //  ==== Diro ====
   /*---------------------------------------- States: TWOARM Side Approach -------------------------------------------*/
   enum TWOARM_HSA_States
   {
@@ -273,7 +286,12 @@ class AssemblyStrategy {
   double	state3_zPos;				// Used to identify the position in the z-direction of the wrist
   double	state3_zPrevPos;			// Keeps the previous record
   double 	SA_S4_Height;
+
+  // Ending Times
+  float 	matingTime;					// Time at which mating starts. Used in quadratic equation to dampen force signals in simulation.
+  float 	matingTimeL;				// Same as above for left arm.
   float		mating2EndTime;				// Hard-coded time interval used to indicate the end-time of the task. It is some x secs after mating has ocurred.
+  float  	END_TIME; // Time in which the task will terminate
 
   // Control Basis Objects
   ControlBasis* c1;
@@ -333,28 +351,29 @@ class AssemblyStrategy {
   dvector6 		avgSig;													// contains filtered/moving average result signal
   /**************************************************************************** Methods **********************************************************************************/
 
-  int StateMachine(TestAxis 		axis,																		// Used exclusively for AssemblyStrategy::manipulatorTest
-				   CtrlStrategy 	approach,																	// Straight Line Approach or Pivot Approach
-				   JointPathPtr 	m_path,																		// Path structure. Use for right/left arm.
-				   BodyPtr 			bodyPtr,																	// Body structure. Can access all 15 DOF
-				   double 			cur_time,																	// Internal simulation time
-				   vector3& 		pos,																		// TCP position
-				   matrix33& 		rot,																		// TCP rotation
-				   dvector6 		currForces,																	//	Forces in world coordinates
-				   dvector6& 		JointAngleUpdate,
-				   dvector6& 		CurrAngles,
-				   dmatrix 			Jacobian,
-				   dmatrix 			PseudoJacobian);
+  int StateMachine( TestAxis 		axis,																			// Used exclusively for AssemblyStrategy::manipulatorTest
+					   CtrlStrategy 	approach,																	// Straight Line Approach or Pivot Approach
+					   JointPathPtr 	m_path,																		// Path structure. Use for right/left arm.
+					   BodyPtr 			bodyPtr,																	// Body structure. Can access all 15 DOF
+					   double 			cur_time,																	// Internal simulation time
+					   vector3& 		pos,																		// TCP position
+					   matrix33& 		rot,																		// TCP rotation
+					   dvector6 		currForces,																	//	Forces in world coordinates
+					   dvector6& 		JointAngleUpdate,
+					   dvector6& 		CurrAngles,
+					   dmatrix 			Jacobian,
+					   dmatrix 			PseudoJacobian);
 
-  int StateSwitcher(CtrlStrategy 	approach,
-					int& 			State,
-					double 			ErrorNorm1,
-					double 			ErrorNorm2,
-					vector3 		pos,
-					matrix33 		rot,
-					dvector6 		CurJointAngles,
-					dvector6		currForces,
-					double 			cur_time);																			// Switches the states of the state machine according to approach.
+  int StateSwitcher( TestAxis 		axis,																	// Used to tell whether using the right arm or left here.
+		  	  	  	  	CtrlStrategy 	approach,
+						int& 			State,
+						double 			ErrorNorm1,
+						double 			ErrorNorm2,
+						vector3 		pos,
+						matrix33 		rot,
+						dvector6 		CurJointAngles,
+						dvector6		currForces,
+						double 			cur_time);																			// Switches the states of the state machine according to approach.
 
   void NextStateActions(double cur_time, int insertionStateSubFlag);													// Fixed number of operations to be done between switching of states
 
@@ -405,6 +424,7 @@ class AssemblyStrategy {
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);
   void FreeResources(ctrlComp type);
+  double noise();
 
   // Files
   void OpenFiles(int strategyType);
