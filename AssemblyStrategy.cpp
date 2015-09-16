@@ -374,7 +374,7 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 	// 1) Read user specified files. If null strings, go with default values. Trajectory File for State1. If not null, then read. Otherwise we used pre-saved values that were written during the constructor.
 	//--------------------------------------------------------------------------------------------------------------------------------
 
-	/*------------------------- Generate Left Arm Files if any Dual Arm Coordination Policy is Used-------------------------*/
+	/*------------------------- Generate Left and Right Arm Files if any Dual Arm Coordination Policy is Used-------------------------*/
 	if(strategyType==Male_Push_Female_Hold || strategyType==Male_Hold_Female_Push || strategyType==Male_Push_Female_Push)
 	{
 		if(abs(strcmp(TrajState1,"")))
@@ -403,8 +403,36 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 		// world Forces File. If not null, then read
 		if(abs(strcmp(worldForcesDir,"")))
 			strcpy(strForcesWorldL,worldForcesDir);
+
+		// Right Arm
+		if(abs(strcmp(TrajState1,"")))
+			strcpy(strTrajState1,TrajState1);
+
+		// Trajectory File for State2. If not null, then read
+		if(abs(strcmp(TrajState2,"")))
+			strcpy(strTrajState2,TrajState2);
+
+		// Joint Angles File. If not null, then read
+		if(abs(strcmp(AnglesDir,"")))
+			strcpy(strAngles,AnglesDir);
+
+		// Cartesian Positions File. If not null, then read
+		if(abs(strcmp(CartPosDir,"")))
+			strcpy(strCartPos,CartPosDir);
+
+		// State File. If not null, then read
+		if(abs(strcmp(StateDir,"")))
+			strcpy(strState,StateDir);
+
+		// local Forces File. If not null, then read
+		if(abs(strcmp(ForcesDir,"")))
+			strcpy(strForces,ForcesDir);
+
+		// world Forces File. If not null, then read
+		if(abs(strcmp(worldForcesDir,"")))
+			strcpy(strForcesWorld,worldForcesDir);
 	}
-	/*------------------------- Generate Right Arm Files regardless of Coordination Policy -------------------------*/
+	/*------------------------- Generate Right Arm Files Only -------------------------*/
 	else
 	{
 		if(abs(strcmp(TrajState1,"")))
@@ -1057,7 +1085,7 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 					// FORCE Controller Goal without Gravity Compensation
 					if(axis==1) {
 						DesForce(SIDE_AXIS) =	  9.00;
-						DesForce(UP_AXIS)	=     9.00;
+						DesForce(UP_AXIS)	=     9.10;
 						DesForce(FWD_AXIS) 	=	-18.00;
 
 						// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
@@ -1133,7 +1161,7 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 					// Left Arm
 					if(axis==1) {
 						DesForce(SIDE_AXIS) =	  9.00;
-						DesForce(UP_AXIS)	=     9.00;
+						DesForce(UP_AXIS)	=     8.90; // 9.00
 						DesForce(FWD_AXIS) 	=	-18.50;
 
 						// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
@@ -1206,12 +1234,12 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 					// FORCE Controller Goal without Gravity Compensation
 					// Left Arm
 					if(axis==1) {
-						DesForce(SIDE_AXIS) =	  9.50;
-						DesForce(UP_AXIS)	=     9.00;
-						DesForce(FWD_AXIS) 	=	-16.50;
+						DesForce(SIDE_AXIS) =	 11.00;
+						DesForce(UP_AXIS)	=     8.00; // 9.00;
+						DesForce(FWD_AXIS) 	=	-17.50;
 
 						// MOMENT Controller Goal (multiply by -1 to compensate for change in y-axes)
-						DesMoment(UP_AXIS)	= 4.25*ROTATIONAL_FORCE;
+						DesMoment(UP_AXIS)	= 4.00*ROTATIONAL_FORCE;
 					}
 					// else: for right arm all values are zero. No need to assign.
 				}
@@ -1247,9 +1275,34 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 				std::cerr << "DualArm::HSA::Right Arm Mating State: " << cur_time << std::endl;
 			}
 
-			for(int i=0;i<6;i++)
-				avgSig(i)=avgSig(i)-avgSig(i)*pow((cur_time-matingTime),2); // This quadratic kills the signals after about one second. //avgSig(i) = avgSig(i)*exp(-cur_time/2.5);
+				#if SIMULATION
+					// 1. Male Push
+					if(approach==Male_Push_Female_Hold)
+					{
+						// FORCE Controller Goal without Gravity Compensation
+						// Right Arm
+						if(axis==0) {
+							for(int i=0;i<6;i++)
+								avgSig(i)=avgSig(i)-avgSig(i)*pow((cur_time-matingTime),2); // This quadratic kills the signals after about one second. //avgSig(i) = avgSig(i)*exp(-cur_time/2.5);
+						}
+						// else: for right arm all values are zero. No need to assign.
+					}
+					// 2. Female Push
+					else if(approach==Male_Hold_Female_Push)
+					{
+						if(axis==1)
+							for(int i=0;i<6;i++)
+								avgSig(i)=avgSig(i)-avgSig(i)*pow((cur_time-matingTime),2); // This quadratic kills the signals after about one second. //avgSig(i) = avgSig(i)*exp(-cur_time/2.5);
+						// else: for right arm all values are zero. No need to assign.
+					}
+					// 3. Both male and female push (push-push)
+					else if(approach==Male_Push_Female_Push)
+					{
+						for(int i=0;i<6;i++)
+							avgSig(i)=avgSig(i)-avgSig(i)*pow((cur_time-matingTime),2); // This quadratic kills the signals after about one second. //avgSig(i) = avgSig(i)*exp(-cur_time/2.5);
+					}
 
+				#endif
 //			//Initialize
 //			if(ctrlInitFlag)
 //			{
@@ -1297,20 +1350,18 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 
 	if(DB_WRITE)
 	{
-		if(approach==SideApproach  	|| approach==FailureCharacerization || approach==Male_Push_Female_Hold 	|| approach==Male_Hold_Female_Push || approach==Male_Push_Female_Push)
+		if(approach==SideApproach || approach==FailureCharacerization || approach==Male_Push_Female_Hold || approach==Male_Hold_Female_Push || approach==Male_Push_Female_Push)
 		{
 			// Temp Variables
-			int 				whatArm=0; 	// 0 represents Left, 1 represents the Right arm.
+			int 				whatArm=0; 	// 0 represents Right, 1 represents the Left arm.
 			vector3 handPos, 	handRPY;
 			vector3 tempForce, 	tempMoment;
 			vector3 temp1,		temp2;
 			dvector6 worldForce;
 
 			// Declare which arm is being used: look for left arm approaches
-			if(axis==0) // Used to identify right arm.
-				whatArm = 0;
-			else
-				whatArm = 1;
+			if(axis==0) whatArm = 0; // Used to identify right arm.
+			else 	 	whatArm = 1;
 
 			/***************************** Force/Moment ********************************/
 			// Copy forces in world coordinates to local variable
@@ -1343,7 +1394,7 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 			 * 		 handRPY = rpyFromRot(m_path->joint(5)->attitude()); // Used in linux simulations
 			 * 		 handRPY = rpyFromRot(m_path->joint(5)->segmentAttitude());  }*/
 
-			WriteFiles( whatArm, 				// Tells which arm is being used: left or right.
+			WriteFiles( whatArm, 				// Tells which arm is being used: left or right. 0 for right. 1 for left.
 						cur_time, 				// Current time
 						CurrAngles, 			// Current robot joint angles
 						JointAngleUpdate, 		// Changes in Joint Angles in the last iteration
@@ -2115,8 +2166,8 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 
 				// Left Arm
 				// Look for the left arm's 5th joint.
-				if(axis==0 && approach==Male_Push_Female_Hold) {
-					if(CurJointAngles(My) < TwoArm_SA_SubIns2Mat_L) // -13.5 degrees
+				if(axis==1 && approach==Male_Hold_Female_Push) {
+					if(CurJointAngles(My) < TwoArm_SA_SubIns2Mat_L) // -15.7 for approximate mating. 16.9 (with shaking) for perfect mating. degrees
 					{
 						if(DEBUG) std::cerr << "DualArmTransition::LeftArm::TWOARM_hsaInsPartB2Mating" << std::endl;
 						hsaHIROTransitionExepction = normal;
@@ -2702,7 +2753,7 @@ void AssemblyStrategy::OpenFiles(int strategyType)
 
 	if(DEBUG) std::cerr << "\nAssemblyStrategy::OpenFiles - Entering" << std::endl;
 
-	//--------------------------------------- Left Arm Files ------------------------------------------//
+	//--------------------------------------- Left and Right Arm Files for anyDual Coordination Policy------------------------------------------//
 	if(strategyType==Male_Push_Female_Hold || strategyType==Male_Hold_Female_Push || strategyType==Male_Push_Female_Push)
 	{
 		/*************************************** Current Joint Angles ***************************************/
@@ -2732,9 +2783,48 @@ void AssemblyStrategy::OpenFiles(int strategyType)
 		ostr_Forces_worldL.open(strForcesWorldL);	// "localTorques.dat");
 		if (!ostr_Forces_worldL.is_open())
 			std::cerr << strForcesWorldL << " was not opened." << std::endl;
-	}
 
-	//--------------------------------------- Right Arm Files ------------------------------------------//
+		/*************************************** Current Joint Angles ***************************************/
+		ostr_angles.open(strAngles);			// "Angles.dat");
+		if (!ostr_angles.is_open())
+			std::cerr << strAngles << " was not opened." << std::endl;
+
+		/*************************************** EndEffector Cartesian Positions (World Coordinates) ***************************************/
+		ostr_cartPos.open(strCartPos); 		// "CartPos.dat");
+		if (!ostr_cartPos.is_open())
+			std::cerr << strCartPos << " was not  opened." << std::endl;
+
+		/*************************************** State Time Data ***************************************/
+		ostr_state.open(strState);			// "State.dat"); //
+		if (!ostr_state.is_open())
+			std::cerr << strState << " was not opened." << std::endl;
+
+		// Insert a value of 0 as the starting time of the state vector
+		ostr_state << "0.0" << endl;;
+
+		/*************************************** Current Wrench Data in Local Coordinates ***************************************/
+		ostr_Forces.open(strForces);			// "Torques.dat");
+		if (!ostr_Forces.is_open())
+			std::cerr << strForces << " was not opened." << std::endl;
+
+		/*************************************** Current Wrench Data in Local Coordinates ***************************************/
+		ostr_Forces_world.open(strForcesWorld);	// "localTorques.dat");
+		if (!ostr_Forces_world.is_open())
+			std::cerr << strForcesWorld << " was not opened." << std::endl;
+
+		/*************************************** Desired Joint Torque Data in Local Coordinates ***************************************/
+	//	ostr_des.open("TorquesLocal.dat");
+	//	if(!ostr_des.is_open())
+	//		std::cerr << "TorquesLocal.dat was not opened." << std::endl;
+
+		/*************************************** Actual Joint Torque Data in World Coordinates ***************************************/
+	//	ostr_cur.open("AnglesLocal.dat");
+	//	if(!ostr_cur.is_open())
+	//		std::cerr << "AnglesLocal.dat was not opened." << std::endl;
+
+		if(DEBUG) std::cerr << "\nAssemblyStrategy::OpenFiles - Exiting" << std::endl;
+	}
+	//--------------------------------------- Right Arm Files Only ------------------------------------------//
 	else
 	{
 		/*************************************** Current Joint Angles ***************************************/
@@ -2784,7 +2874,7 @@ void AssemblyStrategy::OpenFiles(int strategyType)
 /********************************************************************************************/
 void AssemblyStrategy::CloseFiles()
 {
-	//--------------------------------------- Left Arm Files ------------------------------------------//
+	//--------------------------------------- Right Arm Files ------------------------------------------//
 	// Robot Joint Angles
 	if(ostr_angles.is_open())
 		ostr_angles.close();
@@ -2858,7 +2948,7 @@ int AssemblyStrategy::WriteFiles(int whichSide, double& cur_time, dvector6& Curr
 {
 	//--------------------------------------------- Write data for LEFT ARM ------------------------------------------------//
 
-	if(whichSide==0)
+	if(whichSide==1)
 	{
 		/*************************** Write DesiredAngles file ****************************************/
 		ostr_anglesL << cur_time << "\t";

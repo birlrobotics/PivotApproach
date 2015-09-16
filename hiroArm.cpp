@@ -91,8 +91,8 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define TWOARM_HSA_FLAG			1			// Perform SideApproach with Dual Arms. 		If true, set others to zero.
 												// DualArm mode can execute 3 coordination schemes: male-push|female-hold or male-hold|female-push or male-push|female-push.												// Choose one of the following three:
-#define MALE_PUSH_FEMALE_HOLD_FLAG	0
-#define MALE_HOLD_FEMALE_PUSH_FLAG 1
+#define MALE_PUSH_FEMALE_HOLD_FLAG	1
+#define MALE_HOLD_FEMALE_PUSH_FLAG 0
 #define MALE_PUSH_FEMALE_PUSH_FLAG	0
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
