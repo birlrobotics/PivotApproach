@@ -3254,27 +3254,29 @@ bool AssemblyStrategy::checkArmLimit(JointPathPtr arm_path)
 	return true;
 
 }
-
+//--------------------------------------------------------------------------------------
+// noise()
+// This function returns a random number between -0.0005m (-0.5mm) and +0.0005m (0.5mm)
+// It can be added to introduce noise to the generations.
+// A random number generator between -5,000 and 5,000 is generated first, and then divided by 10M.
+// Depends on #include<stdlib>
+//--------------------------------------------------------------------------------------
 double AssemblyStrategy::noise()
 {
-	/* Setup constants */
-	const static int q = 15;
-	const static float c1 = (1 << q) - 1;
-	const static float c2 = ((int)(c1 / 3)) + 1;
-	const static float c3 = 1.f / c1;
+	// Local variable
+	double deviation=0.0;
 
-	/* random number in range 0 - 1 not including 1 */
-	double random = 0.f;
+	// Seed the random number generator with current time
+	srand (time(NULL));
 
-	/* the white noise */
-	double noise = 0.f;
+	// Generate a number between -5000 and 5000, then divide by 1M, to get millimeter level numbers
+	deviation = rand() % 10001 + (-5000);
 
-	//for (int i = 0; i < numSamples; i++)
-	//{
-	// Generate noise with mean 0 and variance from -1 to 1
-	random = ((float)rand() / (float)(RAND_MAX + 1));
-	noise = (2.f * ((random * c2) + (random * c2) + (random * c2)) - 3.f * (c2 - 1.f)) * c3;
-	noise = noise/2000; // 0.5mm
-	//}
-	return 0; // noise;
+	// Fix the number of decimal points
+	deviation /= 1000000;
+
+	if(DEBUG) std::cout << "The randomly generated noise for deviation is: " << deviation << std::endl;
+
+	return deviation;
 }
+
