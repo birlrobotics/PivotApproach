@@ -63,10 +63,15 @@ using std::ceil;
 #define GRAV_COMP_PARAM_FILE 		"./data/GravComp/gravCompParams.dat" // Saves grav comp parameters
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+// DESIGN PARAMETERS: SET THEM BEFORE YOU DO ANYTHING ELSE, then go to AssemblyStrategy.cpp and set those there.
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define DB_TIME 					0			// Used to print timing duration of functions
 #define DEBUG						0			// Used to print temporary cerr statements
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // TEST MODE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,17 +88,18 @@ using std::ceil;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define STRAIGHT_LINE_FLAG 		0 			// Masking Flags to determine which trajectory to choose
 #define PIVOT_APPROACH_FLAG		0			// Pivot approach. 								If true, STRAIGHT_LINE_FLAG=0,SIDE_APPROACH_FLAG=0, FAILURE_CHARAC_FLAG=0.
-#define SIDE_APPROACH_FLAG			0			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
+#define SIDE_APPROACH_FLAG			1			// Similar to PivotApproach but no alignment. 	If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,FAILURE_CHARAC_FLAG=0.
 #define FAILURE_CHARAC_FLAG		0			// Uses params from SideApproach. 				If true, STRAIGHT_LINE_FLAG=0,PIVOT_APPROACH_FLAG=0,SIDE_APPROACH_FLAG=0.
 												// If used, change the ConstraintForceSolver.cpp (L77) NEGATIVE_VELOCITY_RATIO_FOR_PENETRATION from 3.5 to 10 and compile (make).
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // DOUBLE ARM ASSEMBLY STRATEGY TYPES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define TWOARM_HSA_FLAG			1			// Perform SideApproach with Dual Arms. 		If true, set others to zero.
+#define TWOARM_HSA_FLAG			0			// Perform SideApproach with Dual Arms. 		If true, set others to zero.
 												// DualArm mode can execute 3 coordination schemes: male-push|female-hold or male-hold|female-push or male-push|female-push.												// Choose one of the following three:
-#define MALE_PUSH_FEMALE_HOLD_FLAG	1
+#define MALE_PUSH_FEMALE_HOLD_FLAG	0
 #define MALE_HOLD_FEMALE_PUSH_FLAG 0
 #define MALE_PUSH_FEMALE_PUSH_FLAG	0
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Strategy Values

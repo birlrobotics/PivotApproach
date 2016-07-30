@@ -46,12 +46,17 @@ extern "C" {
 #include <stdio.h>
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+// FIRST THING TO DO: is to set if you will be working with the left arm (T/F).
+// Then proceed to hiroArm.cpp and set design parameters there. And then to assemblyStrategy.cpp
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 // ARM CONFIGUARTIONS
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define LEFT       	0   // Used to indicate index for f_control
 #define RIGHT 			1 	// Used to indicate index for f_control
 
-#define LEFT_ARM  		1 	// Flag to enable left Arm computations.
+#define LEFT_ARM  		0 	// Flag to enable left Arm computations.
 #define GRAVITY_COMP 	0 	// Flag to activate gravity compensation through a control_mode. Automatically set to call the PivotApproach after that.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -72,13 +77,13 @@ extern "C" {
 #define GRAV_COMP_LEFT_WRENCH			"./data/Results/L_GC_Torques.dat"
 // World Coordinates
 #define GRAV_COMP_RIGHT_WORLD_WRENCH	"./data/Results/R_GC_worldTorques.dat"
-#define GRAV_COMP_LEFT_WORLD_WRENCH		"./data/Results/L_GC_worldTorques.dat"
+#define GRAV_COMP_LEFT_WORLD_WRENCH	"./data/Results/L_GC_worldTorques.dat"
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // Debugging
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define DB_TIME 			0			// Used to print timing duration of functions
 #define FORCE_TEST 		0 			// Used to test if force drivers are working in Old HIRO
-#define SIMULATION_TEST 	1	 		// Used to test certain pieces of code within the control method for testing purposes
+#define SIMULATION_RUN 	1	 		// Run if using simulation
 #define DEBUG 				0 			// Used to print temporary cerr statements
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -583,7 +588,7 @@ void forceSensorPlugin_impl::control(RobotState *rs, RobotState *mc)
 		}
 
 		// Simulation test is used to skip code that is enclosed in the if function.
-		if(SIMULATION_TEST)
+		if(SIMULATION_RUN)
 		{
 
 			// Timing

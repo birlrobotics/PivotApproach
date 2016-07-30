@@ -30,14 +30,15 @@
 //---------------------------------------------------------------------------------------------------------------------------
 // STL Libraries.
 #include <iostream>
-#include <math.h>
+#include <math.h>		// floor, pow
 #include <fstream>
 #include <sstream>
-#include <stdio.h>			// string operations
+#include <stdio.h>		// string operations
 #include <stdlib.h>		// posix
 #include <string.h>
 #include <string>
 #include <time.h>
+#include <random>
 #include <sys/time.h>
 //#include <sys/syspage.h>
 #include <vector>
@@ -424,7 +425,10 @@ class AssemblyStrategy {
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);
   void FreeResources(ctrlComp type);
-  double noise();
+  
+  // Noise Methods
+  double noise(float decimalPlaces);			// normal noise drawn from a unif. dist
+  double normalNoise(float decimalPlaces);		// normally distributed noise
 
   // Files
   void OpenFiles(int strategyType);

@@ -15,8 +15,8 @@
 // ----------------------------------------------------- PLEASE SEE MORE DESIGN PARAMETERS IN hiroArm ------------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
-#define HIRO					0
-#define TWOARM_HIRO			1
+#define HIRO					1
+#define TWOARM_HIRO				0
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSEMBLY_STRATEGY_AUTOMATA STATES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 //-----------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define DEBUG					0			// Used to print temporary cerr statements
+#define DEBUG					1			// Used to print temporary cerr statements
 #define DEBUG_AS		     	0           // Flag used to test functions with hard-coded data
 #define DB_WRITE               1           // Used to write angles, cart position, forces, and states to FILE.
 #define DB_TIME 				0           // Used to print timing duration of functions
@@ -573,11 +573,11 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_L
 		// These modification will be added to the waypoints entered in the failureCaseState1.dat saved in ~/src/OpenHRP3.0/IOserver/Controller/robot/HRP2STEP1/data/PivotApproach/FC. Unite are in meters.
 		// Test xDir1 divPoint()=;divPoint()=;divPoint()=;divPoint()=;divPoint()=;
 
-		divPoint(0) = noise(); // 0.00;	// x-axis
-		divPoint(1) = noise(); // 0.0083; 						// y-axis
-		divPoint(2) = 0.00;						// z-axis
-		divPoint(3) = 0.00; // ANGLE_DEVIATION_MAGNITDUE;	// ROLL PATH_DEVIATION_MAGNITUDE
-		divPoint(5) = 0.00;						// YALL
+		divPoint(0) = 0.00;		// x-axis
+		divPoint(1) = 0.00; 	// y-axis
+		divPoint(2) = 0.00;		// z-axis
+		divPoint(3) = 0.00; 	// ANGLE_DEVIATION_MAGNITDUE;	// ROLL PATH_DEVIATION_MAGNITUDE
+		divPoint(5) = 0.00;		// YALL
 	}
 
 	// For the first iteration they are both the same.
@@ -626,7 +626,7 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 	/*----------------------------- Local variables ----------------------------------------*/
 	//float 		MaxErrNorm = 0.0;
 	int 		ret = 0;
-
+	double 		noiseTemp = 0.0;
 	double 		filteredSig[6];
 	double 		temp[6];
 	double 		ErrorNorm1 = 0, ErrorNorm2 = 0;
@@ -657,8 +657,17 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 		//		ft->secOrderFilter(temp,filteredSig);
 		//		ft->secOrderFilter(currForces,avgSig);
 
-		for(int i=0;i<6;i++)
-			avgSig(i) = filteredSig[i];
+		for(int i=0;i<3;i++)
+		{
+			noiseTemp=noise(2); // normalNoise(1.0);
+			avgSig(i) = filteredSig[i]+noiseTemp; // Adding noise mean 0, std. dev 0.5
+		}
+		for(int i=3;i<6;i++)
+		{
+			noiseTemp=noise(3); // ormalNoise(3.0);
+			avgSig(i) = filteredSig[i]+noiseTemp; // Adding noise mean 0, std. dev 0.005
+		}
+
 		//ft->LowPassFilter(currForces,avgSig);
 		//std::cout<<avgSig(Fx)<<std::endl;
 	}
@@ -2255,8 +2264,8 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 	int  	T 			= ex_time.size();						// Read the number of waypoints contained in motion.dat
 
 	double 	m_pi 	= 3.141592;									// Pi
-	double 	coswt	= 0.0;										// Scaling function between waypoints
-
+	double 	coswt	= 0.0;	
+									// Scaling function between waypoints
 	// Trajectory-stage Divider
 	// If the time-stamp (from way-point file) is less than the accumulated time of our simulation, increase counter i.
 	for(int j=0; j<T; j++)
@@ -2282,13 +2291,13 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 
 		// Compute the new END_EFFECTOR position.
 		// Original_Position + (New_Position - Original_Position)*scaling function
-		EndEff_p =  EndEff_p_org(0) + (x_pos[i]-EndEff_p_org(0)) * coswt,						// x_pos comes from the waypoints in setRobot()
-					EndEff_p_org(1) + (y_pos[i]-EndEff_p_org(1)) * coswt,
-					EndEff_p_org(2) + (z_pos[i]-EndEff_p_org(2)) * coswt;
+		EndEff_p =  	EndEff_p_org(0) + (x_pos[i]-EndEff_p_org(0)) * coswt,						// x_pos comes from the waypoints in setRobot()
+						EndEff_p_org(1) + (y_pos[i]-EndEff_p_org(1)) * coswt,						// Introduce mm-level error for starting first set of way-points
+						EndEff_p_org(2) + (z_pos[i]-EndEff_p_org(2)) * coswt;
 
-		EndEff_r =  EndEff_r_org(0) + ( roll_angle[i]-EndEff_r_org(0)) * coswt,
-					EndEff_r_org(1) + (pitch_angle[i]-EndEff_r_org(1)) * coswt,
-					EndEff_r_org(2) + (  yaw_angle[i]-EndEff_r_org(2)) * coswt;
+		EndEff_r =  	EndEff_r_org(0) + ( roll_angle[i]-EndEff_r_org(0)) * coswt,
+			    		EndEff_r_org(1) + (pitch_angle[i]-EndEff_r_org(1)) * coswt,
+			    		EndEff_r_org(2) + (  yaw_angle[i]-EndEff_r_org(2)) * coswt;
 
 		//		hand[0] = 	lhand_org + (l_hand[i] - lhand_org) * coswt;
 		//		hand[1] = 	rhand_org + (r_hand[i] - rhand_org) * coswt;
@@ -2299,9 +2308,9 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 	else if(i<T)
 	{
 		coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 			// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-		EndEff_p = 	x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-					y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
-					z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
+		EndEff_p = 	x_pos[i-1] + noise(4) + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,			// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
+		  			y_pos[i-1] + noise(4) + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,			// Introduce 0.1mm level error for second set of waypoints
+		  			z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
 
 		EndEff_r = 	roll_angle[i-1]  + ( roll_angle[i] +divPoint(3)-roll_angle[i-1])  * coswt,
 					pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
@@ -2314,12 +2323,12 @@ bool AssemblyStrategy::moveRobot(double cur_time)
 	//---------------	----------------------------------------------------------------------------------------------------------------------------
 	else
 	{
-		EndEff_p = 	x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
-					y_pos[i-1]			+divPoint(1),
-					z_pos[i-1]			+divPoint(2);
-		EndEff_r = 	roll_angle[i-1]		+divPoint(3),
-					pitch_angle[i-1]	+divPoint(4),
-					yaw_angle[i-1]		+divPoint(5);
+	  EndEff_p = 	x_pos[i-1]			+noise(4), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
+	    			y_pos[i-1]			+noise(4),
+	    			z_pos[i-1]			+divPoint(2);
+	  EndEff_r = 	roll_angle[i-1]		+divPoint(3),
+			  	  	pitch_angle[i-1]	+divPoint(4),
+			  	  	yaw_angle[i-1]		+divPoint(5);
 		//		hand[0] = 	l_hand[i-1];
 		//		hand[1] = 	r_hand[i-1];
 		ret = false;
@@ -3254,6 +3263,7 @@ bool AssemblyStrategy::checkArmLimit(JointPathPtr arm_path)
 	return true;
 
 }
+
 //--------------------------------------------------------------------------------------
 // noise()
 // This function returns a random number between -0.0005m (-0.5mm) and +0.0005m (0.5mm)
@@ -3261,22 +3271,61 @@ bool AssemblyStrategy::checkArmLimit(JointPathPtr arm_path)
 // A random number generator between -5,000 and 5,000 is generated first, and then divided by 10M.
 // Depends on #include<stdlib>
 //--------------------------------------------------------------------------------------
-double AssemblyStrategy::noise()
+double AssemblyStrategy::noise(float decimalPlaces)
 {
 	// Local variable
-	double deviation=0.0;
+	int scale 	= 0;
+	int base 	= 0; 
+	int shift 	= 0;
+	double deviation= 0.0;
 
 	// Seed the random number generator with current time
 	srand (time(NULL));
 
-	// Generate a number between -5000 and 5000, then divide by 1M, to get millimeter level numbers
-	deviation = rand() % 10001 + (-5000);
+	// Choose number of significant figures by shifting number << 10,000 = 4 sig.fig.
+	int sf = 4;
+	base = pow(10.0,sf); 			// This is the base number we use to compute significant figures. Needs to add 1 to count for zero. Will do later.
+	shift = -1*base/2;			// We will subtract by this number to create pos and neg numbers.
+	base = base+1; 				// To account for number 0
+	// Generate a number between -base and base
+	deviation = rand() % base + shift;
 
+	// Scale = significant figures + decimal places
+	scale=sf+decimalPlaces;
+	scale=pow(10.0,scale);
 	// Fix the number of decimal points
-	deviation /= 1000000;
+	deviation /= scale; // Expecting a number like 1e07 or 10,000,000
 
 	if(DEBUG) std::cout << "The randomly generated noise for deviation is: " << deviation << std::endl;
 
 	return deviation;
 }
 
+//-----------------------------------------------------------------------------
+// normalNoise
+// Creates gaussian noise with mean 0 and std. deviation of 5/scale. 
+// Scale can be an int like 10, or a long format number like 1e03.
+// Uses Cxx0 standards. 
+// Still cannot get to run in runtime. Some issue with cxx0 standards. 
+//-----------------------------------------------------------------------------
+double normalNoise(float decimalPlaces)
+{
+  // Local variables
+	
+  double normal_noise=0.0;
+  double scale=0.0;
+  double std_dev=5.0;
+  
+  // // Random Number Generator Instantiation
+  // std::random_device rd;  // random number generator drawn from a uniform distribution
+  // std::mt19937 gen(rd()); // merseen twisted generator produces unsigned integer random numbers
+
+  // // Normal Distribution Instantiation and Generation
+  // scale=pow(10,decimalPlaces);
+  // std_dev /=scale; 
+  // std::normal_distribution<float> dist(0.0,std_dev);  // normal distribution with mean 0 and std dev 5/scale
+  // normal_noise = dist(gen);
+
+  return normal_noise;
+	return 0;
+}
