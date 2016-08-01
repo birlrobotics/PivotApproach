@@ -19,9 +19,9 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE_X   	0.0085				// xDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075 // Parameter used to study Failure Characterization.
-#define PATH_DEVIATION_MAGNITUDE_Y   	-0.0105			// yDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075
-#define ANGLE_DEVIATION_MAGNITUDE  		0.4363			// YawDir (6) 0.5235 // (5) 0.4363 // (4) 0.3490 // (3) 0.2618 // (2) 0.1745 // (1) 0.08725
+#define PATH_DEVIATION_MAGNITUDE_X   	0 // 0.0085				// xDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075 // Parameter used to study Failure Characterization.
+#define PATH_DEVIATION_MAGNITUDE_Y   	0 // -0.0105			// yDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075
+#define ANGLE_DEVIATION_MAGNITUDE  	0 // 	0.4363			// YawDir (6) 0.5235 // (5) 0.4363 // (4) 0.3490 // (3) 0.2618 // (2) 0.1745 // (1) 0.08725
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FILTERING
@@ -495,6 +495,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 	double 		filteredSig[6];
 	double 		temp[6];
+	double          noiseTemp = 0.0;
 	double 		ErrorNorm1 = 0, ErrorNorm2 = 0;
 
 	dvector6 	n6;
@@ -523,8 +524,17 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 //		ft->secOrderFilter(temp,filteredSig);
 //		ft->secOrderFilter(currForces,avgSig);
 
-		for(int i=0;i<6;i++)
-			avgSig(i) = filteredSig[i];
+		for(int i=0;i<3;i++)
+		  {
+		    noiseTemp=noise(3);
+		    avgSig(i) = filteredSig[i]+noiseTemp;
+		  }
+		for(int i=3;i<6;i++)
+		  {
+		    noiseTemp=noise(4);
+		    avgSig(i) = filteredSig[i]+noiseTemp;
+		  }
+
 		//ft->LowPassFilter(currForces,avgSig);
 	}
 	else
@@ -863,6 +873,10 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 					// So even when no force is applied, the simulation produces a jittery effect that is seen as very high noise and large force jumps in the plots.
 					// This exponential decay for the force values registered by the FT sensor are an attempt to reproduce the decay that would take place upon proper mating.
 					avgSig = avgSig * exp(-cur_time/2.5);
+					ret=StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
+					if(ret==PA_FINISH)
+					  exit;
+
 				}
 		break;
 		// case hsaFinsih
@@ -1701,8 +1715,8 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   else if(i<T)
   {
 	  coswt = coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-	  EndEff_p = x_pos[i-1] + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-			  	 y_pos[i-1] + (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
+	  EndEff_p = x_pos[i-1] + noise(5) + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
+	    y_pos[i-1] + noise(5) +  (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
 			  	 z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
 
 	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+divPoint(3)-roll_angle[i-1])  * coswt,
@@ -1716,8 +1730,8 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   //---------------	----------------------------------------------------------------------------------------------------------------------------
   else
     {
-      EndEff_p = x_pos[i-1]			+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
-    		  	 y_pos[i-1]			+divPoint(1),
+      EndEff_p = x_pos[i-1]    +noise(5)+divPoint(0), 		// The divPoint array was introduced to perform error characterization of failure case scenarios.
+	y_pos[i-1]	       +noise(5)+divPoint(1),
     		  	 z_pos[i-1]			+divPoint(2);
       EndEff_r = roll_angle[i-1]	+divPoint(3),
     		     pitch_angle[i-1]	+divPoint(4),
@@ -2513,4 +2527,27 @@ bool  AssemblyStrategy::checkArmLimit(JointPathPtr arm_path)
   }
   return true;
 
+}
+
+double AssemblyStrategy::noise(float decimalPlaces)
+{
+  int scale=0;
+  int base=0;
+  int shift=0;
+  double deviation=0;
+
+  srand(time(NULL));
+  int sf=4;
+  base=pow(10.0,sf);
+  shift=-1*base/2;
+  base=base+1;
+
+  deviation=rand()%base +shift;
+
+  scale=sf+decimalPlaces;
+  scale=pow(10.0,scale);
+  
+  deviation /=scale;
+  if(DEBUG_AS) std::cout << "The randomly generated noise for deviation is: " << deviation << std::endl;
+  return deviation;
 }

@@ -38,6 +38,7 @@
 #include <string.h>
 #include <string>
 #include <time.h>
+#include <random>
 #include <sys/time.h>
 //#include <sys/syspage.h>
 #include <vector>
@@ -366,6 +367,9 @@ class AssemblyStrategy {
   int  EndEff2WristTrans(/*in*/ Vector3 EndEff_p, /*in*/ Vector3 EndEff_r, /*out*/ Vector3& WristPos, /*out*/ Vector3& WristRot);
   int  wrist2EndEffTrans(/*in,out*/vector3& WristPos, /*in,out*/vector3& WristRot);
   void FreeResources(ctrlComp type);
+  
+  // Noise methods
+  double noise(float decimalPlaces); // random number generator that draws from a uniform distribution
 
   // Files
   void OpenFiles();
