@@ -13,7 +13,7 @@ DYNAMICSSIMULATOR = $(TOP)DynamicsSimulator/
 # Rules                                                                                                                                 
 include $(TOP)Controller/IOserver/plugin/Make.rules
 #--------------------------------------------- Compile Commands -----------------------------------------------------------
-CXX_FLAGS += -g -Wall -O0										# Compilation Flags
+#CXX_FLAGS += -g -Wall -O0										# Compilation Flags
 CXX_FLAGS += -std=c++0x										# C++11 support std::normal_distribution<>
 CXX_FLAGS:=$(CXX_FLAGS) -I/usr/include/qdbm
 CXX_FLAGS += -fno-schedule-insns -fno-schedule-insns2 -fno-strict-aliasing

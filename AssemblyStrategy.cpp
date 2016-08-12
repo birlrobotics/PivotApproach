@@ -15,12 +15,12 @@
 // ----------------------------------------------------- PLEASE SEE MORE DESIGN PARAMETERS IN hiroArm ------------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #define PA10					0
-#define HIRO					1
-#define TWOARM_HIRO				0
+#define HIRO					0
+#define TWOARM_HIRO				1
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // ASSEMBLY_STRATEGY_AUTOMATA STATES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PA_FINISH 				10 			// value returned when the assembly is finished
+#define PA_FINISH 				16 			// value returned when the assembly is finished
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 //-----------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define DEBUG					1			// Used to print temporary cerr statements
+#define DEBUG					0			// Used to print temporary cerr statements
 #define DEBUG_AS		     	0           // Flag used to test functions with hard-coded data
 #define DB_WRITE               1           // Used to write angles, cart position, forces, and states to FILE.
 #define DB_TIME 				0           // Used to print timing duration of functions
@@ -659,12 +659,12 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 
 		for(int i=0;i<3;i++)
 		{
-			noiseTemp=noise(2); // normalNoise(1.0);
+			noiseTemp=noise(1); // normalNoise(1.0);
 			avgSig(i) = filteredSig[i]+noiseTemp; // Adding noise mean 0, std. dev 0.5
 		}
 		for(int i=3;i<6;i++)
 		{
-			noiseTemp=noise(3); // ormalNoise(3.0);
+			noiseTemp=noise(2); // ormalNoise(3.0);
 			avgSig(i) = filteredSig[i]+noiseTemp; // Adding noise mean 0, std. dev 0.005
 		}
 
@@ -726,7 +726,7 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 			// Initialize
 			if(ctrlInitFlag)
 			{
-				if(DEBUG) std::cerr << "State 2 in AssemblyStrategy::StateMachine" << std::endl;
+			  	if(DEBUG) std::cerr << "State 2 in AssemblyStrategy::StateMachine" << std::endl;
 
 				nextState	 = false;
 				ctrlInitFlag = false;
@@ -1031,10 +1031,10 @@ int AssemblyStrategy::StateMachine(	 TestAxis 		axis,				/*in*/
 
 			// Call IK Controller
 			// Right Arm moves
-			if(approach==Male_Push_Female_Hold && axis==0)
+			if(approach==Male_Push_Female_Hold && (AssemblyStrategy::TestAxis)axis==0)
 				ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
 			// Left Arm moves
-			else if(approach==Male_Hold_Female_Push && axis==1)
+			else if(approach==Male_Hold_Female_Push && (AssemblyStrategy::TestAxis)axis==1)
 				ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
 			else if (approach==Male_Push_Female_Push)
 				ret = ControlCompositions(m_path, bodyPtr, JointAngleUpdate, CurrAngles, approach, IKinComposition, n, DesForce, n6, ErrorNorm1, ErrorNorm2, pos, rot, cur_time, Jacobian, PseudoJacobian);
@@ -2081,7 +2081,7 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 					if(axis==1 && approach==Male_Hold_Female_Push) {
 						if(avgSig(Fx) > TwoArm_SA_App2Rot_Fx_L)
 						{
-							NextStateActions(cur_time,hsaHIROTransitionExepction);
+						  	NextStateActions(cur_time,hsaHIROTransitionExepction,axis);
 							std::cerr << "Left Arm: Transition Fx value ocurred at: " << cur_time << " and with an Fx threshold value of: " << avgSig(Fx)
 									<< ".\n The threshold is set to: " << TwoArm_SA_App2Rot_Fx_L << std::endl;
 						}
@@ -2116,7 +2116,7 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 						// If wrist angle surpasses the threshold transition
 						if(CurJointAngles(4) < TwoArm_SA_Rot2Ins_My_L)
 						{
-							NextStateActions(cur_time, hsaHIROTransitionExepction);
+							NextStateActions(cur_time, hsaHIROTransitionExepction,axis);
 							std::cerr << "TWOARM_hsaRotation2Insertion :: change to Insertion state" << std::endl;
 						}
 					}
@@ -2147,7 +2147,7 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 						if(CurJointAngles(4) < TwoArm_SA_Ins2SubIns_My_L)
 						{
 							hsaHIROTransitionExepction = Ins2InsSubPart;
-							NextStateActions(cur_time, hsaHIROTransitionExepction);
+							NextStateActions(cur_time, hsaHIROTransitionExepction,axis);
 							hsaHIROTransitionExepction = normal;
 							std::cerr << "TWOARM_hsaInsertion2InsertionB::LeftArm::Change to Insertion B state" << std::endl;
 						}
@@ -2180,7 +2180,7 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 					{
 						if(DEBUG) std::cerr << "DualArmTransition::LeftArm::TWOARM_hsaInsPartB2Mating" << std::endl;
 						hsaHIROTransitionExepction = normal;
-						NextStateActions(cur_time, hsaHIROTransitionExepction);
+						NextStateActions(cur_time, hsaHIROTransitionExepction,axis);
 
 						// Set an Ending Time
 						END_TIME=cur_time+mating2EndTime;
@@ -2198,7 +2198,7 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 				{
 					if(DEBUG) std::cerr << "DualArmTransition::TWOARM_hsaMating2Finish" << std::endl;
 					hsaHIROTransitionExepction = DoNotIncreaseStateNum;
-					NextStateActions(END_TIME, hsaHIROTransitionExepction); exit(0); // Terminate the program
+					NextStateActions(END_TIME, hsaHIROTransitionExepction,axis); exit(0); // Terminate the program
 				}
 			}
 			break;
@@ -2213,9 +2213,13 @@ int AssemblyStrategy::StateSwitcher(TestAxis 		axis,
 }
 
 /*----------------------------------------------------------------------------------------------------*/
+// NextStateActions(double,int)
 // Increase the value of the state variable by one and reset nextState and ctrlInitFlags.
 // Except for listed exceptions.
-void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionExepction)
+// Has a default argument TestAxis axis=0, indicating the right arm. 
+// TODO: Write info to the left state stream if using the left arm.
+/*----------------------------------------------------------------------------------------------------*/
+void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionExepction,int axis)
 {
 	nextState		= true;
 	ctrlInitFlag	= true;
@@ -2226,7 +2230,11 @@ void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionEx
 		State++;
 
 		// Enter the time at which the state changed. Start with State 0 moving at the home position, State 1 moving towards part...
-		ostr_state << cur_time << std::endl;
+		if(axis==0)
+		  ostr_state << cur_time << std::endl;
+
+		if(axis==1)
+		  ostr_stateL << cur_time << std::endl;
 	}
 
 	// 2) If flag is Ins2InsSubPart, then increase state but do not write output to file.
@@ -2237,7 +2245,11 @@ void AssemblyStrategy::NextStateActions(double cur_time, int hsaHIROTransitionEx
 	else if(hsaHIROTransitionExepction==DoNotIncreaseStateNum)
 	{
 		// Enter the time at which the state changed. Start with State 0 moving at the home position, State 1 moving towards part...
-		ostr_state << cur_time << std::endl;
+		if(axis==0)
+		  ostr_state << cur_time << std::endl;
+
+		if(axis==1)
+		  ostr_stateL << cur_time << std::endl;
 	}
 }
 

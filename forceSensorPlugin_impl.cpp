@@ -56,7 +56,7 @@ extern "C" {
 #define LEFT       	0   // Used to indicate index for f_control
 #define RIGHT 			1 	// Used to indicate index for f_control
 
-#define LEFT_ARM  		0 	// Flag to enable left Arm computations.
+#define LEFT_ARM  		1 	// Flag to enable left Arm computations.
 #define GRAVITY_COMP 	0 	// Flag to activate gravity compensation through a control_mode. Automatically set to call the PivotApproach after that.
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -376,7 +376,7 @@ class AssemblyStrategy {
 						dvector6		currForces,
 						double 			cur_time);																			// Switches the states of the state machine according to approach.
 
-  void NextStateActions(double cur_time, int insertionStateSubFlag);													// Fixed number of operations to be done between switching of states
+  void NextStateActions(double cur_time, int insertionStateSubFlag, int axis=0);													// Fixed number of operations to be done between switching of states
 
   // Call any combination of legal control compositions (upto three for now), and pass desired data.
   int ControlCompositions(JointPathPtr 	m_path,
