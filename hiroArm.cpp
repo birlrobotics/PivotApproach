@@ -33,10 +33,10 @@ using std::ceil;
 #define FAILURE_CHARAC_FILE 	"/FC/failureCaseXDir.dat"				// Waypoints for State1 in FailureCase. Three files: failureCaseXDir.dat, failureCaseYDir.dat, and failureCaseRollDir.dat
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // To Write Data (used in AssemblyStrategy::OpenFiles)
-#define ANGLES_FILE				"/Angles.dat"							// Save joint angles of robot
-#define CARTPOS_FILE			"/CartPos.dat"							// Save CartPos of End-Effector in world coordinates
-#define STATE_FILE				"/State.dat"							// Save State Transition times for SideApproach
-#define FORCES_FILE				"/Torques.dat"							// Save Joint Torques for robot
+#define ANGLES_FILE				"/R_Angles.dat"							// Save joint angles of robot
+#define CARTPOS_FILE			"/R_CartPos.dat"							// Save CartPos of End-Effector in world coordinates
+#define STATE_FILE				"/R_State.dat"							// Save State Transition times for SideApproach
+#define FORCES_FILE				"/R_Torques.dat"							// Save Joint Torques for robot
 #define MANIP_TEST_FILE			"/manipulationTestAxis.dat"				// Used to test force and moment controllers behavior
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // DEBUGGING
