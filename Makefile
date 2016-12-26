@@ -13,14 +13,14 @@ DYNAMICSSIMULATOR = $(TOP)DynamicsSimulator/
 # Rules                                                                                                                                 
 include $(TOP)Controller/IOserver/plugin/Make.rules
 #--------------------------------------------- Compile Commands -----------------------------------------------------------
-#CXX_FLAGS += -g -Wall -O1										# Compilation Flags
+CXX_FLAGS += -ggdb3 -Wall -O0 										# Compilation Flags
 CXX_FLAGS += -std=c++0x
 CXX_FLAGS:=$(CXX_FLAGS) -I/usr/include/qdbm
 CXX_FLAGS += -fno-schedule-insns -fno-schedule-insns2 -fno-strict-aliasing
-#CXX_FLAGS += -DDEBUG_PLUGIN -DDEBUG_PLUGIN2 -DDEBUG_PLUGIN3			 			# Flag DEBUG_PLUGIN is used in forceSensorPlugin.cpp,...PLUGIN_2 in hiroArm, ...PLUGIN3, in  AssemblyStrat.
+CXX_FLAGS += -DDEBUG_PLUGIN -DDEBUG_PLUGIN2 -DDEBUG_PLUGIN3			 			# Flag DEBUG_PLUGIN is used in forceSensorPlugin.cpp,...PLUGIN_2 in hiroArm, ...PLUGIN3, in  AssemblyStrat.
 CXX_FLAGS += -DPIVOTAPPROACH #-DIMPEDANCE 
 CXX_FLAGS += -DSIMULATION
-#CXX_FLAGS += -DWRITELOG
+CXX_FLAGS += -DWRITELOG
 CXX_FLAGS += -I$(TOP)Controller/IOserver/include   
 CXX_FLAGS += -I$(TOP)Controller/IOserver/robot/HRP2STEP1/
 CXX_FLAGS += -I$(TOP)Common -I$(TOP)Controller/IOserver/robot/HRP2STEP1/iob/ 

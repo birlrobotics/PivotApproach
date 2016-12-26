@@ -6,6 +6,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "AssemblyStrategy.h"
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sstream>
+#include <cmath>
+#include <ctime>
+
+
 ///---------------------------------------------------------------------------------------------------------------------------------------------------//
 /************************************************************* DESIGN PARAMETERS AND FLAGS ************************************************************/
 // ----------------------------------------------------- PLEASE SEE MORE DESIGN PARAMETERS IN hiroArm ------------------------------------------------//
@@ -19,8 +28,8 @@
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 // FAILURE CHARACTERIZATION VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-#define PATH_DEVIATION_MAGNITUDE_X   	0 // 0.0085				// xDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075 // Parameter used to study Failure Characterization.
-#define PATH_DEVIATION_MAGNITUDE_Y   	0 // -0.0105			// yDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075
+#define PATH_DEVIATION_MAGNITUDE_X   	0.015 // 0.0085				// xDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075 // Parameter used to study Failure Characterization.
+#define PATH_DEVIATION_MAGNITUDE_Y   	0.01 // -0.0105			// yDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075
 #define ANGLE_DEVIATION_MAGNITUDE  	0 // 	0.4363			// YawDir (6) 0.5235 // (5) 0.4363 // (4) 0.3490 // (3) 0.2618 // (2) 0.1745 // (1) 0.08725
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -47,6 +56,20 @@
 #endif
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+/*ugly globals create by shuangqi, in order to automate data generation*/
+double rollback_start_time;
+double way_point_time_base = 0.0;
+double this_phase_start_time = 0.0;
+double this_exp_start_time = 0.0;
+double roll_back_time = 0.0;
+
+
+
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -314,9 +337,17 @@ AssemblyStrategy::~AssemblyStrategy()
 // 4) Assigns the kind of control method and strategy motion that we will use. Currently (4) options: Straight Line Approach (PA10), Pivot Approach (PA10), Side Approach (HIRO), Failure Characterization (HIRO).
 // 5) Allocates the filter class
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-int AssemblyStrategy::Initialize(char TrajState1[STR_LEN], char TrajState2[STR_LEN], char AnglesDir[STR_LEN], char CartPosDir[STR_LEN], char StateDir[STR_LEN], char ForcesDir[STR_LEN],
-									 vector3 pos, matrix33 rot, double CurAngles[15],
-									 int strategyType, int controlMethodType)
+int AssemblyStrategy::Initialize(char TrajState1[STR_LEN],
+		char TrajState2[STR_LEN],
+		char AnglesDir[STR_LEN],
+		char CartPosDir[STR_LEN],
+		char StateDir[STR_LEN],
+		char ForcesDir[STR_LEN],
+		vector3 pos,
+		matrix33 rot,
+		double CurAngles[15],
+		int strategyType,
+		int controlMethodType)
 {
 #ifdef DEBUG_PLUGIN3
   std::cerr << "\nAssemblyStrategy::Initialize - entered" << std::endl;
@@ -723,6 +754,10 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 				nextState	 = false;
 				ctrlInitFlag = false;
+				this_phase_start_time = cur_time;
+				this_exp_start_time = cur_time;
+				CloseFiles();
+				OpenFiles();
 			}
 
 			// Primitive Ikin controller: Use a preplanned trajectory to move the wrist at an angle until contact.
@@ -741,145 +776,171 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			// Initialize
 			if(ctrlInitFlag)
 			{
-#ifdef DEBUG_PLUGIN3
-				std::cerr << "State 2 in AssemblyStrategy::StateMachine" << std::endl;
-#endif	 
-
 				nextState	 	= false;
 				ctrlInitFlag 	= false;
-				// Set up a new trajectory file with current information
-				ProcessTrajFile(strTrajState2,State,pos,CurRPY,cur_time);
-				EndEff_p_org = pos;
-				EndEff_r_org = CurRPY;
-			}
 
-			// Primitive Ikin controller: Use a preplanned trajectory to rotate wrist until further contact
-			//ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach, IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
-
-			// Or, use a ForceIKinController
-			// Set a DesForce that pushes down and against the wall of the camera model
-#ifdef SIMULATION
-			/*------------------------ WORLD COORDINATES -------------------------------*/
-			// +X: Downwards
-			// +Y: Moves right
-			// +Z: Moves forward (and a bit left)
-			DesForce(UP_AXIS) 	=  1.000*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) = -1.000*HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	=  -16.000*TRANSVERSE_FORCE;
-			DesMoment(1) 		=  3.0*ROTATIONAL_FORCE;
-#else
-			DesForce(UP_AXIS) 	= 1.375*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	= -20*TRANSVERSE_FORCE;
-			DesMoment(1) 		= 2.100*ROTATIONAL_FORCE;
-#endif
-
-			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
-
-			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
-		}
-		break;
-
-
-		/*-------------------------------------------------- Compliant Insertion Controller --------------------------------------------------*/
-		case hsaInsertion:
-		{
-			// Initialize
-			if(ctrlInitFlag)
-			{
-#ifdef DEBUG_PLUGIN3
-				std::cerr << "State 3 in AssemblyStrategy::StateMachine" << std::endl;
-#endif	 
-
-				nextState	 = false;
-				ctrlInitFlag = false;
-			}
-			/*------------------------ WORLD COORDINATES -------------------------------*/
-			// Set a DesForce that pushes down stronger and still rotates.
-			// +X: Downwards
-			// +Y: Moves right
-			// +Z: Moves forward (and a bit left)
-#ifdef SIMULATION
-			DesForce(UP_AXIS) 	=   1.300*VERTICAL_FORCE;
-			DesForce(SIDE_AXIS) =   2.000*HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
-			DesMoment(1) 		=   3.750*ROTATIONAL_FORCE;
-#else
-			DesForce(UP_AXIS) = VERTICAL_FORCE;
-			// DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-			DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
-			DesMoment(1) = 4*ROTATIONAL_FORCE;
-#endif
-
-			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,ForceMomentComposition,DesForce,DesMoment,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
-
-			// Check for state termination. Also free allocated resources.
-			StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
-		}
-		break;
-
-		/*-------------------------------------------------- SubInsertionStage --------------------------------------------------*/
-		// Introduced in 2013Aug to deal with lack of empalement at end. Contains the same information that was formally used in the hsaMating state.
-		case hsaSubInsertion: // Only push down
-		{
-			// Initialize
-			if(ctrlInitFlag)
-			{
-#ifdef DEBUG_PLUGIN3
-				std::cerr << "State 3b: in AssemblyStrategy::StateMachine" << std::endl;
-#endif	 
-
-				nextState	 = false;
-				ctrlInitFlag = false;
-				//SA_S4_Height = pos(2);
-			}
-
-			// Set a DesForce that pushes down and against the wall of the camera model
-			//--------------------------------------------------------------------------
-			// Linux
-			//DesForce(UP_AXIS)   =  1.25*VERTICAL_FORCE;	// In world coordinates
-			//DesForce(FWD_AXIS)  = -6.0*TRANSVERSE_FORCE*((pos(2)-0.0728)/(SA_S4_Height-0.0728)); // same as above but weaker backwards pushing. the push decreases as the rotation decreases and the snaps push in.
-			//DesForce(SIDE_AXIS) = HORIZONTAL_FORCE/10.0;
-
-			// QNX
-			//DesForce(UP_AXIS)   =  VERTICAL_FORCE;   // In world coordinates
-			//DesForce(FWD_AXIS)  =  TRANSVERSE_FORCE; //
-
-#ifdef SIMULATION
-			DesForce(UP_AXIS)		=   1.5000*VERTICAL_FORCE;
-			//DesForce(SIDE_AXIS) 	=   0.000*HORIZONTAL_FORCE;
-			//DesForce(FWD_AXIS) 	= -13.000*TRANSVERSE_FORCE;			// DesForce(FWD_AXIS)  =-13.0*TRANSVERSE_FORCE*( pow(CurrAngles(4),2)/pow(1.5708,2) ); 					// backwards pushing force that counters the forward motion cause by the forward rotation (jacobian effect)
-
-#else
-			DesForce(UP_AXIS) = 3*VERTICAL_FORCE;
-			DesForce(FWD_AXIS) = -20*TRANSVERSE_FORCE;
-#endif
-
-			//	    DesForce(SIDE_AXIS) = HORIZONTAL_FORCE;
-			//--------------------------------------------------------------------------
-			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,MomentForceComposition,DesMoment,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
-
-			// Check for Approach termination condition
-			ret=StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
-
-			break;
-
-		}
-
-		case hsaMating:
-				{
-					// 2013Aug. When mating takes place under current simulation circumstances, there is penetration from the male snap into the walls of the female snap.
-					// So even when no force is applied, the simulation produces a jittery effect that is seen as very high noise and large force jumps in the plots.
-					// This exponential decay for the force values registered by the FT sensor are an attempt to reproduce the decay that would take place upon proper mating.
-					avgSig = avgSig * exp(-cur_time/2.5);
-					ret=StateSwitcher(approach,State,ErrorNorm1,ErrorNorm2,pos,rot,CurrAngles,avgSig,cur_time);
-					if(ret==PA_FINISH)
-					  exit;
-
+				stringstream folder_name;
+				folder_name << "XX";
+				if (divPoint(0) != 0) {
+					if (divPoint(0) < 0) {
+						folder_name << "-";
+					}
+					else {
+						folder_name << "+";
+					}
+					folder_name << "x" << fabs(divPoint(0));
 				}
+				if (divPoint(1) != 0) {
+					if (divPoint(1) < 0) {
+						folder_name << "-";
+					}
+					else {
+						folder_name << "+";
+					}
+					folder_name << "y" << fabs(divPoint(1));
+				}
+				if (divPoint(3) != 0) {
+					if (divPoint(3) < 0) {
+						folder_name << "-";
+					}
+					else {
+						folder_name << "+";
+					}
+					folder_name << "r" << fabs(divPoint(3));
+				}
+
+				const string& tmp = folder_name.str();
+				stringstream cmd;
+				cmd << "/home/harada/src/OpenHRP3.0/Controller/IOserver/plugin/forceSensorPlugin_Juan/server/collect_data.py";
+				cmd << " " << tmp;
+
+				CloseFiles();
+				system(cmd.str().c_str());
+				OpenFiles();
+
+
+
+
+
+				char path[100];
+				sprintf(path, "./data/PivotApproach/pivotApproachState2.dat");
+
+				// 1) Open the trajectory file wbhere we will place time and position data for the second state
+				ostr_TrajState2.open(path);
+				if (!ostr_TrajState2.is_open())
+					std::cerr << path << " not opened" << std::endl;
+
+				// 2) Insert current data in the first line and the desired data in the second line
+				float traj2_goaltime = cur_time + 10;	// Goal time is one second later
+
+				// Insert a Start and End position for State 2.
+				// The first line is the current position
+				// The second line keeps the same pose, but sets the goal orientation to be parallel to the ground
+				ostr_TrajState2 << cur_time 		<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2)
+						<< "\t" << CurRPY(0) << "\t" << CurRPY(1)  << "\t" << CurRPY(2) << "\n";
+				double timeToWrite = cur_time;
+
+				for (int i = ex_time.size()-2; i >= 0; i--) {
+					double timeSpan = ex_time[i+1]-ex_time[i];
+					timeToWrite += timeSpan+1;
+					ostr_TrajState2 << timeToWrite 		<< "\t" << x_pos[i] << "\t" << y_pos[i] << "\t" << z_pos[i] << "\t" << roll_angle[i] << "\t" << pitch_angle[i]  << "\t" << yaw_angle[i] << "\n";
+				}
+				timeToWrite += 1;
+				ostr_TrajState2 << timeToWrite 		<< "\t" << EndEff_p_org(0) << "\t" << EndEff_p_org(1) << "\t" << EndEff_p_org(2)
+						<< "\t" << EndEff_r_org(0) << "\t" << EndEff_r_org(1)  << "\t" << EndEff_r_org(2) << "\n";
+
+				roll_back_time = timeToWrite-cur_time;
+
+				// 3) Close file
+				if(ostr_TrajState2.is_open())
+					ostr_TrajState2.close();
+				ostr_TrajState2.clear();
+
+				// Clear data
+				ex_time.clear();
+				x_pos.clear();
+				y_pos.clear();
+				z_pos.clear();
+				roll_angle.clear();
+				pitch_angle.clear();
+				yaw_angle.clear();
+
+
+
+
+
+				// Set up a new trajectory file with current information
+				ProcessTrajFile(path,State,pos,CurRPY,cur_time);
+
+				EndEff_r_org = rpyFromRot(rot);
+				wrist_r = EndEff_r_org;
+
+				EndEff_p_org = pos;
+				wrist_p = EndEff_p_org;
+
+				divPoint(0) = 0;
+				divPoint(1) = 0;
+				divPoint(2) = 0;
+				divPoint(3) = 0;
+				divPoint(4) = 0;
+				divPoint(5) = 0;
+
+				rollback_start_time = cur_time;
+				this_phase_start_time = cur_time;
+			}
+			ret=ControlCompositions(m_path,bodyPtr,JointAngleUpdate,CurrAngles,approach,IKinComposition,n,DesForce,n6,ErrorNorm1,ErrorNorm2,pos,rot,cur_time,Jacobian,PseudoJacobian);
+
+			// check if we've rolled back, if so, we set state back to 1
+			// we give it 3 seconds to roll back
+			if (cur_time - rollback_start_time > roll_back_time+1) {
+				EndEff_r_org = rpyFromRot(rot);
+				wrist_r = EndEff_r_org;
+
+				EndEff_p_org = pos;
+				wrist_p = EndEff_p_org;
+
+				// Clear data
+				ex_time.clear();
+				x_pos.clear();
+				y_pos.clear();
+				z_pos.clear();
+				roll_angle.clear();
+				pitch_angle.clear();
+				yaw_angle.clear();
+
+				way_point_time_base = cur_time;
+				ProcessTrajFile(strTrajState1,1,EndEff_p_org,EndEff_r_org,cur_time);	// string path,state,curr_pos,cur_time
+				way_point_time_base = 0.0;
+
+
+
+				// now, generate new random deviation for next failure
+
+#define PATH_DEVIATION_MAGNITUDE_X   	0.0150 // 0.0085				// xDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075 // Parameter used to study Failure Characterization.
+#define PATH_DEVIATION_MAGNITUDE_Y   	0.0100 // -0.0105			// yDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075
+#define ANGLE_DEVIATION_MAGNITUDE  	0 // 	0.4363			// YawDir (6) 0.5235 // (5) 0.4363 // (4) 0.3490 // (3) 0.2618 // (2) 0.1745 // (1) 0.08725
+
+				srand(time(NULL));
+				divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
+				if (rand()%2) {
+					divPoint(0) 						= (rand()%200)*0.0001;			// x-axis
+				}
+				if (rand()%2) {
+					divPoint(1) 						= (rand()%200)*0.0001-0.0100; 			// y-axis
+					if(divPoint(0)>0.00) divPoint(2) 	=-0.005;								// Change z-axis
+					else		  		   divPoint(2) 	= 0.000;								// If there is deviation in the x-axis, then we need to add a deviation in the z-axis with value of -0.005 such that there is contact after moving forward.
+				}
+				if (rand()%2) {
+					divPoint(3) 						= (rand()%5000)*0.0001;
+				}
+
+				State = 1;
+				ctrlInitFlag = true;
+				nextState = true;
+
+			}
+		}
 		break;
-		// case hsaFinsih
 		}
 	}
 	else
@@ -933,7 +994,7 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 			  handRPY = rpyFromRot(m_path->joint(5)->segmentAttitude());
 			  }*/
 
-			WriteFiles(cur_time, 				// Current time
+			WriteFiles(cur_time-this_exp_start_time, 				// Current time
 					   CurrAngles, 				// Current robot joint angles
 					   JointAngleUpdate, 		// Changes in Joint Angles in the last iteration
 					   handPos,					// Current end-effector Cartesian position
@@ -1598,8 +1659,9 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  // if(pos(2) < 0.575)  // This number is relative and can change depending on where to put the object of interest
 				  // 2013Aug. New parameters.
 				  // if(attitude(1) < -1.5400 || CurJointAngles(My) < 0.3700)
-				  // if( (attitude(1) < -1.5330 && currForces(4) > 1.2) || (CurJointAngles(My) < 0.3870 && currForces(4) > 1.2) )	Used with 2nd Order Filter of Cutoff Freq 0.1
-				  if( (attitude(1) < -1.5330 && currForces(4) > 0.9) || (CurJointAngles(My) < 0.3870 && currForces(4) > 0.9) )		// Used with 2nd Order Filter of Cutoff Freq 0.095
+				  //if( (attitude(1) < -1.5330 && currForces(4) > 1.2) || (CurJointAngles(My) < 0.3870 && currForces(4) > 1.2) )	Used with 2nd Order Filter of Cutoff Freq 0.1
+				  //if( (attitude(1) < -1.5330 && currForces(4) > 0.9) || (CurJointAngles(My) < 0.3870 && currForces(4) > 0.9) )		// Used with 2nd Order Filter of Cutoff Freq 0.095
+			    if ( currForces(4) < -5.06 && currForces(1) > 23.0 )		// Used with 2nd Order Filter of Cutoff Freq 0.095
 				  {
 					  NextStateActions(cur_time,	 			hsaHIROTransitionExepction);		// Enter a time entry for the mating state
 					  hsaHIROTransitionExepction = DoNotIncreaseStateNum;
@@ -1694,7 +1756,7 @@ bool AssemblyStrategy::moveRobot(double cur_time)
       // Scaling function
       // Design a simple scaling function over time from 0secs to 1sec.
       // cur_time/ex_time is a ration that goes from 0 to 1, for each way point segment.
-      coswt = 0.5*(1.0 - cos(m_pi*(cur_time/ex_time[i])) ); // coswt = cur_time/ex_time[i]; 	//
+      coswt = 0.5*(1.0 - cos(m_pi*((cur_time-this_phase_start_time)/(ex_time[i]-this_phase_start_time))) ); // coswt = cur_time/ex_time[i]; 	//
 
       // Compute the new END_EFFECTOR position.
       // Original_Position + (New_Position - Original_Position)*scaling function
@@ -1715,9 +1777,9 @@ bool AssemblyStrategy::moveRobot(double cur_time)
   else if(i<T)
   {
 	  coswt = coswt = 0.5*(1.0 - cos(m_pi*(cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1])) ); 	// (cur_time-ex_time[i-1])/(ex_time[i]-ex_time[i-1]); // position + (current desired position-previous position)*scaling function.
-	  EndEff_p = x_pos[i-1] + noise(5) + (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
-	    y_pos[i-1] + noise(5) +  (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
-			  	 z_pos[i-1] + (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
+	  EndEff_p = x_pos[i-1] + noise(5) +  (x_pos[i]+divPoint(0)-x_pos[i-1]) * coswt,							// xpos is a 3x1. it stores data for a given waypoint step, 0, 1, or 2.
+			  	 y_pos[i-1] + noise(5) +  (y_pos[i]+divPoint(1)-y_pos[i-1]) * coswt,
+			  	 z_pos[i-1] +             (z_pos[i]+divPoint(2)-z_pos[i-1]) * coswt;
 
 	  EndEff_r = roll_angle[i-1]  + (  roll_angle[i]+divPoint(3)-roll_angle[i-1])  * coswt,
 			  	 pitch_angle[i-1] + ( pitch_angle[i]+divPoint(4)-pitch_angle[i-1]) * coswt,
@@ -2313,41 +2375,6 @@ int AssemblyStrategy::ProcessTrajFile(char path[STR_LEN], int State, vector3 pos
 		std::cerr << "\nAssemblyStrategy::ProcessTrajFile - Entering" << std::endl;
 	#endif
 
-	// If we enter state 2: Used in PivotApproach with PA10 but not in SideApproach with HIRO
-	if(State==2)
-	{
-		#ifdef DEBUG_PLUGIN3
-				std::cerr << "AssemblyStrategy::ProcessTrajFile - Entering State 2" << std::endl;
-		#endif
-
-		// 1) Open the trajectory file where we will place time and position data for the second state
-		ostr_TrajState2.open("./data/PivotApproach/pivotApproachState2.dat");
-		if (!ostr_TrajState2.is_open())
-			std::cerr << path << " not opened" << std::endl;
-
-		// 2) Insert current data in the first line and the desired data in the second line
-		float traj2_goaltime = cur_time + ROTATION_TIME_SLOW;	// Goal time is one second later
-
-		// Insert a Start and End position for State 2.
-		// The first line is the current position
-		// The second line keeps the same pose, but sets the goal orientation to be parallel to the ground
-		ostr_TrajState2 << cur_time 		<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << rpy(0) << "\t" << rpy(1)  << "\t" << rpy(2) << "\n";
-		ostr_TrajState2 << traj2_goaltime 	<< "\t" << pos(0) << "\t" << pos(1) << "\t" << pos(2) << "\t" << 0.00   << "\t" << -1.5708 << "\t" << -1.5708;
-
-		// 3) Close file
-		if(ostr_TrajState2.is_open())
-			ostr_TrajState2.close();
-		ostr_TrajState2.clear();
-
-		// Clear data
-		ex_time.clear();
-		x_pos.clear();
-		y_pos.clear();
-		z_pos.clear();
-		roll_angle.clear();
-		pitch_angle.clear();
-		yaw_angle.clear();
-	}
 
 	/*--------------------------------------------------------------------- State 1 ---------------------------------------------------------------------------*/
 	// Open an input stream
@@ -2381,7 +2408,7 @@ int AssemblyStrategy::ProcessTrajFile(char path[STR_LEN], int State, vector3 pos
 			ifstr_pivApproachState1 >> x;
 			if(ifstr_pivApproachState1.eof())
 				break;
-			ex_time.push_back(x);								// Waypoint time
+			ex_time.push_back(x+way_point_time_base);								// Waypoint time
 
 			#ifdef DEBUG_PLUGIN3
 				std::cerr << "Time: " << x << std::endl;
@@ -2417,6 +2444,8 @@ int AssemblyStrategy::ProcessTrajFile(char path[STR_LEN], int State, vector3 pos
 				std::cerr << "Yaw " << x << std::endl;
 			#endif
 		}
+		ifstr_pivApproachState1.close();
+		ifstr_pivApproachState1.clear();
 	}
 	else
 		std::cerr << "The file was not opened successfully." << std::endl;
