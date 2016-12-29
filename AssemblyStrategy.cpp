@@ -467,12 +467,21 @@ int AssemblyStrategy::Initialize(char TrajState1[STR_LEN],
 
 	  // Keep the z-axis, the pitch, and yaw at zero
 	  divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
+		// now, generate new random deviation for next failure
 
-	  divPoint(0) 						= PATH_DEVIATION_MAGNITUDE_X;			// x-axis
-	  divPoint(1) 						= PATH_DEVIATION_MAGNITUDE_Y; 			// y-axis
-	  if(divPoint(0)>0.00) divPoint(2) 	=-0.005;								// Change z-axis
-	  else		  		   divPoint(2) 	= 0.000;								// If there is deviation in the x-axis, then we need to add a deviation in the z-axis with value of -0.005 such that there is contact after moving forward.
-	  divPoint(3) 						= ANGLE_DEVIATION_MAGNITUDE;			// Yaw ANGLE_DEVIATION_MAGNITUDE
+		srand(time(NULL));
+		divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
+		if (rand()%2) {
+			divPoint(0) 						= (rand()%200)*0.0001;			// x-axis
+		}
+		if (rand()%2) {
+			divPoint(1) 						= (rand()%200)*0.0001-0.0100; 			// y-axis
+			if(divPoint(0)>0.00) divPoint(2) 	=-0.005;								// Change z-axis
+			else		  		   divPoint(2) 	= 0.000;								// If there is deviation in the x-axis, then we need to add a deviation in the z-axis with value of -0.005 such that there is contact after moving forward.
+		}
+		if (rand()%2) {
+			divPoint(3) 						= (rand()%5000)*0.0001;
+		}
   }
 
   // For the first iteration they are both the same.
@@ -915,10 +924,6 @@ int AssemblyStrategy::StateMachine(TestAxis 		axis,				/*in*/
 
 
 				// now, generate new random deviation for next failure
-
-#define PATH_DEVIATION_MAGNITUDE_X   	0.0150 // 0.0085				// xDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075 // Parameter used to study Failure Characterization.
-#define PATH_DEVIATION_MAGNITUDE_Y   	0.0100 // -0.0105			// yDir   (4) 0.0105 // (3) 0.0095 // (2) 0.0085 // (1) 0.0075
-#define ANGLE_DEVIATION_MAGNITUDE  	0 // 	0.4363			// YawDir (6) 0.5235 // (5) 0.4363 // (4) 0.3490 // (3) 0.2618 // (2) 0.1745 // (1) 0.08725
 
 				srand(time(NULL));
 				divPoint(2)=0; divPoint(4)=0;divPoint(5)=0;
@@ -1596,7 +1601,7 @@ int AssemblyStrategy::StateSwitcher(enum 		CtrlStrategy approach,
 				  // Graph shows that contacts typically manage to exceed Threshold 9 N. Measure at 75% end of trajectory
 				  float endApproachTime=ex_time[1];						// Check the pivotApproachState1.dat carefully. If 1 line choose ex_time[0], if there are two lines choose ex_time[0]
 				  if( cur_time>(endApproachTime*0.80) )					// Want to make sure we are near the region of contact before we start measuring.
-					  if(avgSig(Fx)>HSA_App2Rot_Fx)						// Vertical Contact Force along X-Direction in local coordinates. // Lateral contact for x-axis
+					  if(avgSig(Fx)>HSA_App2Rot_Fx || cur_time>endApproachTime)						// Vertical Contact Force along X-Direction in local coordinates. // Lateral contact for x-axis
 					  {
 							  NextStateActions(cur_time,hsaHIROTransitionExepction);
 					  }
